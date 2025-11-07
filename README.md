@@ -20,7 +20,10 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 -   Special power-ups: Speed Boost, Shield, and the powerful Super Throw!
 -   Programmatically generated chiptune sound effects and jingles
 -   Temporary invincibility on respawn with visual feedback
+-   Instant visual feedback (screen flash) when taking damage
+-   Dynamic extra life system that rewards high scores (up to a maximum of 3 lives)
 -   Score tracking and a lives system
+-   Enlarged HUD for better readability
 
 ## Controls
 

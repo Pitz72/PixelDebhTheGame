@@ -25,6 +25,9 @@ export const LAUNCH_FORCE = 40;
 // Scoring
 export const COLLECTIBLE_POINTS = 100;
 export const ENEMY_DEFEAT_POINTS = 500;
+export const EXTRA_LIFE_SCORE_START = 20000;
+export const EXTRA_LIFE_SCORE_MULTIPLIER = 2;
+
 
 // Game settings
 export const INITIAL_LIVES = 3;

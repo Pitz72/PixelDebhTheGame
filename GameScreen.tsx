@@ -10,7 +10,7 @@ import { levels } from './levels';
 import {
   GAME_WIDTH, GAME_HEIGHT, GRAVITY, PLAYER_SPEED, PLAYER_FAST_SPEED, JUMP_FORCE, PLAYER_INVINCIBILITY_DURATION,
   ENEMY_SPEED, FLYER_SPEED, FLYER_VERTICAL_SPEED, FLYER_PATROL_RANGE, ENEMY_JUMP_FORCE, ENEMY_JUMP_COOLDOWN, LAUNCH_FORCE, POWER_UP_DURATION, SUPER_THROW_EXPLOSION_RADIUS,
-  COLLECTIBLE_POINTS, ENEMY_DEFEAT_POINTS, INITIAL_LIVES
+  COLLECTIBLE_POINTS, ENEMY_DEFEAT_POINTS, INITIAL_LIVES, EXTRA_LIFE_SCORE_START, EXTRA_LIFE_SCORE_MULTIPLIER
 } from './constants';
 
 const areRectsColliding = (rect1: {x: number, y: number, width: number, height: number}, rect2: {x: number, y: number, width: number, height: number}) => {
@@ -36,12 +36,31 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
   const [enemies, setEnemies] = useState<EnemyType[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [platforms, setPlatforms] = useState<PlatformType[]>([]);
+  const [damageFlash, setDamageFlash] = useState(false);
+  const [nextExtraLifeScore, setNextExtraLifeScore] = useState(EXTRA_LIFE_SCORE_START);
 
   const keysPressed = useRef<{ [key: string]: boolean }>({}).current;
   const gameLoopRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
   const gameStateRef = useRef<GameState>('playing');
   
+  const updateScore = useCallback((pointsToAdd: number) => {
+    setScore(prevScore => {
+        const newScore = prevScore + pointsToAdd;
+        if (newScore >= nextExtraLifeScore) {
+            setLives(prevLives => {
+                if (prevLives < INITIAL_LIVES) {
+                    soundService.playJingle('extraLife');
+                    return prevLives + 1;
+                }
+                return prevLives;
+            });
+            setNextExtraLifeScore(current => current * EXTRA_LIFE_SCORE_MULTIPLIER);
+        }
+        return newScore;
+    });
+  }, [nextExtraLifeScore]);
+
   const loadLevel = useCallback((levelIndex: number) => {
     const levelData = levels[levelIndex];
     if (!levelData) {
@@ -195,16 +214,15 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
         }
       });
       if (newPlayer.y > GAME_HEIGHT) { // Player fell off screen
+          setDamageFlash(true);
+          setTimeout(() => setDamageFlash(false), 200);
           soundService.playSound('damage');
           setLives(l => l - 1);
-          if (lives - 1 <= 0) {
-              soundService.playSound('gameOver');
-              gameStateRef.current = 'gameover';
-              onGameOver();
-              return newPlayer;
+          if (gameStateRef.current !== 'gameover') {
+              soundService.playJingle('respawn');
+              return { ...newPlayer, x: levels[currentLevelIndex].playerStart.x, y: levels[currentLevelIndex].playerStart.y, vx: 0, vy: 0, isInvincible: true, invincibilityTimer: PLAYER_INVINCIBILITY_DURATION, capturedEnemyId: null };
           }
-          soundService.playJingle('respawn');
-          return { ...newPlayer, x: levels[currentLevelIndex].playerStart.x, y: levels[currentLevelIndex].playerStart.y, vx: 0, vy: 0, isInvincible: true, invincibilityTimer: PLAYER_INVINCIBILITY_DURATION, capturedEnemyId: null };
+          return newPlayer;
       }
       return newPlayer;
     });
@@ -300,10 +318,10 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
                                     defeatedCount++;
                                 }
                             });
-                             setScore(s => s + (ENEMY_DEFEAT_POINTS * defeatedCount));
+                             updateScore(ENEMY_DEFEAT_POINTS * defeatedCount);
                         } else {
                             enemy.state = 'defeated'; otherEnemy.state = 'defeated';
-                            setScore(s => s + ENEMY_DEFEAT_POINTS * 2);
+                            updateScore(ENEMY_DEFEAT_POINTS * 2);
                         }
                     }
                 });
@@ -320,6 +338,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
         enemies.forEach(enemy => { if (enemy.state === 'active' && areRectsColliding(p, enemy)) tookDamage = true; });
 
         if (tookDamage) {
+            setDamageFlash(true);
+            setTimeout(() => setDamageFlash(false), 200);
             if (p.hasShield) {
                 soundService.playSound('hit');
                 return { ...p, hasShield: false, isInvincible: true, invincibilityTimer: 500 }; // brief invincibility after shield breaks
@@ -334,7 +354,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
                 }
                 return newLives;
             });
-            if (lives - 1 > 0) {
+            if (gameStateRef.current !== 'gameover') {
                  soundService.playJingle('respawn');
                  return { ...p, x: levels[currentLevelIndex].playerStart.x, y: levels[currentLevelIndex].playerStart.y, vx: 0, vy: 0, isInvincible: true, invincibilityTimer: PLAYER_INVINCIBILITY_DURATION, capturedEnemyId: null };
             }
@@ -350,7 +370,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
                     case 'joystick':
                     case 'floppy':
                     case 'cartridge':
-                        setScore(s => s + COLLECTIBLE_POINTS);
+                        updateScore(COLLECTIBLE_POINTS);
                         soundService.playSound('collect');
                         return false;
                     case 'shield':
@@ -387,7 +407,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     });
 
     gameLoopRef.current = requestAnimationFrame(gameLoop);
-  }, [items, currentLevelIndex, enemies, keysPressed, lives, platforms, player, onGameOver, onCompleted, setGameState]);
+  }, [items, currentLevelIndex, enemies, keysPressed, platforms, player, onGameOver, onCompleted, setGameState, updateScore]);
 
   useEffect(() => {
     gameLoopRef.current = requestAnimationFrame(gameLoop);
@@ -398,6 +418,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
 
   return (
     <div className="w-full h-full relative overflow-hidden bg-black" style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}>
+      {damageFlash && <div className="absolute inset-0 bg-red-600 bg-opacity-40 z-50 pointer-events-none"></div>}
       <div className="absolute inset-0 bg-gradient-to-b from-[#0c1a4d] to-[#200e3d]" />
       <div className="absolute inset-0" style={{backgroundImage: 'radial-gradient(circle, white 0.5px, transparent 1px)', backgroundSize: '25px 25px'}}></div>
       <div className="absolute inset-0" style={{backgroundImage: 'radial-gradient(circle, white 0.5px, transparent 1px)', backgroundSize: '50px 50px', opacity: 0.5}}></div>

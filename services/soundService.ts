@@ -41,6 +41,12 @@ const jingles: { [key: string]: Note[] } = {
     { freq: 392.00, duration: 0.1, type: 'triangle', volume: 0.15 }, // G4
     { freq: 523.25, duration: 0.2, type: 'triangle', volume: 0.15 }, // C5
   ],
+  extraLife: [
+    { freq: 523.25, duration: 0.1, type: 'square', volume: 0.15 }, // C5
+    { freq: 659.25, duration: 0.1, type: 'square', volume: 0.15 }, // E5
+    { freq: 783.99, duration: 0.1, type: 'square', volume: 0.15 }, // G5
+    { freq: 1046.50, duration: 0.2, type: 'square', volume: 0.15 }, // C6
+  ],
 };
 
 
@@ -107,7 +113,7 @@ export function playSound(name: string) {
   }
 }
 
-export function playJingle(name: 'levelStart' | 'respawn') {
+export function playJingle(name: 'levelStart' | 'respawn' | 'extraLife') {
   if (!soundsLoaded || !audioContext) return;
   const jingle = jingles[name];
   if (!jingle) return;
