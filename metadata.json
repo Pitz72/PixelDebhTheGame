@@ -1,0 +1,5 @@
+{
+  "name": "PixelDebh: Retro-Rescue!",
+  "description": "A 2D retro platformer adventure where you control PixelDebh to capture and launch enemies, collect retro items, and clear challenging levels. Built with React and TypeScript.",
+  "requestFramePermissions": []
+}
