@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -26,7 +25,7 @@
       body {
         background-color: #0c0c17;
         overflow: hidden; /* Hide scrollbars */
-        font-family: 'Press Start 2P', cursive;
+        font-family: 'Press+Start+2P', cursive;
       }
       /* Blinking animation for text */
       @keyframes blink {
@@ -37,6 +36,59 @@
       .animate-blink {
         animation: blink 1s step-start 0s infinite;
       }
+      
+      /* New Cyclops Frog Boss Animations */
+      .frog-boss-sprite.hopping .frog-svg-body {
+        animation: frogwares-jump 1.2s infinite ease-in-out;
+      }
+
+      @keyframes frogwares-jump {
+        0% { transform: translateY(0) scale(1, 1); }
+        15% { transform: translateY(0) scale(1.1, 0.9); }
+        50% { transform: translateY(-50px) scale(0.9, 1.1); }
+        85% { transform: translateY(0) scale(1.1, 0.9); }
+        100% { transform: translateY(0) scale(1, 1); }
+      }
+
+      .frog-boss-sprite.throwing .frog-body-group {
+        animation: frogwares-throw-recoil 0.5s ease-out;
+      }
+
+      .frog-boss-sprite.throwing .projectile {
+        animation: frogwares-drop-projectile 1s ease-in forwards;
+      }
+      
+      .projectile-base {
+        position: absolute;
+        bottom: 50px;
+        left: 50%;
+        width: 25px;
+        height: 25px;
+        background-color: #7B68EE;
+        border-radius: 50%;
+        transform: translateX(-50%);
+        z-index: 3;
+        opacity: 0;
+      }
+
+      @keyframes frogwares-throw-recoil {
+        0% { transform: rotate(0) scale(1); }
+        30% { transform: rotate(-5deg) scale(0.98); }
+        60% { transform: rotate(5deg) scale(1.02); }
+        100% { transform: rotate(0) scale(1); }
+      }
+
+      @keyframes frogwares-drop-projectile {
+        0% {
+          transform: translate(-50%, 0);
+          opacity: 1;
+        }
+        100% {
+          transform: translate(-50%, 400px);
+          opacity: 0;
+        }
+      }
+
     </style>
   <script type="importmap">
 {

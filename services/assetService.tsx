@@ -154,3 +154,11 @@ export const ShieldSprite = () => (
         <circle cx="10" cy="10" r="9" stroke="#00d5ff" strokeWidth="2" fill="rgba(0, 213, 255, 0.3)" />
     </svg>
 );
+
+// --- PLAYER PROJECTILE SPRITE ---
+export const PlayerProjectileSprite = () => (
+    <svg viewBox="0 0 8 8" className="w-full h-full">
+        <circle cx="4" cy="4" r="3.5" fill="#ffde34" />
+        <circle cx="4" cy="4" r="2" fill="#ffffff" />
+    </svg>
+);

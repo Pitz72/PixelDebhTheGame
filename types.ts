@@ -1,4 +1,3 @@
-
 export interface GameObject {
   x: number;
   y: number;
@@ -20,6 +19,7 @@ export interface Player extends DynamicObject {
   hasShield: boolean;
   activePowerUp: ItemType | null;
   powerUpTimer: number;
+  shootCooldown: number;
 }
 
 export type EnemyType = 'base' | 'jumper' | 'flyer';
@@ -43,11 +43,38 @@ export interface Item extends GameObject {
 
 export interface Platform extends GameObject {}
 
+export interface Boss extends DynamicObject {
+  hp: number;
+  maxHp: number;
+  attackCooldown: number;
+  isHit: boolean;
+  hitTimer: number;
+  isHopping: boolean;
+  isThrowing: boolean;
+}
+
+export interface Projectile extends DynamicObject {
+  id: number;
+}
+
+export interface PlayerProjectile extends DynamicObject {
+    id: number;
+}
+
+export interface EnemySpawnPoint {
+  x: number;
+  y: number;
+  cooldown: number;
+  timer: number;
+}
+
 export interface LevelData {
   platforms: Omit<Platform, 'id'>[];
   items: Omit<Item, 'id'>[];
   enemies: Omit<Enemy, 'id' | 'state' | 'vx' | 'vy' | 'direction' | 'jumpCooldown'>[];
   playerStart: { x: number; y: number };
+  boss?: Omit<Boss, 'hp' | 'attackCooldown' | 'isHit' | 'hitTimer' | 'vy' | 'isHopping' | 'isThrowing'>;
+  enemySpawns?: Omit<EnemySpawnPoint, 'timer'>[];
 }
 
 export type GameState = 'start' | 'playing' | 'level-cleared' | 'completed' | 'gameover';

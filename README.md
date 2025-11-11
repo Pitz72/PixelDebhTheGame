@@ -11,10 +11,14 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 - **Capture:** Get close to an enemy and press the capture button.
 - **Launch:** While holding a captured enemy, press the button again to launch it in the direction you're facing.
 - **Goal:** Collect all the retro-themed items (joysticks, floppy disks, cartridges) in each level to advance to the next.
+- **Boss Battle:** Face off against the mighty Cyclops Frog in a dedicated arena, using a new shooting ability to win!
 
 ## Features
 
 -   Classic 2D platforming action
+-   Vast, horizontally scrolling levels with a dynamic camera system
+-   Immersive parallax background for a sense of depth
+-   An epic boss battle that introduces new game mechanics
 -   9 challenging levels with increasing difficulty
 -   Three unique enemy types: Globby, Hoppy (jumper), and Flappy (flyer)
 -   Special power-ups: Speed Boost, Shield, and the powerful Super Throw!
@@ -31,6 +35,7 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 -   **Move Right:** `D` or `Right Arrow`
 -   **Jump:** `W`, `Up Arrow`, or `Spacebar`
 -   **Capture / Launch:** `C` or `X`
+-   **Shoot (Boss Battle Only):** `Left Shift`
 
 ## Built With
 
