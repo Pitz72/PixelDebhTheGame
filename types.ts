@@ -77,4 +77,4 @@ export interface LevelData {
   enemySpawns?: Omit<EnemySpawnPoint, 'timer'>[];
 }
 
-export type GameState = 'start' | 'playing' | 'level-cleared' | 'completed' | 'gameover';
+export type GameState = 'intro' | 'start' | 'playing' | 'level-cleared' | 'completed' | 'gameover';

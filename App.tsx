@@ -5,13 +5,16 @@ import StartScreen from './components/StartScreen';
 import GameScreen from './GameScreen';
 import CompletedScreen from './components/CompletedScreen';
 import GameoverScreen from './components/GameoverScreen';
+import PixelArcadeIntro from './components/PixelArcadeIntro';
 import { GameState } from './types';
 import { GAME_WIDTH, GAME_HEIGHT } from './constants';
 
 function App() {
-  const [gameState, setGameState] = useState<GameState>('start');
+  const [gameState, setGameState] = useState<GameState>('intro');
   const [gameId, setGameId] = useState(1);
   const { dimensions, margins } = useGameScale();
+
+  const handleIntroComplete = useCallback(() => setGameState('start'), []);
 
   const handleStart = useCallback(() => {
     setGameState('playing');
@@ -29,6 +32,8 @@ function App() {
 
   const renderContent = () => {
     switch (gameState) {
+      case 'intro':
+        return <PixelArcadeIntro onIntroComplete={handleIntroComplete} />;
       case 'start':
         return <StartScreen onStart={handleStart} />;
       case 'playing':

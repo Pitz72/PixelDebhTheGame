@@ -1,10 +1,10 @@
+
 import React, { useEffect, useCallback } from 'react';
 import { PlayerSprite } from '../services/assetService';
 import * as soundService from '../services/soundService';
 
 const StartScreen: React.FC<{ onStart: () => void }> = ({ onStart }) => {
   const handleStart = useCallback(() => {
-    soundService.initAudio();
     soundService.playSound('start');
     onStart();
   }, [onStart]);
