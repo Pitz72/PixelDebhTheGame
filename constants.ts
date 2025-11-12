@@ -3,11 +3,20 @@ export const GAME_WIDTH = 1920;
 export const GAME_HEIGHT = 1080;
 
 // Player physics
+export const PLAYER_WIDTH = 50;
+export const PLAYER_HEIGHT = 70;
 export const PLAYER_SPEED = 8;
 export const PLAYER_FAST_SPEED = 12;
 export const JUMP_FORCE = -25;
 export const GRAVITY = 1;
 export const PLAYER_INVINCIBILITY_DURATION = 3000; // in ms
+export const PLAYER_SHOOT_COOLDOWN = 500; // in ms
+
+// Player Projectile
+export const PLAYER_PROJECTILE_WIDTH = 20;
+export const PLAYER_PROJECTILE_HEIGHT = 20;
+export const PLAYER_PROJECTILE_SPEED = 20;
+
 
 // Power-up settings
 export const POWER_UP_DURATION = 8000; // in ms
@@ -21,6 +30,14 @@ export const FLYER_PATROL_RANGE = 50;
 export const ENEMY_JUMP_FORCE = -20;
 export const ENEMY_JUMP_COOLDOWN = 2000; // in ms
 export const LAUNCH_FORCE = 40;
+
+// Boss settings
+export const BOSS_INITIAL_HP = 30;
+export const BOSS_INITIAL_VX = 3;
+export const BOSS_INITIAL_VY = 1;
+export const BOSS_PROJECTILE_WIDTH = 35;
+export const BOSS_PROJECTILE_HEIGHT = 35;
+export const BOSS_PROJECTILE_SPEED = 8;
 
 // Scoring
 export const COLLECTIBLE_POINTS = 100;

@@ -80,7 +80,7 @@ const PixelArcadeIntro: React.FC<PixelArcadeIntroProps> = ({ onIntroComplete }) 
   };
 
   return (
-    <div className="relative w-full h-full bg-gradient-to-br from-orange-400 via-orange-500 to-red-500 overflow-hidden">
+    <div className="relative w-full h-full bg-gradient-to-br from-orange-400 via-orange-500 to-red-500 overflow-hidden flex justify-center items-center">
       {/* Flash effect */}
       {showFlash && (
         <div className="absolute inset-0 bg-white z-50 animate-pulse" />
@@ -173,21 +173,22 @@ const PixelArcadeIntro: React.FC<PixelArcadeIntroProps> = ({ onIntroComplete }) 
             DEBH
           </h2>
         </div>
-
-        {/* Press Start */}
-        {animationComplete && (
-          <div 
-            className="absolute bottom-20 text-white text-2xl font-bold"
-            style={{
-              animation: 'intro-blink 1s infinite',
-              fontFamily: "'Press Start 2P', cursive",
-              textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
-            }}
-          >
-            PRESS START
-          </div>
-        )}
       </div>
+      
+      {/* Press Start - Positioned relative to the viewport to avoid being pushed off-screen */}
+      {animationComplete && (
+        <div 
+          className="absolute text-white text-2xl font-bold"
+          style={{
+            bottom: '15%', // Adjusted for visibility with scaling
+            animation: 'intro-blink 1s infinite',
+            fontFamily: "'Press Start 2P', cursive",
+            textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+          }}
+        >
+          PRESS START
+        </div>
+      )}
 
       {/* Fade out overlay */}
       {isFadingOut && (

@@ -6,13 +6,13 @@ import Platform from './components/Platform';
 import Hud from './components/Hud';
 import Background from './components/Background';
 import CyclopsFrogBoss from './components/FrogBoss';
-import { ItemSprite, PlayerProjectileSprite } from './services/assetService';
+import { ItemSprite, PlayerProjectileSprite, CDROMSprite } from './services/assetService';
 import * as soundService from './services/soundService';
 import { levels } from './levels';
 import {
   GAME_WIDTH, GAME_HEIGHT, GRAVITY, PLAYER_SPEED, PLAYER_FAST_SPEED, JUMP_FORCE, PLAYER_INVINCIBILITY_DURATION,
   ENEMY_SPEED, FLYER_SPEED, FLYER_VERTICAL_SPEED, FLYER_PATROL_RANGE, ENEMY_JUMP_FORCE, ENEMY_JUMP_COOLDOWN, LAUNCH_FORCE, POWER_UP_DURATION, SUPER_THROW_EXPLOSION_RADIUS,
-  COLLECTIBLE_POINTS, ENEMY_DEFEAT_POINTS, INITIAL_LIVES, EXTRA_LIFE_SCORE_START, EXTRA_LIFE_SCORE_MULTIPLIER
+  COLLECTIBLE_POINTS, ENEMY_DEFEAT_POINTS, INITIAL_LIVES, EXTRA_LIFE_SCORE_START, EXTRA_LIFE_SCORE_MULTIPLIER, PLAYER_WIDTH, PLAYER_HEIGHT, BOSS_INITIAL_VX, BOSS_INITIAL_VY, PLAYER_PROJECTILE_SPEED, PLAYER_PROJECTILE_WIDTH, PLAYER_PROJECTILE_HEIGHT, PLAYER_SHOOT_COOLDOWN, BOSS_PROJECTILE_SPEED, BOSS_PROJECTILE_WIDTH, BOSS_PROJECTILE_HEIGHT
 } from './constants';
 
 const areRectsColliding = (rect1: {x: number, y: number, width: number, height: number}, rect2: {x: number, y: number, width: number, height: number}) => {
@@ -93,8 +93,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
 
     setPlayer({
       ...levelData.playerStart,
-      width: 50,
-      height: 70,
+      width: PLAYER_WIDTH,
+      height: PLAYER_HEIGHT,
       vx: 0,
       vy: 0,
       direction: 'right',
@@ -120,11 +120,11 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
         setBoss({
             ...levelData.boss,
             hp: levelData.boss.maxHp,
-            vy: 0,
+            vx: BOSS_INITIAL_VX,
+            vy: BOSS_INITIAL_VY,
             attackCooldown: 3000,
             isHit: false,
             hitTimer: 0,
-            isHopping: true,
             isThrowing: false,
         });
         setEnemies([]); // No initial enemies in boss room
@@ -157,20 +157,20 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
           setPlayer(p => {
               if (p.shootCooldown <= 0) {
                   soundService.playSound('playerShoot');
-                  const projectileSpeed = 20;
+                  const projectileSpeed = PLAYER_PROJECTILE_SPEED;
                   setPlayerProjectiles(prev => [
                       ...prev,
                       {
                           id: Date.now(),
                           x: p.x + p.width / 2,
                           y: p.y + p.height / 2,
-                          width: 20,
-                          height: 20,
+                          width: PLAYER_PROJECTILE_WIDTH,
+                          height: PLAYER_PROJECTILE_HEIGHT,
                           vx: p.direction === 'right' ? projectileSpeed : -projectileSpeed,
                           vy: 0,
                       }
                   ]);
-                  return {...p, shootCooldown: 500};
+                  return {...p, shootCooldown: PLAYER_SHOOT_COOLDOWN};
               }
               return p;
           });
@@ -291,7 +291,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
             onGameOver();
         } else {
             soundService.playJingle('respawn');
-            nextPlayer = { ...player, ...levels[currentLevelIndex].playerStart, width: 50, height: 70, vx: 0, vy: 0, isInvincible: true, invincibilityTimer: PLAYER_INVINCIBILITY_DURATION, capturedEnemyId: null };
+            nextPlayer = { ...player, ...levels[currentLevelIndex].playerStart, width: PLAYER_WIDTH, height: PLAYER_HEIGHT, vx: 0, vy: 0, isInvincible: true, invincibilityTimer: PLAYER_INVINCIBILITY_DURATION, capturedEnemyId: null };
         }
     }
 
@@ -300,20 +300,45 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
         setBoss(prevBoss => {
             if (!prevBoss) return null;
             let nextBoss = {...prevBoss, isThrowing: false};
+
+            // Movement
+            nextBoss.x += nextBoss.vx;
+            nextBoss.y += nextBoss.vy;
+
+            // Boundary checks and direction change
+            if (nextBoss.x <= 0 || nextBoss.x + nextBoss.width >= GAME_WIDTH) {
+                nextBoss.vx *= -1;
+            }
+            if (nextBoss.y <= 50 || nextBoss.y + nextBoss.height >= GAME_HEIGHT - 200) {
+                nextBoss.vy *= -1;
+            }
+            if (Math.random() < 0.005) nextBoss.vx *= -1;
+            if (Math.random() < 0.01) nextBoss.vy *= -1;
+
             if (nextBoss.isHit) {
                 nextBoss.hitTimer -= deltaTime;
                 if (nextBoss.hitTimer <= 0) nextBoss.isHit = false;
             }
+
+            // Attack
             nextBoss.attackCooldown -= deltaTime;
             if (nextBoss.attackCooldown <= 0) {
-                nextBoss.attackCooldown = 2500 + Math.random() * 1000;
+                nextBoss.attackCooldown = 2000 + Math.random() * 1500;
                 nextBoss.isThrowing = true;
                 soundService.playSound('bossShoot');
+                
+                const dx = player.x - (nextBoss.x + nextBoss.width / 2);
+                const dy = player.y - (nextBoss.y + nextBoss.height / 2);
+                const distance = Math.sqrt(dx*dx + dy*dy) || 1;
+                const projectileSpeed = BOSS_PROJECTILE_SPEED;
+
                 setProjectiles(prev => [
                     ...prev,
                     {
-                        id: Date.now(), x: nextBoss.x + nextBoss.width / 2, y: nextBoss.y + 50,
-                        width: 25, height: 25, vx: 0, vy: 0, // Fall is handled by gravity
+                        id: Date.now(), x: nextBoss.x + nextBoss.width / 2, y: nextBoss.y + nextBoss.height / 2,
+                        width: BOSS_PROJECTILE_WIDTH, height: BOSS_PROJECTILE_HEIGHT, 
+                        vx: (dx / distance) * projectileSpeed, 
+                        vy: (dy / distance) * projectileSpeed,
                     }
                 ]);
             }
@@ -322,7 +347,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     }
 
     // B. Update Projectiles
-    setProjectiles(prev => prev.map(p => ({...p, y: p.y + (p.vy + GRAVITY * 2)})).filter(p => p.y < GAME_HEIGHT));
+    setProjectiles(prev => prev.map(p => ({ ...p, x: p.x + p.vx, y: p.y + p.vy, })).filter(p => p.y < GAME_HEIGHT && p.y > -50 && p.x > -50 && p.x < levelWidth + 50));
     setPlayerProjectiles(prev => prev.map(p => ({...p, x: p.x + p.vx})).filter(p => p.x > -50 && p.x < levelWidth + 50));
 
 
@@ -420,7 +445,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
                     onGameOver();
                 } else {
                     soundService.playJingle('respawn');
-                    nextPlayer = { ...player, ...levels[currentLevelIndex].playerStart, width: 50, height: 70, vx: 0, vy: 0, isInvincible: true, invincibilityTimer: PLAYER_INVINCIBILITY_DURATION, capturedEnemyId: null };
+                    nextPlayer = { ...player, ...levels[currentLevelIndex].playerStart, width: PLAYER_WIDTH, height: PLAYER_HEIGHT, vx: 0, vy: 0, isInvincible: true, invincibilityTimer: PLAYER_INVINCIBILITY_DURATION, capturedEnemyId: null };
                 }
             }
         }
@@ -521,7 +546,9 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
         {enemies.map(e => <Enemy key={e.id} enemy={e} />)}
         {boss && <CyclopsFrogBoss boss={boss} />}
         {projectiles.map(p => (
-            <div key={p.id} className="rounded-full bg-purple-500" style={{ position: 'absolute', left: p.x, top: p.y, width: p.width, height: p.height }} />
+            <div key={p.id} style={{ position: 'absolute', left: p.x, top: p.y, width: p.width, height: p.height }}>
+                <CDROMSprite />
+            </div>
         ))}
         {playerProjectiles.map(p => (
             <div key={p.id} style={{ position: 'absolute', left: p.x, top: p.y, width: p.width, height: p.height }}>

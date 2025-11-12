@@ -11,21 +11,22 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 - **Capture:** Get close to an enemy and press the capture button.
 - **Launch:** While holding a captured enemy, press the button again to launch it in the direction you're facing.
 - **Goal:** Collect all the retro-themed items (joysticks, floppy disks, cartridges) in each level to advance to the next.
-- **Boss Battle:** Face off against the mighty Cyclops Frog in his pixel-art glory! Use a special shooting ability to win this unique encounter.
+- **Boss Battle:** Face off against the mighty Cyclops Frog! In an epic showdown, the boss now floats with unpredictable movement and attacks by launching spinning CD-ROMs at you. Use your special shooting ability (Left Shift) to win this dynamic encounter.
 
 ## Features
 
 -   **Dynamic Arcade-Style Intro:** A vibrant, animated intro sequence to welcome players.
+-   **Character Parade Title Screen:** A classic arcade-style character presentation with a custom chiptune music theme.
+-   **Epic Boss Battle:** An epic, reworked boss battle with a floating, unpredictable boss that throws targeted projectiles.
 -   Classic 2D platforming action with a consistent pixel-perfect look
 -   Vast, horizontally scrolling levels with a dynamic camera system
 -   Immersive parallax background for a sense of depth
--   An epic, redesigned boss battle with a unique pixel-art sprite
 -   9 challenging levels with increasing difficulty
 -   Three unique enemy types: Globby, Hoppy (jumper), and Flappy (flyer)
 -   Special power-ups: Speed Boost, Shield, and the powerful Super Throw!
--   Programmatically generated chiptune sound effects and jingles
--   Temporary invincibility on respawn with visual feedback
+-   Programmatically generated chiptune sound effects, jingles, and music
 -   Enhanced visual feedback (screen flash, fade-to-black transitions)
+-   Critical bug fixes for a smoother and more reliable gameplay experience.
 -   Dynamic extra life system that rewards high scores (up to a maximum of 3 lives)
 -   Score tracking and a lives system
 -   Enlarged HUD for better readability

@@ -1,6 +1,10 @@
 let audioContext: AudioContext | null = null;
 let soundsLoaded = false;
 
+// --- Music variables ---
+let musicContext: { oscillator: OscillatorNode, gainNode: GainNode, timer: number | null } | null = null;
+
+
 interface SoundEffect {
   type: OscillatorType;
   startFreq: number;
@@ -53,27 +57,30 @@ const jingles: { [key: string]: Note[] } = {
   ],
 };
 
+const music: { [key: string]: Note[] } = {
+  startScreenTheme: [
+      { freq: 261.63, duration: 0.2, type: 'square', volume: 0.08 }, // C4
+      { freq: 329.63, duration: 0.2, type: 'square', volume: 0.08 }, // E4
+      { freq: 392.00, duration: 0.2, type: 'square', volume: 0.08 }, // G4
+      { freq: 329.63, duration: 0.2, type: 'square', volume: 0.08 }, // E4
+      { freq: 293.66, duration: 0.2, type: 'square', volume: 0.08 }, // D4
+      { freq: 349.23, duration: 0.2, type: 'square', volume: 0.08 }, // F4
+      { freq: 440.00, duration: 0.2, type: 'square', volume: 0.08 }, // A4
+      { freq: 349.23, duration: 0.2, type: 'square', volume: 0.08 }, // F4
+  ]
+};
+
 
 export function initAudio() {
-  if (audioContext || soundsLoaded) return;
+  if (soundsLoaded) return;
   try {
-    audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    if (!audioContext) return;
-
-    // A user gesture is required to start audio on some browsers.
-    const unlockAudio = () => {
-      if (audioContext && audioContext.state === 'suspended') {
-        audioContext.resume();
-      }
-      if (audioContext && audioContext.state === 'running') {
-        soundsLoaded = true;
-        window.removeEventListener('click', unlockAudio);
-        window.removeEventListener('keydown', unlockAudio);
-      }
-    };
-    window.addEventListener('click', unlockAudio);
-    window.addEventListener('keydown', unlockAudio);
-
+    if (!audioContext) {
+      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    // Resume returns a promise, but we can assume it will work after a user gesture.
+    // Set the flag immediately to allow subsequent sound calls to go through.
+    audioContext.resume();
+    soundsLoaded = true;
   } catch (e) {
     console.error("Could not initialize audio context", e);
   }
@@ -145,4 +152,54 @@ export function playJingle(name: 'levelStart' | 'respawn' | 'extraLife') {
 
     startTime += note.duration; // Schedule next note right after
   });
+}
+
+
+export function playMusicLoop(name: 'startScreenTheme') {
+    if (!soundsLoaded || !audioContext || musicContext) return;
+
+    const track = music[name];
+    if (!track) return;
+
+    let noteIndex = 0;
+    const playNote = () => {
+        if (!audioContext) return;
+        const note = track[noteIndex % track.length];
+        
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        const now = audioContext.currentTime;
+        oscillator.type = note.type;
+        oscillator.frequency.setValueAtTime(note.freq, now);
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(note.volume, now + 0.01);
+        gainNode.gain.linearRampToValueAtTime(0, now + note.duration - 0.01);
+
+        oscillator.start(now);
+        oscillator.stop(now + note.duration);
+
+        noteIndex++;
+        if (musicContext) {
+            musicContext.timer = window.setTimeout(playNote, note.duration * 1000);
+        }
+    };
+
+    musicContext = {
+        oscillator: audioContext.createOscillator(), // Dummy, not used directly
+        gainNode: audioContext.createGain(), // Dummy, not used directly
+        timer: null,
+    };
+    playNote();
+}
+
+export function stopMusic() {
+    if (!soundsLoaded || !audioContext || !musicContext) return;
+
+    if (musicContext.timer) {
+        clearTimeout(musicContext.timer);
+    }
+    musicContext = null;
 }

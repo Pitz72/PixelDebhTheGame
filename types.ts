@@ -49,7 +49,6 @@ export interface Boss extends DynamicObject {
   attackCooldown: number;
   isHit: boolean;
   hitTimer: number;
-  isHopping: boolean;
   isThrowing: boolean;
 }
 
@@ -73,7 +72,7 @@ export interface LevelData {
   items: Omit<Item, 'id'>[];
   enemies: Omit<Enemy, 'id' | 'state' | 'vx' | 'vy' | 'direction' | 'jumpCooldown'>[];
   playerStart: { x: number; y: number };
-  boss?: Omit<Boss, 'hp' | 'attackCooldown' | 'isHit' | 'hitTimer' | 'vy' | 'isHopping' | 'isThrowing'>;
+  boss?: Omit<Boss, 'hp' | 'attackCooldown' | 'isHit' | 'hitTimer' | 'vy' | 'isThrowing' | 'vx'>;
   enemySpawns?: Omit<EnemySpawnPoint, 'timer'>[];
 }
 

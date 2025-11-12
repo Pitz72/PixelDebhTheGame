@@ -162,3 +162,23 @@ export const PlayerProjectileSprite = () => (
         <circle cx="4" cy="4" r="2" fill="#ffffff" />
     </svg>
 );
+
+// --- BOSS CD-ROM PROJECTILE SPRITE ---
+export const CDROMSprite = () => (
+    <svg viewBox="0 0 16 16" className="w-full h-full animate-spin">
+        <defs>
+            <linearGradient id="rainbow" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#ff0000" />
+                <stop offset="16%" stopColor="#ff7f00" />
+                <stop offset="33%" stopColor="#ffff00" />
+                <stop offset="50%" stopColor="#00ff00" />
+                <stop offset="66%" stopColor="#0000ff" />
+                <stop offset="83%" stopColor="#4b0082" />
+                <stop offset="100%" stopColor="#ee82ee" />
+            </linearGradient>
+        </defs>
+        <circle cx="8" cy="8" r="7.5" fill="#c0c0c0" stroke="#808080" strokeWidth="0.5"/>
+        <path d="M8 1.5 a 6.5 6.5 0 0 0 0 13" fill="none" stroke="url(#rainbow)" strokeWidth="1"/>
+        <circle cx="8" cy="8" r="2.5" fill="#0c0c17" stroke="#ffffff" strokeWidth="0.5"/>
+    </svg>
+);

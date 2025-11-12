@@ -8,7 +8,6 @@ interface CyclopsFrogBossProps {
 const CyclopsFrogBoss: React.FC<CyclopsFrogBossProps> = ({ boss }) => {
   const spriteClasses = [
     'frog-boss-sprite',
-    boss.isHopping ? 'hopping' : '',
     boss.isThrowing ? 'throwing' : '',
   ].join(' ');
 
@@ -32,9 +31,6 @@ const CyclopsFrogBoss: React.FC<CyclopsFrogBossProps> = ({ boss }) => {
         transition: 'filter 0.05s linear',
       }}
     >
-      {/* The projectile (pixel style) */}
-      <div className="projectile-pixel"></div>
-
       {/* SVG designed to look like Pixel Art */}
       <svg
         className="frog-svg-body"

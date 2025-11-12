@@ -1,5 +1,5 @@
 import { LevelData } from './types';
-import { GAME_WIDTH, GAME_HEIGHT } from './constants';
+import { GAME_WIDTH, GAME_HEIGHT, BOSS_INITIAL_HP } from './constants';
 
 export const levels: LevelData[] = [
   // Level 1: Introduction (Expanded)
@@ -117,8 +117,7 @@ export const levels: LevelData[] = [
       y: GAME_HEIGHT - 40 - 320, // Sits on the floor
       width: 320,
       height: 320,
-      vx: 0, // Stationary boss
-      maxHp: 30, // Tougher boss
+      maxHp: BOSS_INITIAL_HP, 
     },
     enemySpawns: [], // No spawns
   },
