@@ -12,52 +12,74 @@ const CyclopsFrogBoss: React.FC<CyclopsFrogBossProps> = ({ boss }) => {
     boss.isThrowing ? 'throwing' : '',
   ].join(' ');
 
-  const mainColor = "#66BB6A";
-  const eyeColor = "white";
-  const pupilColor = "#333333";
+  // Color Palette
+  const mainColor = "#66BB6A"; 
+  const darkColor = "#388E3C"; 
+  const eyeIrisColor = "#00897b"; 
+  const pupilColor = "#1a1a1a";
+  const highlightColor = "#FFFFFF";
 
   return (
-    <div 
-      className={spriteClasses} 
-      style={{ 
-        position: 'absolute', 
+    <div
+      className={spriteClasses}
+      style={{
+        position: 'absolute',
         left: boss.x,
         top: boss.y,
-        width: boss.width, 
+        width: boss.width,
         height: boss.height,
         filter: boss.isHit ? 'brightness(3)' : 'none',
         transition: 'filter 0.05s linear',
       }}
     >
-      <div className="projectile-base projectile"></div>
+      {/* The projectile (pixel style) */}
+      <div className="projectile-pixel"></div>
 
+      {/* SVG designed to look like Pixel Art */}
       <svg
         className="frog-svg-body"
-        viewBox="0 0 250 250"
+        viewBox="0 0 64 64" // The "pixel art" canvas
         xmlns="http://www.w3.org/2000/svg"
-        style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%' }}
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+        }}
       >
-        <ellipse cx="125" cy="235" rx="80" ry="15" fill="rgba(0,0,0,0.3)" />
-        
-        <g className="frog-body-group" style={{ transformOrigin: '125px 150px' }}>
-          <path
-            d="M 60 150 C 30 130, 30 70, 100 50 C 170 30, 220 70, 190 150 C 170 170, 80 170, 60 150 Z"
-            fill={mainColor}
-          />
-          <path d="M 70 140 C 60 160, 50 170, 40 160 L 50 130 Z" fill={mainColor} />
-          <path d="M 180 140 C 190 160, 200 170, 210 160 L 200 130 Z" fill={mainColor} />
-          <path d="M 50 160 C 30 180, 20 200, 40 200 L 60 180 Z" fill={mainColor} />
-          <path d="M 200 160 C 220 180, 230 200, 210 200 L 190 180 Z" fill={mainColor} />
-          <path
-            d="M 80 160 Q 125 175, 170 160"
-            stroke={pupilColor}
-            strokeWidth="4"
-            fill="none"
-          />
-          <g transform="translate(125, 100)">
-            <circle cx="0" cy="0" r="35" fill={eyeColor} />
-            <ellipse cx="0" cy="0" rx="18" ry="25" fill={pupilColor} />
-            <circle cx="5" cy="-8" r="6" fill="white" />
+        {/* Group for body animations */}
+        <g
+          className="frog-body-group"
+          style={{ transformOrigin: '32px 48px' }} // Transformation center (base of body)
+        >
+          {/* Body (drawn with <rect> for a blocky look) */}
+          {/* Dark border */}
+          <rect x="10" y="20" width="44" height="34" fill={darkColor} />
+          <rect x="14" y="16" width="36" height="42" fill={darkColor} />
+          {/* Main body */}
+          <rect x="12" y="22" width="40" height="30" fill={mainColor} />
+          <rect x="16" y="18" width="32" height="38" fill={mainColor} />
+
+          {/* Legs (simple blocks) */}
+          <rect x="4" y="44" width="10" height="8" fill={darkColor} />
+          <rect x="50" y="44" width="10" height="8" fill={darkColor} />
+          <rect x="6" y="46" width="8" height="6" fill={mainColor} />
+          <rect x="50" y="46" width="8" height="6" fill={mainColor} />
+
+          {/* Stylized Eye */}
+          <g transform="translate(32, 30)"> {/* Centered (X=32, Y=30) */}
+            {/* Iris (green oval) */}
+            <path d="M -14 0 C -14 -12, 14 -12, 14 0 C 14 12, -14 12, -14 0 Z" fill={eyeIrisColor} />
+            {/* Dark border for iris */}
+            <path d="M -14 0 C -14 -12, 14 -12, 14 0 C 14 12, -14 12, -14 0 Z" fill="none" stroke={darkColor} strokeWidth="2" />
+
+            {/* Pupil (vertical black oval) */}
+            <path d="M -3 0 C -3 -10, 3 -10, 3 0 C 3 10, -3 10, -3 0 Z" fill={pupilColor} />
+
+            {/* Highlights */}
+            <rect x="-8" y="-7" width="3" height="4" fill={highlightColor} />
+            <rect x="5" y="3" width="2" height="3" fill={highlightColor} />
           </g>
         </g>
       </svg>

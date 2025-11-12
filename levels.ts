@@ -113,10 +113,10 @@ export const levels: LevelData[] = [
     items: [], // No items
     enemies: [], // No enemies
     boss: {
-      x: (GAME_WIDTH / 2) - 125,
-      y: GAME_HEIGHT - 40 - 250, // Sits on the floor
-      width: 250,
-      height: 250,
+      x: (GAME_WIDTH / 2) - 160,
+      y: GAME_HEIGHT - 40 - 320, // Sits on the floor
+      width: 320,
+      height: 320,
       vx: 0, // Stationary boss
       maxHp: 30, // Tougher boss
     },

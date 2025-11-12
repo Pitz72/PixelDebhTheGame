@@ -2,7 +2,7 @@
 
 ![Gameplay Screenshot](gameplay.png) <!-- I can't add an image, but this is a good placeholder -->
 
-A 2D retro platformer adventure where you control PixelDebh to capture and launch enemies, collect retro items, and clear challenging levels. This game is built with React, TypeScript, and TailwindCSS, running in a browser environment.
+A 2D retro platformer adventure where you control PixelDebh to capture and launch enemies, collect retro items, and clear challenging levels. This game is built with React, TypeScript, and TailwindCSS, running in a browser environment with a sharp, pixel-perfect aesthetic.
 
 ## Gameplay
 
@@ -11,14 +11,14 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 - **Capture:** Get close to an enemy and press the capture button.
 - **Launch:** While holding a captured enemy, press the button again to launch it in the direction you're facing.
 - **Goal:** Collect all the retro-themed items (joysticks, floppy disks, cartridges) in each level to advance to the next.
-- **Boss Battle:** Face off against the mighty Cyclops Frog in a dedicated arena, using a new shooting ability to win!
+- **Boss Battle:** Face off against the mighty Cyclops Frog in his pixel-art glory! Use a special shooting ability to win this unique encounter.
 
 ## Features
 
--   Classic 2D platforming action
+-   Classic 2D platforming action with a consistent pixel-perfect look
 -   Vast, horizontally scrolling levels with a dynamic camera system
 -   Immersive parallax background for a sense of depth
--   An epic boss battle that introduces new game mechanics
+-   An epic, redesigned boss battle with a unique pixel-art sprite
 -   9 challenging levels with increasing difficulty
 -   Three unique enemy types: Globby, Hoppy (jumper), and Flappy (flyer)
 -   Special power-ups: Speed Boost, Shield, and the powerful Super Throw!
