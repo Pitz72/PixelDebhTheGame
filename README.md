@@ -15,6 +15,7 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 
 ## Features
 
+-   **Dynamic Arcade-Style Intro:** A vibrant, animated intro sequence to welcome players.
 -   Classic 2D platforming action with a consistent pixel-perfect look
 -   Vast, horizontally scrolling levels with a dynamic camera system
 -   Immersive parallax background for a sense of depth
@@ -24,7 +25,7 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 -   Special power-ups: Speed Boost, Shield, and the powerful Super Throw!
 -   Programmatically generated chiptune sound effects and jingles
 -   Temporary invincibility on respawn with visual feedback
--   Instant visual feedback (screen flash) when taking damage
+-   Enhanced visual feedback (screen flash, fade-to-black transitions)
 -   Dynamic extra life system that rewards high scores (up to a maximum of 3 lives)
 -   Score tracking and a lives system
 -   Enlarged HUD for better readability

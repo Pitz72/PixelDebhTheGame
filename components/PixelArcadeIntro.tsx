@@ -9,6 +9,7 @@ interface PixelArcadeIntroProps {
 const PixelArcadeIntro: React.FC<PixelArcadeIntroProps> = ({ onIntroComplete }) => {
   const [animationComplete, setAnimationComplete] = useState(false);
   const [showFlash, setShowFlash] = useState(false);
+  const [isFadingOut, setIsFadingOut] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -27,10 +28,14 @@ const PixelArcadeIntro: React.FC<PixelArcadeIntroProps> = ({ onIntroComplete }) 
   }, []);
 
   const handleContinue = useCallback(() => {
+    if (isFadingOut) return;
     soundService.initAudio();
     soundService.playSound('start');
-    onIntroComplete();
-  }, [onIntroComplete]);
+    setIsFadingOut(true);
+    setTimeout(() => {
+      onIntroComplete();
+    }, 500); // Match fade animation duration
+  }, [onIntroComplete, isFadingOut]);
 
   useEffect(() => {
     if (animationComplete) {
@@ -87,8 +92,11 @@ const PixelArcadeIntro: React.FC<PixelArcadeIntroProps> = ({ onIntroComplete }) 
              backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, black 2px, black 4px)',
            }} />
 
-      {/* Main container */}
-      <div className="relative w-full h-full flex items-center justify-center">
+      {/* Main container - Scaled up for more impact */}
+      <div 
+        className="relative w-full h-full flex items-center justify-center"
+        style={{ transform: 'scale(1.75)' }}
+      >
         {/* Background circle */}
         <div 
           className="absolute w-96 h-96 rounded-full bg-gradient-to-br from-orange-300 to-red-400 shadow-2xl"
@@ -180,6 +188,14 @@ const PixelArcadeIntro: React.FC<PixelArcadeIntroProps> = ({ onIntroComplete }) 
           </div>
         )}
       </div>
+
+      {/* Fade out overlay */}
+      {isFadingOut && (
+        <div
+          className="absolute inset-0 bg-black z-50"
+          style={{ animation: 'fadeOut 0.5s ease-in forwards' }}
+        />
+      )}
     </div>
   );
 };
