@@ -113,7 +113,8 @@ const PixelArcadeIntro: React.FC<PixelArcadeIntroProps> = ({ onIntroComplete }) 
           const finalX = element.offsetX || 0;
           const finalY = element.offsetY || 0;
           
-          const style: React.CSSProperties = {
+          // Fix: Explicitly type the style object to allow for CSS custom properties.
+          const style: React.CSSProperties & { '--final-x': string; '--final-y': string } = {
             fontSize: `${element.size}px`,
             animation: `flyIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${element.delay}s forwards`,
             transform: `translate(${initialPos.x}vw, ${initialPos.y}vh) rotate(${Math.random() * 720 - 360}deg) scale(0)`,
