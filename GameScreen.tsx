@@ -299,7 +299,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     if (keysPressed['a'] || keysPressed['arrowleft']) { nextPlayer.vx = -currentSpeed; nextPlayer.direction = 'left'; } 
     else if (keysPressed['d'] || keysPressed['arrowright']) { nextPlayer.vx = currentSpeed; nextPlayer.direction = 'right'; } 
     else { nextPlayer.vx = 0; }
-    if ((keysPressed['w'] || keysPressed['arrowup'] || keysPressed[' ']) && nextPlayer.isOnGround) { 
+    if (keysPressed[' '] && nextPlayer.isOnGround) { 
         nextPlayer.vy = JUMP_FORCE; 
         nextPlayer.isOnGround = false;
         soundService.playSound('jump');

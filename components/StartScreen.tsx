@@ -82,7 +82,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart }) => {
         <div className="flex flex-col items-center mt-8">
             <p className="text-4xl text-white animate-blink">Press Enter to Start</p>
             <p className="text-lg text-gray-400 mt-24">
-                CONTROLS: [A][D] or Arrows to Move | [W] or Space to Jump | [C] or [X] to Capture/Launch
+                CONTROLS: [A][D] or Arrows to Move | Space to Jump | [C] or [X] to Capture/Launch
             </p>
         </div>
       )}

@@ -42,7 +42,7 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 
 -   **Move Left:** `A` or `Left Arrow`
 -   **Move Right:** `D` or `Right Arrow`
--   **Jump:** `W`, `Up Arrow`, or `Spacebar`
+-   **Jump:** `Spacebar`
 -   **Capture / Launch:** `C` or `X`
 -   **Shoot (Boss Battle Only):** `Left Shift` (Hold movement keys to aim in 8 directions)
 
