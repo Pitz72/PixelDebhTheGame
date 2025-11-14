@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Player as PlayerType, Enemy as EnemyType, Item, Platform as PlatformType, GameState, ItemType, LevelData, Boss, Projectile, PlayerProjectile } from './types';
+import { Player as PlayerType, Enemy as EnemyType, Item, Platform as PlatformType, GameState, ItemType, LevelData, Boss, Projectile, PlayerProjectile, Goal } from './types';
 import Player from './components/Player';
 import Enemy from './components/Enemy';
 import Platform from './components/Platform';
 import Hud from './components/Hud';
 import Background from './components/Background';
 import CyclopsFrogBoss from './components/FrogBoss';
-import { ItemSprite, PlayerProjectileSprite, CDROMSprite, BombSprite } from './services/assetService';
+import { ItemSprite, PlayerProjectileSprite, CDROMSprite, BombSprite, GoalSprite } from './services/assetService';
 import * as soundService from './services/soundService';
 import { levels } from './levels';
 import {
@@ -38,6 +38,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
   const [enemies, setEnemies] = useState<EnemyType[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [platforms, setPlatforms] = useState<PlatformType[]>([]);
+  const [goal, setGoal] = useState<Goal | null>(null);
   const [boss, setBoss] = useState<Boss | null>(null);
   const [projectiles, setProjectiles] = useState<Projectile[]>([]);
   const [playerProjectiles, setPlayerProjectiles] = useState<PlayerProjectile[]>([]);
@@ -85,8 +86,9 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
         ...levelData.items.map(i => i.x + i.width),
         ...levelData.enemies.map(e => e.x + e.width),
       ];
+      const goalX = levelData.goal ? levelData.goal.x + levelData.goal.width : 0;
       const bossX = levelData.boss ? levelData.boss.x + levelData.boss.width : 0;
-      return Math.max(GAME_WIDTH, ...allX, bossX);
+      return Math.max(GAME_WIDTH, ...allX, goalX, bossX);
     };
     setLevelWidth(calculateLevelWidth(levelData));
     setCameraX(0);
@@ -116,6 +118,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     setProjectiles([]);
     setPlayerProjectiles([]);
     setItems(levelData.items.map((c, i) => ({ id: i, ...c })));
+    setGoal(levelData.goal ? { id: 0, ...levelData.goal } : null);
     
     if (levelData.boss) {
         setBoss({
@@ -187,6 +190,33 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
               if (p.shootCooldown <= 0) {
                   soundService.playSound('playerShoot');
                   const projectileSpeed = PLAYER_PROJECTILE_SPEED;
+                  let vx = p.direction === 'right' ? projectileSpeed : -projectileSpeed;
+                  let vy = 0;
+
+                  const up = keysPressed['w'] || keysPressed['arrowup'];
+                  const down = keysPressed['s'] || keysPressed['arrowdown'];
+                  const left = keysPressed['a'] || keysPressed['arrowleft'];
+                  const right = keysPressed['d'] || keysPressed['arrowright'];
+                  
+                  // Determine vertical and horizontal velocity based on keys pressed
+                  if (up && !down) vy = -projectileSpeed;
+                  else if (down && !up) vy = projectileSpeed;
+
+                  if (left && !right) vx = -projectileSpeed;
+                  else if (right && !left) vx = projectileSpeed;
+
+                  // Normalize diagonal speed
+                  if (vx !== 0 && vy !== 0) {
+                      const magnitude = Math.sqrt(2); // sqrt(1*1 + 1*1)
+                      vx = (vx / magnitude);
+                      vy = (vy / magnitude);
+                  }
+
+                  // If only up/down is pressed, horizontal velocity should be zero
+                  if ((up || down) && !left && !right) {
+                    vx = 0;
+                  }
+
                   setPlayerProjectiles(prev => [
                       ...prev,
                       {
@@ -195,8 +225,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
                           y: p.y + p.height / 2,
                           width: PLAYER_PROJECTILE_WIDTH,
                           height: PLAYER_PROJECTILE_HEIGHT,
-                          vx: p.direction === 'right' ? projectileSpeed : -projectileSpeed,
-                          vy: 0,
+                          vx: vx,
+                          vy: vy,
                       }
                   ]);
                   return {...p, shootCooldown: PLAYER_SHOOT_COOLDOWN};
@@ -406,7 +436,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
         }
         return nextP;
     }).filter(p => p.y < GAME_HEIGHT && p.y > -50 && p.x > -50 && p.x < levelWidth + 50));
-    setPlayerProjectiles(prev => prev.map(p => ({...p, x: p.x + p.vx})).filter(p => p.x > -50 && p.x < levelWidth + 50));
+    setPlayerProjectiles(prev => prev.map(p => ({...p, x: p.x + p.vx, y: p.y + p.vy})).filter(p => p.x > -50 && p.x < levelWidth + 50 && p.y > -50 && p.y < GAME_HEIGHT + 50));
 
 
     // 3. Update Enemies (non-boss levels)
@@ -541,7 +571,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
             }
         }
     }
-
+    
+    // 5. Player Projectiles & Boss Collision
     if (boss && boss.hp > 0) {
         setPlayerProjectiles(prev => prev.filter(p => {
             if(areRectsColliding(p, boss)) {
@@ -568,46 +599,52 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
             return true;
         }));
     }
-
-    setItems(prev => {
-        const remaining = prev.filter(item => {
-            if (areRectsColliding(nextPlayer, item)) {
-                switch(item.type) {
-                    case 'joystick': case 'floppy': case 'cartridge':
-                        if (boss) return true; // Don't collect in boss fight
-                        updateScore(COLLECTIBLE_POINTS);
-                        soundService.playSound('collect');
-                        return false;
-                    case 'shield':
-                        nextPlayer.hasShield = true; soundService.playSound('powerup'); return false;
-                    case 'speed-boost':
-                        nextPlayer.activePowerUp = 'speed-boost'; nextPlayer.powerUpTimer = POWER_UP_DURATION; soundService.playSound('powerup'); return false;
-                    case 'super-throw':
-                        nextPlayer.activePowerUp = 'super-throw'; soundService.playSound('powerup'); return false;
-                }
+    
+    // 6. Player & Item Collision
+    const remainingItems = items.filter(item => {
+        if (areRectsColliding(nextPlayer, item)) {
+            switch(item.type) {
+                case 'joystick': case 'floppy': case 'cartridge':
+                    if (boss) return true; // Don't collect in boss fight
+                    updateScore(COLLECTIBLE_POINTS);
+                    soundService.playSound('collect');
+                    return false;
+                case 'shield':
+                    nextPlayer.hasShield = true; soundService.playSound('powerup'); return false;
+                case 'speed-boost':
+                    nextPlayer.activePowerUp = 'speed-boost'; nextPlayer.powerUpTimer = POWER_UP_DURATION; soundService.playSound('powerup'); return false;
+                case 'super-throw':
+                    nextPlayer.activePowerUp = 'super-throw'; soundService.playSound('powerup'); return false;
             }
-            return true;
-        });
+        }
+        return true;
+    });
+    setItems(remainingItems);
 
-        if (boss) return remaining;
+    // 7. Level Clear Check
+    if (goal && !boss && gameStateRef.current === 'playing') {
+        const collectiblesLeft = remainingItems.filter(item => ['joystick', 'floppy', 'cartridge'].includes(item.type)).length;
+        const totalCollectiblesInLevel = levels[currentLevelIndex].items.filter(item => ['joystick', 'floppy', 'cartridge'].includes(item.type)).length;
 
-        const collectiblesLeft = remaining.filter(item => ['joystick', 'floppy', 'cartridge'].includes(item.type)).length;
-        if (collectiblesLeft === 0 && prev.filter(item => ['joystick', 'floppy', 'cartridge'].includes(item.type)).length > 0) {
+        if (collectiblesLeft === 0 && totalCollectiblesInLevel > 0 && areRectsColliding(nextPlayer, goal)) {
             soundService.playSound('levelClear');
             gameStateRef.current = 'level-cleared';
             setGameState('level-cleared');
             setTimeout(() => {
-                if (currentLevelIndex + 1 >= levels.length) { onCompleted(); } 
-                else { setCurrentLevelIndex(i => i + 1); }
+                if (currentLevelIndex + 1 >= levels.length) {
+                    onCompleted();
+                } else {
+                    setCurrentLevelIndex(i => i + 1);
+                }
             }, 2000);
         }
-        return remaining;
-    });
+    }
+
 
     setPlayer(nextPlayer);
 
     gameLoopRef.current = requestAnimationFrame(gameLoop);
-  }, [items, currentLevelIndex, enemies, keysPressed, platforms, player, onGameOver, onCompleted, setGameState, updateScore, levelWidth, lives, boss, projectiles, isGodMode, score]);
+  }, [items, currentLevelIndex, enemies, keysPressed, platforms, player, onGameOver, onCompleted, setGameState, updateScore, levelWidth, lives, boss, projectiles, isGodMode, score, goal]);
 
   useEffect(() => {
     gameLoopRef.current = requestAnimationFrame(gameLoop);
@@ -629,6 +666,11 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
         style={{ willChange: 'transform', transform: `translateX(-${cameraX}px)`}}
       >
         {platforms.map((p, i) => <Platform key={i} platform={p} />)}
+        {goal && (
+            <div style={{ position: 'absolute', left: goal.x, top: goal.y, width: goal.width, height: goal.height, zIndex: 1 }}>
+                <GoalSprite />
+            </div>
+        )}
         {items.map(c => (
           <div key={c.id} style={{ position: 'absolute', left: c.x, top: c.y, width: c.width, height: c.height }}>
             <ItemSprite type={c.type} />

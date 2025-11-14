@@ -11,8 +11,8 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 -   **Capture:** Get close to an enemy and press the capture button.
 -   **Launch:** While holding a captured enemy, press the button again to launch it in the direction you're facing.
 -   **Stun Enemies:** Jump and hit a platform from below to stun any enemies walking on top of it, giving you a strategic advantage!
--   **Goal:** Collect all the retro-themed items (joysticks, floppy disks, cartridges) in each level to advance to the next.
--   **Boss Battle:** Face off against the mighty Cyclops Frog! In an epic showdown, the boss now floats with unpredictable movement and attacks by launching spinning CD-ROMs at you. Use your special shooting ability (Left Shift) to win this dynamic encounter.
+-   **Goal:** To complete a level, you must first collect all the retro-themed items (joysticks, floppy disks, cartridges). Once all items are collected, a goal door at the far right of the level becomes active. Reach the door to advance!
+-   **Boss Battle:** Face off against the mighty Cyclops Frog! In an epic showdown, the boss now floats with unpredictable movement and attacks by launching spinning CD-ROMs at you. Use your special shooting ability (`Left Shift`) to win this dynamic encounter. You can aim in 8 directions by holding the movement keys while you shoot, giving you full control to target the floating menace.
 
 ## Features
 
@@ -44,7 +44,7 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 -   **Move Right:** `D` or `Right Arrow`
 -   **Jump:** `W`, `Up Arrow`, or `Spacebar`
 -   **Capture / Launch:** `C` or `X`
--   **Shoot (Boss Battle Only):** `Left Shift`
+-   **Shoot (Boss Battle Only):** `Left Shift` (Hold movement keys to aim in 8 directions)
 
 ## Developer Features
 

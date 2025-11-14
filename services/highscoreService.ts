@@ -34,6 +34,12 @@ function saveHighscores(scores: HighscoreEntry[]): void {
     const sortedScores = scores
       .sort((a, b) => b.score - a.score)
       .slice(0, MAX_SCORES);
+
+    // Pad the array to always have MAX_SCORES entries
+    while (sortedScores.length < MAX_SCORES) {
+        sortedScores.push({ name: 'AAA', score: 0 });
+    }
+
     localStorage.setItem(HIGHSCORE_KEY, JSON.stringify(sortedScores));
   } catch (error) {
     console.error("Failed to save highscores:", error);
@@ -41,13 +47,13 @@ function saveHighscores(scores: HighscoreEntry[]): void {
 }
 
 export function addHighscore(name: string, score: number): void {
-  let scores = getHighscores();
-  // Filter out default scores if this is the first real entry
-  if (scores.every(s => s.name === 'AAA' && s.score === 0)) {
-      scores = [];
-  }
-  scores.push({ name, score });
-  saveHighscores(scores);
+  const scores = getHighscores();
+  // Filter out the default placeholder entries before adding the new score.
+  // A score of 0 is valid, but not from the default 'AAA'.
+  const currentRealScores = scores.filter(s => !(s.name === 'AAA' && s.score === 0));
+
+  currentRealScores.push({ name, score });
+  saveHighscores(currentRealScores);
 }
 
 export function isHighscore(score: number): boolean {

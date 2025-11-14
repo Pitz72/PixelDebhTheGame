@@ -45,6 +45,12 @@ export interface Item extends GameObject {
 
 export interface Platform extends GameObject {}
 
+// FIX: Added 'id' property to Goal interface to resolve a type error in GameScreen.tsx
+// and align with the Omit<Goal, 'id'> usage in LevelData.
+export interface Goal extends GameObject {
+  id: number;
+}
+
 export interface Boss extends DynamicObject {
   hp: number;
   maxHp: number;
@@ -76,6 +82,7 @@ export interface LevelData {
   items: Omit<Item, 'id'>[];
   enemies: Omit<Enemy, 'id' | 'state' | 'vx' | 'vy' | 'direction' | 'jumpCooldown' | 'stunTimer' | 'attackCooldown'>[];
   playerStart: { x: number; y: number };
+  goal?: Omit<Goal, 'id'>;
   boss?: Omit<Boss, 'hp' | 'attackCooldown' | 'isHit' | 'hitTimer' | 'vy' | 'isThrowing' | 'vx'>;
   enemySpawns?: Omit<EnemySpawnPoint, 'timer'>[];
 }

@@ -160,6 +160,23 @@ export const ItemSprite = ({ type }: { type: string }) => {
   }
 };
 
+// --- GOAL SPRITE ---
+export const GoalSprite = () => (
+    <svg viewBox="0 0 24 40" className="w-full h-full">
+        {/* Frame */}
+        <path d="M0 0 h24 v40 h-24 z" fill="#593d2b" />
+        <path d="M2 2 h20 v36 h-20 z" fill="#8c6246" />
+        {/* Door */}
+        <path d="M4 4 h16 v32 h-16 z" fill="#593d2b" />
+        {/* Panels */}
+        <path d="M6 6 h12 v12 h-12 z" fill="#402c1e" />
+        <path d="M6 20 h12 v12 h-12 z" fill="#402c1e" />
+        {/* Doorknob */}
+        <rect x="17" y="19" width="2" height="2" fill="#ffd700" />
+    </svg>
+);
+
+
 // --- HEART SPRITE ---
 export const HeartSprite = () => (
     <svg viewBox="0 0 16 16" className="w-full h-full">
