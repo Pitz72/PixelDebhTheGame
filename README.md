@@ -16,8 +16,12 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 
 ## Features
 
--   **Game Progression:** A full adventure across 13 levels, including multiple boss battles and a final challenge.
--   **Arcade High Score Leaderboard:** Compete for the top score! If you make it into the top 5, the game features a fully immersive highscore entry screen where you select your initials by scrolling through the alphabet, just like on a real arcade cabinet, instead of typing. The leaderboard is pre-filled with default scores.
+-   **Structured Game Progression:** A full adventure across 13 levels, with a carefully designed difficulty curve. Each standard level is progressively longer than the last, mixing horizontal and vertical platforming challenges.
+-   **Gradual Enemy Introduction:** New enemy types are introduced every two levels, giving players time to learn their patterns:
+    -   **Levels 1-2:** Face the basic "Globby" enemies.
+    -   **Levels 3 & 5:** The unpredictable jumping "Hoppy" is introduced.
+    -   **Level 6+:** The flying "Flappy" adds an aerial threat to the mix.
+-   **Arcade High Score Leaderboard:** Compete for the top score! If you make it into the top 5, the game features a fully immersive highscore entry screen where you select your initials by scrolling through the alphabet, just like on a real arcade cabinet. The leaderboard is pre-filled with default scores.
 -   **Arcade-Style Attract Mode:** The title screen simulates a classic arcade cabinet, automatically and seamlessly alternating between the "Character Parade" intro and the high score leaderboard. The player can press Enter on either screen to start the game. The chiptune theme plays continuously throughout, creating a fluid attract mode experience.
 -   **Dynamic Background Music:** Each level features a dynamic chiptune soundtrack. A pleasant, upbeat theme accompanies standard levels, while a tense, ominous track plays during boss battles to heighten the drama.
 -   **Dynamic Arcade-Style Intro:** A vibrant, animated intro sequence to welcome players.
