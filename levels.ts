@@ -1,9 +1,8 @@
 import { LevelData } from './types';
 import { GAME_WIDTH, GAME_HEIGHT, BOSS_INITIAL_HP } from './constants';
 
-export const levels: LevelData[] = [
-  // Level 1: Introduction (Expanded)
-  {
+const level1: LevelData = {
+    name: "Level 1",
     playerStart: { x: 100, y: GAME_HEIGHT - 120 },
     platforms: [
       { x: 0, y: GAME_HEIGHT - 40, width: 3840, height: 40 }, // Expanded Floor
@@ -38,9 +37,10 @@ export const levels: LevelData[] = [
       { type: 'flyer', x: 2600, y: 400, width: 60, height: 40, originalX: 2600, originalY: 400 },
       { type: 'base', x: 3000, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 3000, originalY: GAME_HEIGHT - 80 },
     ],
-  },
-  // Level 2: Introduction to Jumpers (Expanded)
-  {
+  };
+
+const level2: LevelData = {
+    name: "Level 2",
     playerStart: { x: 100, y: GAME_HEIGHT - 120 },
     platforms: [
       { x: 0, y: GAME_HEIGHT - 40, width: 3000, height: 40 }, // Continuous floor
@@ -72,9 +72,10 @@ export const levels: LevelData[] = [
       { type: 'jumper', x: 2000, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 2000, originalY: GAME_HEIGHT - 80 },
       { type: 'flyer', x: 2400, y: 300, width: 60, height: 40, originalX: 2400, originalY: 300 },
     ],
-  },
-  // Level 3: Aerial Assault (Expanded)
-  {
+  };
+
+const level3: LevelData = {
+    name: "Level 3",
     playerStart: { x: 100, y: GAME_HEIGHT - 120 },
     platforms: [
         { x: 0, y: GAME_HEIGHT - 40, width: 500, height: 40 },
@@ -103,9 +104,10 @@ export const levels: LevelData[] = [
         { type: 'flyer', x: 2700, y: 200, width: 60, height: 40, originalX: 2700, originalY: 200 },
         { type: 'base', x: 2000, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 2000, originalY: GAME_HEIGHT - 80 },
     ],
-  },
-  // Level 4: The Frog's Lair (BOSS - Redesigned)
-  {
+  };
+
+const bossLevel1: LevelData = {
+    name: "BOSS: Cyclops Frog",
     playerStart: { x: 100, y: GAME_HEIGHT - 120 },
     platforms: [
       { x: 0, y: GAME_HEIGHT - 40, width: GAME_WIDTH, height: 40 }, // Simple Floor
@@ -120,9 +122,10 @@ export const levels: LevelData[] = [
       maxHp: BOSS_INITIAL_HP, 
     },
     enemySpawns: [], // No spawns
-  },
-  // Level 5: The Ascent (Expanded)
-  {
+  };
+
+const level5: LevelData = {
+    name: "Level 5",
     playerStart: { x: 80, y: GAME_HEIGHT - 120 },
     platforms: [
         { x: 0, y: GAME_HEIGHT - 40, width: 400, height: 40 },
@@ -155,9 +158,9 @@ export const levels: LevelData[] = [
         { type: 'base', x: 2850, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 2850, originalY: GAME_HEIGHT - 80 },
         { type: 'flyer', x: 2400, y: 400, width: 60, height: 40, originalX: 2400, originalY: 400 },
     ],
-  },
-  // Level 6: Final Fortress (Expanded)
-  {
+  };
+const level6: LevelData = {
+    name: "Level 6",
     playerStart: { x: 1820, y: GAME_HEIGHT - 120 },
     platforms: [
         { x: 0, y: GAME_HEIGHT - 40, width: 200, height: 40 },
@@ -199,9 +202,9 @@ export const levels: LevelData[] = [
         { type: 'jumper', x: 2100, y: GAME_HEIGHT - 240, width: 50, height: 50, originalX: 2100, originalY: GAME_HEIGHT - 240 },
         { type: 'base', x: 2800, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 2800, originalY: GAME_HEIGHT - 80 },
     ],
-  },
-  // Level 7: The Gauntlet (Expanded)
-  {
+  };
+const level7: LevelData = {
+    name: "Level 7",
     playerStart: { x: 50, y: GAME_HEIGHT - 120 },
     platforms: [
         { x: 0, y: GAME_HEIGHT - 40, width: 3500, height: 40 }, // Extended Gauntlet floor
@@ -240,9 +243,12 @@ export const levels: LevelData[] = [
         { type: 'base', x: 2200, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 2200, originalY: GAME_HEIGHT - 80 },
         { type: 'flyer', x: 2500, y: 200, width: 60, height: 40, originalX: 2500, originalY: 200 },
     ],
-  },
-  // Level 8: Flyer's Nest (Expanded)
-  {
+  };
+
+const bossLevel2: LevelData = { ...bossLevel1, name: "BOSS: Cyclops Frog II"};
+
+const level9: LevelData = {
+    name: "Level 9",
     playerStart: { x: 50, y: GAME_HEIGHT - 120 },
     platforms: [
         { x: 0, y: GAME_HEIGHT - 40, width: 400, height: 40 },
@@ -278,9 +284,9 @@ export const levels: LevelData[] = [
         { type: 'flyer', x: 2300, y: 250, width: 60, height: 40, originalX: 2300, originalY: 250 },
         { type: 'flyer', x: 2600, y: 450, width: 60, height: 40, originalX: 2600, originalY: 450 },
     ],
-  },
-  // Level 9: Precision (Expanded)
-  {
+  };
+const level10: LevelData = {
+    name: "Level 10",
     playerStart: { x: 50, y: 100 },
     platforms: [
         { x: 0, y: 200, width: 200, height: 30 },
@@ -315,9 +321,9 @@ export const levels: LevelData[] = [
         // New section
         { type: 'flyer', x: 2500, y: 200, width: 60, height: 40, originalX: 2500, originalY: 200 },
     ],
-  },
-  // Level 10: Chaos Castle (Expanded)
-  {
+  };
+const level11: LevelData = {
+    name: "Level 11",
     playerStart: { x: 935, y: 100 },
     platforms: [
         { x: 860, y: 200, width: 200, height: 30 },
@@ -359,5 +365,31 @@ export const levels: LevelData[] = [
         { type: 'base', x: 2600, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 2600, originalY: GAME_HEIGHT - 80 },
         { type: 'flyer', x: 2800, y: 200, width: 60, height: 40, originalX: 2800, originalY: 200 },
     ],
-  },
+  };
+
+const finalBoss: LevelData = { ...bossLevel1, name: "FINAL BOSS", boss: { ...bossLevel1.boss!, maxHp: BOSS_INITIAL_HP * 2 } };
+const labyrinth: LevelData = { ...level7, name: "The Labyrinth"};
+
+
+export const levels: LevelData[] = [
+  // 3 standard
+  level1,
+  level2,
+  level3,
+  // 1 boss
+  bossLevel1,
+  // 3 standard
+  level5,
+  level6,
+  level7,
+  // 1 boss
+  bossLevel2,
+  // 3 standard
+  level9,
+  level10,
+  level11,
+  // 1 final boss
+  finalBoss,
+  // 1 extra level
+  labyrinth,
 ];

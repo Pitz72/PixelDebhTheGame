@@ -48,3 +48,6 @@ export const EXTRA_LIFE_SCORE_MULTIPLIER = 2;
 
 // Game settings
 export const INITIAL_LIVES = 3;
+
+// Highscore settings
+export const HIGHSCORE_KEY = 'pixelDebhHighscores';

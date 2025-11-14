@@ -67,6 +67,22 @@ const music: { [key: string]: Note[] } = {
       { freq: 349.23, duration: 0.2, type: 'square', volume: 0.08 }, // F4
       { freq: 440.00, duration: 0.2, type: 'square', volume: 0.08 }, // A4
       { freq: 349.23, duration: 0.2, type: 'square', volume: 0.08 }, // F4
+  ],
+  standardTheme: [
+    { freq: 220.00, duration: 0.15, type: 'square', volume: 0.07 }, // A3
+    { freq: 220.00, duration: 0.15, type: 'square', volume: 0.07 }, // A3
+    { freq: 329.63, duration: 0.15, type: 'square', volume: 0.07 }, // E4
+    { freq: 220.00, duration: 0.15, type: 'square', volume: 0.07 }, // A3
+    { freq: 261.63, duration: 0.15, type: 'square', volume: 0.07 }, // C4
+    { freq: 261.63, duration: 0.15, type: 'square', volume: 0.07 }, // C4
+    { freq: 392.00, duration: 0.15, type: 'square', volume: 0.07 }, // G4
+    { freq: 261.63, duration: 0.15, type: 'square', volume: 0.07 }, // C4
+  ],
+  bossTheme: [
+      { freq: 110.00, duration: 0.4, type: 'sawtooth', volume: 0.08 }, // A2
+      { freq: 103.83, duration: 0.4, type: 'sawtooth', volume: 0.08 }, // G#2
+      { freq: 110.00, duration: 0.4, type: 'sawtooth', volume: 0.08 }, // A2
+      { freq: 123.47, duration: 0.4, type: 'sawtooth', volume: 0.08 }, // B2
   ]
 };
 
@@ -155,15 +171,16 @@ export function playJingle(name: 'levelStart' | 'respawn' | 'extraLife') {
 }
 
 
-export function playMusicLoop(name: 'startScreenTheme') {
-    if (!soundsLoaded || !audioContext || musicContext) return;
+export function playMusicLoop(name: 'startScreenTheme' | 'standardTheme' | 'bossTheme') {
+    if (!soundsLoaded || !audioContext) return;
+    stopMusic(); // Stop any existing music before starting new one
 
     const track = music[name];
     if (!track) return;
 
     let noteIndex = 0;
     const playNote = () => {
-        if (!audioContext) return;
+        if (!audioContext || !musicContext) return; // Stop if music has been stopped
         const note = track[noteIndex % track.length];
         
         const oscillator = audioContext.createOscillator();

@@ -25,7 +25,7 @@ const areRectsColliding = (rect1: {x: number, y: number, width: number, height: 
 };
 
 interface GameScreenProps {
-  onGameOver: () => void;
+  onGameOver: (score: number) => void;
   onCompleted: () => void;
   setGameState: React.Dispatch<React.SetStateAction<GameState>>;
 }
@@ -45,6 +45,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
   const [nextExtraLifeScore, setNextExtraLifeScore] = useState(EXTRA_LIFE_SCORE_START);
   const [cameraX, setCameraX] = useState(0);
   const [levelWidth, setLevelWidth] = useState(GAME_WIDTH);
+  const [isGodMode, setIsGodMode] = useState(false);
 
   const keysPressed = useRef<{ [key: string]: boolean }>({}).current;
   const gameLoopRef = useRef<number | null>(null);
@@ -131,7 +132,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     } else {
         setEnemies(levelData.enemies.map((e, i) => ({
           id: i, ...e, vx: e.type === 'flyer' ? FLYER_SPEED : ENEMY_SPEED, vy: e.type === 'flyer' ? FLYER_VERTICAL_SPEED : 0,
-          direction: 'right', state: 'active', jumpCooldown: ENEMY_JUMP_COOLDOWN,
+          direction: 'right', state: 'active', jumpCooldown: ENEMY_JUMP_COOLDOWN, stunTimer: 0
         })));
     }
 
@@ -143,6 +144,24 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     loadLevel(currentLevelIndex);
   }, [currentLevelIndex, loadLevel]);
 
+  // Handle music based on level
+  useEffect(() => {
+    soundService.stopMusic();
+    const levelData = levels[currentLevelIndex];
+    if (!levelData) return;
+
+    // No music for the final labyrinth level
+    if (currentLevelIndex === levels.length - 1) {
+      return;
+    }
+
+    if (levelData.boss) {
+      soundService.playMusicLoop('bossTheme');
+    } else {
+      soundService.playMusicLoop('standardTheme');
+    }
+  }, [currentLevelIndex]);
+
   useEffect(() => {
     soundService.playJingle('levelStart');
   }, [currentLevelIndex]);
@@ -152,6 +171,11 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     const handleKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
       keysPressed[key] = true;
+      
+      // Toggle God Mode with '0'
+      if (e.key === '0') {
+        setIsGodMode(prev => !prev);
+      }
       
       if(e.code === 'ShiftLeft' && gameStateRef.current === 'playing' && boss) {
           setPlayer(p => {
@@ -268,14 +292,36 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
 
     // 2. Player-Platform Collision
     platforms.forEach(platform => {
-      if (player.y + player.height <= platform.y && nextPlayer.y + nextPlayer.height >= platform.y && nextPlayer.x + nextPlayer.width > platform.x && nextPlayer.x < platform.x + platform.width) {
+      const isHorizontallyAligned = nextPlayer.x + nextPlayer.width > platform.x && nextPlayer.x < platform.x + platform.width;
+      
+      // Collision from top (landing)
+      if (player.y + player.height <= platform.y && nextPlayer.y + nextPlayer.height >= platform.y && isHorizontallyAligned) {
         nextPlayer.y = platform.y - nextPlayer.height;
         nextPlayer.vy = 0;
         nextPlayer.isOnGround = true;
       }
-      if (player.y >= platform.y + platform.height && nextPlayer.y < platform.y + platform.height && nextPlayer.x + nextPlayer.width > platform.x && nextPlayer.x < platform.x + platform.width) {
+      
+      // Collision from bottom (hitting head)
+      if (player.y >= platform.y + platform.height && nextPlayer.y < platform.y + platform.height && isHorizontallyAligned) {
         nextPlayer.vy = 0;
         nextPlayer.y = platform.y + platform.height;
+        soundService.playSound('hit');
+
+        // Check for enemies on top of the platform to stun
+        setEnemies(prevEnemies => prevEnemies.map(enemy => {
+            if (
+                enemy.state === 'active' &&
+                // Is the enemy on top of this platform?
+                Math.abs((enemy.y + enemy.height) - platform.y) < 5 &&
+                // Is the enemy horizontally aligned with the platform?
+                enemy.x + enemy.width > platform.x && enemy.x < platform.x + platform.width &&
+                // Is the enemy roughly above the player?
+                enemy.x + enemy.width > nextPlayer.x && enemy.x < nextPlayer.x + nextPlayer.width
+            ) {
+                return { ...enemy, state: 'stunned', stunTimer: 3000, vx: 0 };
+            }
+            return enemy;
+        }));
       }
     });
 
@@ -288,7 +334,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
         if (newLives <= 0) {
             soundService.playSound('gameOver');
             gameStateRef.current = 'gameover';
-            onGameOver();
+            onGameOver(score);
         } else {
             soundService.playJingle('respawn');
             nextPlayer = { ...player, ...levels[currentLevelIndex].playerStart, width: PLAYER_WIDTH, height: PLAYER_HEIGHT, vx: 0, vy: 0, isInvincible: true, invincibilityTimer: PLAYER_INVINCIBILITY_DURATION, capturedEnemyId: null };
@@ -365,6 +411,15 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
                 }
                 return;
             }
+            if (enemy.state === 'stunned') {
+                enemy.stunTimer! -= deltaTime;
+                if(enemy.stunTimer! <= 0) {
+                    enemy.state = 'active';
+                    enemy.vx = enemy.direction === 'right' ? ENEMY_SPEED : -ENEMY_SPEED;
+                }
+                return;
+            }
+
 
             if (enemy.state === 'active') {
                  if (enemy.type === 'flyer') {
@@ -430,22 +485,27 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
         if (tookDamage) {
             setDamageFlash(true);
             setTimeout(() => setDamageFlash(false), 200);
-            if (nextPlayer.hasShield) {
+            
+            if (isGodMode) {
                 soundService.playSound('hit');
-                nextPlayer.hasShield = false;
-                nextPlayer.isInvincible = true;
-                nextPlayer.invincibilityTimer = 500;
             } else {
-                soundService.playSound('damage');
-                const newLives = lives - 1;
-                setLives(newLives);
-                if (newLives <= 0) {
-                    soundService.playSound('gameOver');
-                    gameStateRef.current = 'gameover';
-                    onGameOver();
+                if (nextPlayer.hasShield) {
+                    soundService.playSound('hit');
+                    nextPlayer.hasShield = false;
+                    nextPlayer.isInvincible = true;
+                    nextPlayer.invincibilityTimer = 500;
                 } else {
-                    soundService.playJingle('respawn');
-                    nextPlayer = { ...player, ...levels[currentLevelIndex].playerStart, width: PLAYER_WIDTH, height: PLAYER_HEIGHT, vx: 0, vy: 0, isInvincible: true, invincibilityTimer: PLAYER_INVINCIBILITY_DURATION, capturedEnemyId: null };
+                    soundService.playSound('damage');
+                    const newLives = lives - 1;
+                    setLives(newLives);
+                    if (newLives <= 0) {
+                        soundService.playSound('gameOver');
+                        gameStateRef.current = 'gameover';
+                        onGameOver(score);
+                    } else {
+                        soundService.playJingle('respawn');
+                        nextPlayer = { ...player, ...levels[currentLevelIndex].playerStart, width: PLAYER_WIDTH, height: PLAYER_HEIGHT, vx: 0, vy: 0, isInvincible: true, invincibilityTimer: PLAYER_INVINCIBILITY_DURATION, capturedEnemyId: null };
+                    }
                 }
             }
         }
@@ -516,7 +576,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     setPlayer(nextPlayer);
 
     gameLoopRef.current = requestAnimationFrame(gameLoop);
-  }, [items, currentLevelIndex, enemies, keysPressed, platforms, player, onGameOver, onCompleted, setGameState, updateScore, levelWidth, lives, boss, projectiles]);
+  }, [items, currentLevelIndex, enemies, keysPressed, platforms, player, onGameOver, onCompleted, setGameState, updateScore, levelWidth, lives, boss, projectiles, isGodMode, score]);
 
   useEffect(() => {
     gameLoopRef.current = requestAnimationFrame(gameLoop);
@@ -524,13 +584,14 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
   }, [gameLoop]);
 
   const collectiblesLeft = items.filter(item => ['joystick', 'floppy', 'cartridge'].includes(item.type)).length;
+  const levelName = levels[currentLevelIndex]?.name || `Level ${currentLevelIndex + 1}`;
 
   return (
     <div className="w-full h-full relative overflow-hidden bg-black" style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}>
       {damageFlash && <div className="absolute inset-0 bg-red-600 bg-opacity-40 z-50 pointer-events-none"></div>}
       
       <Background cameraX={cameraX} />
-      <Hud score={score} lives={lives} level={currentLevelIndex + 1} collectiblesLeft={collectiblesLeft} activePowerUp={player.activePowerUp} boss={boss} />
+      <Hud score={score} lives={lives} level={currentLevelIndex + 1} levelName={levelName} collectiblesLeft={collectiblesLeft} activePowerUp={player.activePowerUp} boss={boss} isGodMode={isGodMode} />
 
       <div
         className="absolute top-0 left-0"

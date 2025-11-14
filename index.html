@@ -42,6 +42,17 @@
       .animate-blink {
         animation: blink 1s step-start 0s infinite;
       }
+
+      /* Enemy Stun Shake Animation */
+      @keyframes shake {
+        10%, 90% { transform: translate3d(-1px, 0, 0) scaleX(var(--direction-scale, 1)); }
+        20%, 80% { transform: translate3d(2px, 0, 0) scaleX(var(--direction-scale, 1)); }
+        30%, 50%, 70% { transform: translate3d(-3px, 0, 0) scaleX(var(--direction-scale, 1)); }
+        40%, 60% { transform: translate3d(3px, 0, 0) scaleX(var(--direction-scale, 1)); }
+      }
+      .animate-shake {
+        animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both infinite;
+      }
       
       /* New Cyclops Frog Boss Animations (Pixel Art) */
 

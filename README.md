@@ -8,28 +8,30 @@ A 2D retro platformer adventure where you control PixelDebh to capture and launc
 
 The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enemies. Once an enemy is captured, you can launch it as a projectile to defeat other enemies.
 
-- **Capture:** Get close to an enemy and press the capture button.
-- **Launch:** While holding a captured enemy, press the button again to launch it in the direction you're facing.
-- **Goal:** Collect all the retro-themed items (joysticks, floppy disks, cartridges) in each level to advance to the next.
-- **Boss Battle:** Face off against the mighty Cyclops Frog! In an epic showdown, the boss now floats with unpredictable movement and attacks by launching spinning CD-ROMs at you. Use your special shooting ability (Left Shift) to win this dynamic encounter.
+-   **Capture:** Get close to an enemy and press the capture button.
+-   **Launch:** While holding a captured enemy, press the button again to launch it in the direction you're facing.
+-   **Stun Enemies:** Jump and hit a platform from below to stun any enemies walking on top of it, giving you a strategic advantage!
+-   **Goal:** Collect all the retro-themed items (joysticks, floppy disks, cartridges) in each level to advance to the next.
+-   **Boss Battle:** Face off against the mighty Cyclops Frog! In an epic showdown, the boss now floats with unpredictable movement and attacks by launching spinning CD-ROMs at you. Use your special shooting ability (Left Shift) to win this dynamic encounter.
 
 ## Features
 
+-   **Game Progression:** A full adventure across 13 levels, including multiple boss battles and a final challenge.
+-   **Arcade High Score Leaderboard:** Compete for the top score! At the end of the game, enter your initials if you make it into the top 5, just like the old arcade classics.
+-   **Dynamic Background Music:** Each level features a dynamic chiptune soundtrack. A pleasant, upbeat theme accompanies standard levels, while a tense, ominous track plays during boss battles to heighten the drama.
 -   **Dynamic Arcade-Style Intro:** A vibrant, animated intro sequence to welcome players.
 -   **Character Parade Title Screen:** A classic arcade-style character presentation with a custom chiptune music theme.
--   **Epic Boss Battle:** An epic, reworked boss battle with a floating, unpredictable boss that throws targeted projectiles.
+-   **Epic Boss Battles:** Reworked boss battles with a floating, unpredictable boss that throws targeted projectiles.
 -   Classic 2D platforming action with a consistent pixel-perfect look
 -   Vast, horizontally scrolling levels with a dynamic camera system
 -   Immersive parallax background for a sense of depth
--   9 challenging levels with increasing difficulty
 -   Three unique enemy types: Globby, Hoppy (jumper), and Flappy (flyer)
 -   Special power-ups: Speed Boost, Shield, and the powerful Super Throw!
 -   Programmatically generated chiptune sound effects, jingles, and music
 -   Enhanced visual feedback (screen flash, fade-to-black transitions)
--   Critical bug fixes for a smoother and more reliable gameplay experience.
 -   Dynamic extra life system that rewards high scores (up to a maximum of 3 lives)
 -   Score tracking and a lives system
--   Enlarged HUD for better readability
+-   Enlarged HUD with level names for better readability
 
 ## Controls
 
@@ -38,6 +40,10 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 -   **Jump:** `W`, `Up Arrow`, or `Spacebar`
 -   **Capture / Launch:** `C` or `X`
 -   **Shoot (Boss Battle Only):** `Left Shift`
+
+## Developer Features
+
+-   **God Mode:** Press `0` on the number pad to toggle invincibility for testing purposes. An indicator will appear on the HUD.
 
 ## Built With
 

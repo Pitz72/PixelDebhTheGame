@@ -10,16 +10,24 @@ interface EnemyProps {
 const Enemy: React.FC<EnemyProps> = ({ enemy }) => {
   if (enemy.state === 'defeated') return null;
 
+  const isStunned = enemy.state === 'stunned';
+  const directionScale = enemy.direction === 'left' ? -1 : 1;
+
+  // Cast style to allow custom properties
+  const style: React.CSSProperties & { '--direction-scale'?: number } = {
+    position: 'absolute',
+    left: enemy.x,
+    top: enemy.y,
+    width: enemy.width,
+    height: enemy.height,
+    '--direction-scale': directionScale,
+    transform: `scaleX(${directionScale})`,
+  };
+
   return (
     <div
-      style={{
-        position: 'absolute',
-        left: enemy.x,
-        top: enemy.y,
-        width: enemy.width,
-        height: enemy.height,
-        transform: `scaleX(${enemy.direction === 'left' ? -1 : 1})`
-      }}
+      className={isStunned ? 'animate-shake' : ''}
+      style={style}
     >
       <EnemySprite type={enemy.type} state={enemy.state} />
     </div>

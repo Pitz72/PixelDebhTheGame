@@ -3,7 +3,12 @@ import { PlayerSprite, EnemySprite } from '../services/assetService';
 import * as soundService from '../services/soundService';
 import { EnemyType } from '../types';
 
-const StartScreen: React.FC<{ onStart: () => void }> = ({ onStart }) => {
+interface StartScreenProps {
+  onStart: () => void;
+  onShowHighscores: () => void;
+}
+
+const StartScreen: React.FC<StartScreenProps> = ({ onStart, onShowHighscores }) => {
   const [visibleCharacters, setVisibleCharacters] = useState(0);
   const [showText, setShowText] = useState(false);
 
@@ -38,6 +43,11 @@ const StartScreen: React.FC<{ onStart: () => void }> = ({ onStart }) => {
     soundService.playSound('start');
     onStart();
   }, [onStart]);
+
+  const handleShowScores = useCallback(() => {
+    soundService.playSound('collect'); // Use a generic UI sound
+    onShowHighscores();
+  }, [onShowHighscores]);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Enter' && showText) {
@@ -78,12 +88,18 @@ const StartScreen: React.FC<{ onStart: () => void }> = ({ onStart }) => {
       </div>
 
       {showText && (
-        <>
-            <p className="text-4xl text-white animate-blink mt-8">Press Enter to Start</p>
-            <p className="text-lg text-gray-400 mt-24">
+        <div className="flex flex-col items-center mt-8">
+            <p className="text-4xl text-white animate-blink">Press Enter to Start</p>
+            <button
+                onClick={handleShowScores}
+                className="text-3xl text-yellow-400 mt-8 px-6 py-3 border-2 border-yellow-400 rounded-lg hover:bg-yellow-400 hover:text-black transition-colors"
+            >
+                High Scores
+            </button>
+            <p className="text-lg text-gray-400 mt-16">
                 CONTROLS: [A][D] or Arrows to Move | [W] or Space to Jump | [C] or [X] to Capture/Launch
             </p>
-        </>
+        </div>
       )}
     </div>
   );

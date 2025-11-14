@@ -23,7 +23,7 @@ export interface Player extends DynamicObject {
 }
 
 export type EnemyType = 'base' | 'jumper' | 'flyer';
-export type EnemyState = 'active' | 'captured' | 'launched' | 'defeated';
+export type EnemyState = 'active' | 'captured' | 'launched' | 'defeated' | 'stunned';
 
 export interface Enemy extends DynamicObject {
   id: number;
@@ -33,6 +33,7 @@ export interface Enemy extends DynamicObject {
   originalY: number;
   direction: 'left' | 'right';
   jumpCooldown?: number;
+  stunTimer?: number;
 }
 
 export type ItemType = 'joystick' | 'floppy' | 'cartridge' | 'speed-boost' | 'shield' | 'super-throw';
@@ -68,12 +69,18 @@ export interface EnemySpawnPoint {
 }
 
 export interface LevelData {
+  name: string;
   platforms: Omit<Platform, 'id'>[];
   items: Omit<Item, 'id'>[];
-  enemies: Omit<Enemy, 'id' | 'state' | 'vx' | 'vy' | 'direction' | 'jumpCooldown'>[];
+  enemies: Omit<Enemy, 'id' | 'state' | 'vx' | 'vy' | 'direction' | 'jumpCooldown' | 'stunTimer'>[];
   playerStart: { x: number; y: number };
   boss?: Omit<Boss, 'hp' | 'attackCooldown' | 'isHit' | 'hitTimer' | 'vy' | 'isThrowing' | 'vx'>;
   enemySpawns?: Omit<EnemySpawnPoint, 'timer'>[];
 }
 
-export type GameState = 'intro' | 'start' | 'playing' | 'level-cleared' | 'completed' | 'gameover';
+export type GameState = 'intro' | 'start' | 'playing' | 'level-cleared' | 'completed' | 'gameover' | 'highscore' | 'enter-highscore';
+
+export interface HighscoreEntry {
+  name: string;
+  score: number;
+}
