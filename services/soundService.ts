@@ -59,15 +59,24 @@ const jingles: { [key: string]: Note[] } = {
 
 const music: { [key: string]: Note[] } = {
   startScreenTheme: [
-      { freq: 261.63, duration: 0.2, type: 'square', volume: 0.08 }, // C4
-      { freq: 329.63, duration: 0.2, type: 'square', volume: 0.08 }, // E4
-      { freq: 392.00, duration: 0.2, type: 'square', volume: 0.08 }, // G4
-      { freq: 329.63, duration: 0.2, type: 'square', volume: 0.08 }, // E4
-      { freq: 293.66, duration: 0.2, type: 'square', volume: 0.08 }, // D4
-      { freq: 349.23, duration: 0.2, type: 'square', volume: 0.08 }, // F4
-      { freq: 440.00, duration: 0.2, type: 'square', volume: 0.08 }, // A4
-      { freq: 349.23, duration: 0.2, type: 'square', volume: 0.08 }, // F4
-  ],
+    // Bar 1
+    { freq: 392.00, duration: 0.15, type: 'square', volume: 0.1 }, // G4
+    { freq: 523.25, duration: 0.15, type: 'square', volume: 0.1 }, // C5
+    { freq: 659.25, duration: 0.15, type: 'square', volume: 0.1 }, // E5
+    { freq: 783.99, duration: 0.15, type: 'square', volume: 0.1 }, // G5
+    // Bar 2
+    { freq: 698.46, duration: 0.3, type: 'square', volume: 0.1 },  // F5
+    { freq: 659.25, duration: 0.3, type: 'square', volume: 0.1 },  // E5
+    // Bar 3
+    { freq: 349.23, duration: 0.15, type: 'square', volume: 0.1 }, // F4
+    { freq: 440.00, duration: 0.15, type: 'square', volume: 0.1 }, // A4
+    { freq: 587.33, duration: 0.15, type: 'square', volume: 0.1 }, // D5
+    { freq: 698.46, duration: 0.15, type: 'square', volume: 0.1 }, // F5
+    // Bar 4
+    { freq: 659.25, duration: 0.2, type: 'square', volume: 0.1 },  // E5
+    { freq: 587.33, duration: 0.2, type: 'square', volume: 0.1 },  // D5
+    { freq: 523.25, duration: 0.2, type: 'square', volume: 0.1 },  // C5
+],
   standardTheme: [
     { freq: 220.00, duration: 0.15, type: 'square', volume: 0.07 }, // A3
     { freq: 220.00, duration: 0.15, type: 'square', volume: 0.07 }, // A3

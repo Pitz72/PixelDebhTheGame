@@ -1,17 +1,35 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import * as highscoreService from '../services/highscoreService';
+import * as soundService from '../services/soundService';
 import { HighscoreEntry } from '../types';
 
 interface HighscoreScreenProps {
-  onBack: () => void;
+  onStart: () => void;
 }
 
-const HighscoreScreen: React.FC<HighscoreScreenProps> = ({ onBack }) => {
+const HighscoreScreen: React.FC<HighscoreScreenProps> = ({ onStart }) => {
   const [scores, setScores] = useState<HighscoreEntry[]>([]);
 
   useEffect(() => {
     setScores(highscoreService.getHighscores());
   }, []);
+
+  const handleStart = useCallback(() => {
+    soundService.playSound('start');
+    onStart();
+  }, [onStart]);
+
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleStart();
+    }
+  }, [handleStart]);
+  
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
+
 
   return (
     <div className="w-full h-full bg-black flex flex-col justify-center items-center text-center p-8">
@@ -30,12 +48,7 @@ const HighscoreScreen: React.FC<HighscoreScreenProps> = ({ onBack }) => {
         )}
       </div>
 
-      <button
-        onClick={onBack}
-        className="text-4xl text-white mt-16 px-8 py-4 border-2 border-white rounded-lg hover:bg-white hover:text-black transition-colors"
-      >
-        Back
-      </button>
+      <p className="text-4xl text-white animate-blink mt-16">Press Enter to Start</p>
     </div>
   );
 };

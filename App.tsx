@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useGameScale } from './hooks/useGameScale';
 import StartScreen from './components/StartScreen';
 import GameScreen from './GameScreen';
@@ -14,6 +14,7 @@ import * as soundService from './services/soundService';
 
 function App() {
   const [gameState, setGameState] = useState<GameState>('intro');
+  const [attractScreen, setAttractScreen] = useState<'start' | 'highscore'>('start');
   const [gameId, setGameId] = useState(1);
   const [finalScore, setFinalScore] = useState(0);
   const { dimensions, margins } = useGameScale();
@@ -45,16 +46,52 @@ function App() {
     setGameState('completed');
   }, []);
   
-  const handleShowHighscores = useCallback(() => setGameState('highscore'), []);
-  const handleBackToStart = useCallback(() => setGameState('start'), []);
-  const handleHighscoreEntered = useCallback(() => setGameState('highscore'), []);
+  const handleBackToStart = useCallback(() => {
+      setAttractScreen('start'); // Force back to start screen
+      setGameState('start');
+  }, []);
+  
+  const handleHighscoreEntered = useCallback(() => {
+      setAttractScreen('highscore'); // Show highscore screen after entering
+      setGameState('start');
+  }, []);
+
+  // Attract Mode Logic
+  useEffect(() => {
+    let attractTimer: number | null = null;
+    if (gameState === 'start') {
+        attractTimer = window.setInterval(() => {
+            setAttractScreen(current => (current === 'start' ? 'highscore' : 'start'));
+        }, 10000); // Switch every 10 seconds
+    }
+    return () => {
+        if (attractTimer) {
+            clearInterval(attractTimer);
+        }
+    };
+  }, [gameState]);
+  
+  // Manage start screen music loop
+  useEffect(() => {
+    if (gameState === 'start') {
+      soundService.playMusicLoop('startScreenTheme');
+      // Return a cleanup function that stops the music when the state is no longer 'start'
+      return () => {
+        soundService.stopMusic();
+      }
+    }
+  }, [gameState]);
+
 
   const renderContent = () => {
     switch (gameState) {
       case 'intro':
         return <PixelArcadeIntro onIntroComplete={handleIntroComplete} />;
       case 'start':
-        return <StartScreen onStart={handleStart} onShowHighscores={handleShowHighscores} />;
+        if (attractScreen === 'highscore') {
+            return <HighscoreScreen onStart={handleStart} />;
+        }
+        return <StartScreen onStart={handleStart} />;
       case 'playing':
       case 'level-cleared':
         return <GameScreen key={gameId} onGameOver={handleGameOver} onCompleted={handleGameCompleted} setGameState={setGameState} />;
@@ -63,11 +100,11 @@ function App() {
       case 'gameover':
         return <GameoverScreen onRestart={handleRestart} />;
       case 'highscore':
-        return <HighscoreScreen onBack={handleBackToStart} />;
+        return <HighscoreScreen onStart={handleStart} />;
       case 'enter-highscore':
         return <EnterHighscoreScreen score={finalScore} onHighscoreEntered={handleHighscoreEntered} />;
       default:
-        return <StartScreen onStart={handleStart} onShowHighscores={handleShowHighscores} />;
+        return <StartScreen onStart={handleStart} />;
     }
   };
 

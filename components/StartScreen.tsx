@@ -5,10 +5,9 @@ import { EnemyType } from '../types';
 
 interface StartScreenProps {
   onStart: () => void;
-  onShowHighscores: () => void;
 }
 
-const StartScreen: React.FC<StartScreenProps> = ({ onStart, onShowHighscores }) => {
+const StartScreen: React.FC<StartScreenProps> = ({ onStart }) => {
   const [visibleCharacters, setVisibleCharacters] = useState(0);
   const [showText, setShowText] = useState(false);
 
@@ -20,7 +19,6 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onShowHighscores }) 
   ];
 
   useEffect(() => {
-    soundService.playMusicLoop('startScreenTheme');
     const interval = setInterval(() => {
         setVisibleCharacters(c => {
             if (c < paradeCharacters.length) {
@@ -34,20 +32,13 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onShowHighscores }) 
 
     return () => {
         clearInterval(interval);
-        soundService.stopMusic();
     };
   }, []);
 
   const handleStart = useCallback(() => {
-    soundService.stopMusic();
     soundService.playSound('start');
     onStart();
   }, [onStart]);
-
-  const handleShowScores = useCallback(() => {
-    soundService.playSound('collect'); // Use a generic UI sound
-    onShowHighscores();
-  }, [onShowHighscores]);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Enter' && showText) {
@@ -90,13 +81,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onShowHighscores }) 
       {showText && (
         <div className="flex flex-col items-center mt-8">
             <p className="text-4xl text-white animate-blink">Press Enter to Start</p>
-            <button
-                onClick={handleShowScores}
-                className="text-3xl text-yellow-400 mt-8 px-6 py-3 border-2 border-yellow-400 rounded-lg hover:bg-yellow-400 hover:text-black transition-colors"
-            >
-                High Scores
-            </button>
-            <p className="text-lg text-gray-400 mt-16">
+            <p className="text-lg text-gray-400 mt-24">
                 CONTROLS: [A][D] or Arrows to Move | [W] or Space to Jump | [C] or [X] to Capture/Launch
             </p>
         </div>

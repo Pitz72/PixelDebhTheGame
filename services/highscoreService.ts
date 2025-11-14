@@ -3,16 +3,29 @@ import { HIGHSCORE_KEY } from '../constants';
 
 const MAX_SCORES = 5;
 
+const createDefaultScores = (): HighscoreEntry[] => {
+    return Array(MAX_SCORES).fill(null).map(() => ({
+        name: 'AAA',
+        score: 0,
+    }));
+};
+
 export function getHighscores(): HighscoreEntry[] {
   try {
     const scoresJSON = localStorage.getItem(HIGHSCORE_KEY);
-    if (!scoresJSON) return [];
+    if (!scoresJSON) return createDefaultScores();
+    
     const scores = JSON.parse(scoresJSON);
-    // Ensure the retrieved data is an array before returning
-    return Array.isArray(scores) ? scores.sort((a, b) => b.score - a.score) : [];
+    
+    // Ensure the retrieved data is an array before returning, otherwise return defaults
+    if (Array.isArray(scores) && scores.length > 0) {
+        return scores.sort((a, b) => b.score - a.score);
+    }
+    return createDefaultScores();
+
   } catch (error) {
     console.error("Failed to retrieve highscores:", error);
-    return [];
+    return createDefaultScores();
   }
 }
 
@@ -28,7 +41,11 @@ function saveHighscores(scores: HighscoreEntry[]): void {
 }
 
 export function addHighscore(name: string, score: number): void {
-  const scores = getHighscores();
+  let scores = getHighscores();
+  // Filter out default scores if this is the first real entry
+  if (scores.every(s => s.name === 'AAA' && s.score === 0)) {
+      scores = [];
+  }
   scores.push({ name, score });
   saveHighscores(scores);
 }

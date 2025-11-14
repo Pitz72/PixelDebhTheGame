@@ -17,10 +17,10 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 ## Features
 
 -   **Game Progression:** A full adventure across 13 levels, including multiple boss battles and a final challenge.
--   **Arcade High Score Leaderboard:** Compete for the top score! At the end of the game, enter your initials if you make it into the top 5, just like the old arcade classics.
+-   **Arcade High Score Leaderboard:** Compete for the top score! At the end of the game, enter your initials if you make it into the top 5, just like the old arcade classics. The leaderboard is pre-filled with default scores.
+-   **Arcade-Style Attract Mode:** The title screen simulates a classic arcade cabinet, automatically and seamlessly alternating between the "Character Parade" intro and the high score leaderboard. The player can press Enter on either screen to start the game. The chiptune theme plays continuously throughout, creating a fluid attract mode experience.
 -   **Dynamic Background Music:** Each level features a dynamic chiptune soundtrack. A pleasant, upbeat theme accompanies standard levels, while a tense, ominous track plays during boss battles to heighten the drama.
 -   **Dynamic Arcade-Style Intro:** A vibrant, animated intro sequence to welcome players.
--   **Character Parade Title Screen:** A classic arcade-style character presentation with a custom chiptune music theme.
 -   **Epic Boss Battles:** Reworked boss battles with a floating, unpredictable boss that throws targeted projectiles.
 -   Classic 2D platforming action with a consistent pixel-perfect look
 -   Vast, horizontally scrolling levels with a dynamic camera system
