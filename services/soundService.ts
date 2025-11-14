@@ -34,6 +34,7 @@ const soundEffects: { [key: string]: SoundEffect } = {
   hit: { type: 'square', startFreq: 100, endFreq: 100, attack: 0.01, decay: 0.1, volume: 0.3 },
   levelClear: { type: 'triangle', startFreq: 523, endFreq: 1046, attack: 0.1, decay: 0.5, volume: 0.25 },
   bossShoot: { type: 'sawtooth', startFreq: 200, endFreq: 100, attack: 0.05, decay: 0.2, volume: 0.25 },
+  bomberShoot: { type: 'sine', startFreq: 400, endFreq: 100, attack: 0.02, decay: 0.3, volume: 0.2 },
   bossHit: { type: 'square', startFreq: 440, endFreq: 220, attack: 0.01, decay: 0.3, volume: 0.4 },
   bossDefeat: { type: 'sawtooth', startFreq: 880, endFreq: 55, attack: 0.2, decay: 1.5, volume: 0.5 },
   playerShoot: { type: 'square', startFreq: 800, endFreq: 1200, attack: 0.01, decay: 0.1, volume: 0.15 },

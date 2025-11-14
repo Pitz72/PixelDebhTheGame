@@ -6,13 +6,13 @@ import Platform from './components/Platform';
 import Hud from './components/Hud';
 import Background from './components/Background';
 import CyclopsFrogBoss from './components/FrogBoss';
-import { ItemSprite, PlayerProjectileSprite, CDROMSprite } from './services/assetService';
+import { ItemSprite, PlayerProjectileSprite, CDROMSprite, BombSprite } from './services/assetService';
 import * as soundService from './services/soundService';
 import { levels } from './levels';
 import {
   GAME_WIDTH, GAME_HEIGHT, GRAVITY, PLAYER_SPEED, PLAYER_FAST_SPEED, JUMP_FORCE, PLAYER_INVINCIBILITY_DURATION,
   ENEMY_SPEED, FLYER_SPEED, FLYER_VERTICAL_SPEED, FLYER_PATROL_RANGE, ENEMY_JUMP_FORCE, ENEMY_JUMP_COOLDOWN, LAUNCH_FORCE, POWER_UP_DURATION, SUPER_THROW_EXPLOSION_RADIUS,
-  COLLECTIBLE_POINTS, ENEMY_DEFEAT_POINTS, INITIAL_LIVES, EXTRA_LIFE_SCORE_START, EXTRA_LIFE_SCORE_MULTIPLIER, PLAYER_WIDTH, PLAYER_HEIGHT, BOSS_INITIAL_VX, BOSS_INITIAL_VY, PLAYER_PROJECTILE_SPEED, PLAYER_PROJECTILE_WIDTH, PLAYER_PROJECTILE_HEIGHT, PLAYER_SHOOT_COOLDOWN, BOSS_PROJECTILE_SPEED, BOSS_PROJECTILE_WIDTH, BOSS_PROJECTILE_HEIGHT
+  COLLECTIBLE_POINTS, ENEMY_DEFEAT_POINTS, INITIAL_LIVES, EXTRA_LIFE_SCORE_START, EXTRA_LIFE_SCORE_MULTIPLIER, PLAYER_WIDTH, PLAYER_HEIGHT, BOSS_INITIAL_VX, BOSS_INITIAL_VY, PLAYER_PROJECTILE_SPEED, PLAYER_PROJECTILE_WIDTH, PLAYER_PROJECTILE_HEIGHT, PLAYER_SHOOT_COOLDOWN, BOSS_PROJECTILE_SPEED, BOSS_PROJECTILE_WIDTH, BOSS_PROJECTILE_HEIGHT, PHASER_SPEED, BOMBER_ATTACK_COOLDOWN, BOMB_WIDTH, BOMB_HEIGHT, BOMB_INITIAL_VY, BOMB_HORIZONTAL_SPEED_MULTIPLIER
 } from './constants';
 
 const areRectsColliding = (rect1: {x: number, y: number, width: number, height: number}, rect2: {x: number, y: number, width: number, height: number}) => {
@@ -131,8 +131,13 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
         setEnemies([]); // No initial enemies in boss room
     } else {
         setEnemies(levelData.enemies.map((e, i) => ({
-          id: i, ...e, vx: e.type === 'flyer' ? FLYER_SPEED : ENEMY_SPEED, vy: e.type === 'flyer' ? FLYER_VERTICAL_SPEED : 0,
-          direction: 'right', state: 'active', jumpCooldown: ENEMY_JUMP_COOLDOWN, stunTimer: 0
+          id: i, ...e, 
+          vx: e.type === 'flyer' ? FLYER_SPEED : (e.type === 'bomber' || e.type === 'phaser' ? 0 : ENEMY_SPEED), 
+          vy: e.type === 'flyer' ? FLYER_VERTICAL_SPEED : 0,
+          direction: 'right', state: 'active', 
+          jumpCooldown: e.type === 'jumper' ? ENEMY_JUMP_COOLDOWN : undefined, 
+          attackCooldown: e.type === 'bomber' ? BOMBER_ATTACK_COOLDOWN : undefined,
+          stunTimer: 0
         })));
     }
 
@@ -385,6 +390,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
                         width: BOSS_PROJECTILE_WIDTH, height: BOSS_PROJECTILE_HEIGHT, 
                         vx: (dx / distance) * projectileSpeed, 
                         vy: (dy / distance) * projectileSpeed,
+                        isBomb: false,
                     }
                 ]);
             }
@@ -393,7 +399,13 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     }
 
     // B. Update Projectiles
-    setProjectiles(prev => prev.map(p => ({ ...p, x: p.x + p.vx, y: p.y + p.vy, })).filter(p => p.y < GAME_HEIGHT && p.y > -50 && p.x > -50 && p.x < levelWidth + 50));
+    setProjectiles(prev => prev.map(p => {
+        let nextP = { ...p, x: p.x + p.vx, y: p.y + p.vy };
+        if (p.isBomb) {
+            nextP.vy += GRAVITY;
+        }
+        return nextP;
+    }).filter(p => p.y < GAME_HEIGHT && p.y > -50 && p.x > -50 && p.x < levelWidth + 50));
     setPlayerProjectiles(prev => prev.map(p => ({...p, x: p.x + p.vx})).filter(p => p.x > -50 && p.x < levelWidth + 50));
 
 
@@ -422,7 +434,25 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
 
 
             if (enemy.state === 'active') {
-                 if (enemy.type === 'flyer') {
+                if (enemy.type === 'phaser') {
+                    const dx = nextPlayer.x - enemy.x;
+                    const dy = nextPlayer.y - enemy.y;
+                    const distance = Math.sqrt(dx*dx + dy*dy) || 1;
+                    enemy.vx = (dx / distance) * PHASER_SPEED;
+                    enemy.vy = (dy / distance) * PHASER_SPEED;
+                } else if (enemy.type === 'bomber') {
+                    enemy.attackCooldown! -= deltaTime;
+                    if (enemy.attackCooldown! <= 0) {
+                        enemy.attackCooldown = BOMBER_ATTACK_COOLDOWN + Math.random() * 1000;
+                        soundService.playSound('bomberShoot');
+                        const dx = (player.x + player.width / 2) - (enemy.x + enemy.width / 2);
+                        const bombVx = dx * BOMB_HORIZONTAL_SPEED_MULTIPLIER;
+                        setProjectiles(prev => [...prev, {
+                            id: Date.now(), x: enemy.x + enemy.width / 2, y: enemy.y,
+                            width: BOMB_WIDTH, height: BOMB_HEIGHT, vx: bombVx, vy: BOMB_INITIAL_VY, isBomb: true,
+                        }]);
+                    }
+                } else if (enemy.type === 'flyer') {
                     if (enemy.x < enemy.originalX - 200 || enemy.x > enemy.originalX + 200) { enemy.vx *= -1; enemy.direction = enemy.direction === 'left' ? 'right' : 'left'; }
                     if (enemy.y < enemy.originalY - FLYER_PATROL_RANGE || enemy.y > enemy.originalY + FLYER_PATROL_RANGE) { enemy.vy *= -1; }
                 } else {
@@ -443,7 +473,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
             enemy.x += enemy.vx;
             enemy.y += enemy.vy;
             
-            if (enemy.type !== 'flyer' || enemy.state !== 'active') {
+            if (enemy.type !== 'flyer' && enemy.type !== 'phaser' || enemy.state !== 'active') {
                 platforms.forEach(platform => { if (enemy.y + enemy.height > platform.y && enemy.y + enemy.height < platform.y + 30 && enemy.x + enemy.width > platform.x && enemy.x < platform.x + platform.width && enemy.vy >= 0) { enemy.y = platform.y - enemy.height; enemy.vy = 0; } });
             }
             
@@ -473,12 +503,13 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     // 4. Player & Projectile Collisions
     if (!nextPlayer.isInvincible) {
         let tookDamage = false;
-        if (boss) {
-             projectiles.forEach(proj => { if (areRectsColliding(nextPlayer, proj)) {
-                tookDamage = true;
-                setProjectiles(prev => prev.filter(p => p.id !== proj.id));
-            }});
-        } else {
+        
+        projectiles.forEach(proj => { if (areRectsColliding(nextPlayer, proj)) {
+            tookDamage = true;
+            setProjectiles(prev => prev.filter(p => p.id !== proj.id));
+        }});
+
+        if (!boss) {
              enemies.forEach(enemy => { if (enemy.state === 'active' && areRectsColliding(nextPlayer, enemy)) tookDamage = true; });
         }
        
@@ -608,7 +639,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
         {boss && <CyclopsFrogBoss boss={boss} />}
         {projectiles.map(p => (
             <div key={p.id} style={{ position: 'absolute', left: p.x, top: p.y, width: p.width, height: p.height }}>
-                <CDROMSprite />
+                {p.isBomb ? <BombSprite /> : <CDROMSprite />}
             </div>
         ))}
         {playerProjectiles.map(p => (

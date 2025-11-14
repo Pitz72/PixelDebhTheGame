@@ -29,6 +29,25 @@ export const EnemySprite = ({ type, state }: { type: string, state: string }) =>
   const purple = '#9472ff';
 
   switch (type) {
+    case 'phaser': // Ghosty
+        return (
+            <svg viewBox="0 0 16 16" className={`w-full h-full ${captured ? 'animate-bounce' : ''}`}>
+               <path d="M3 14 a 5 5 0 0 1 10 0 v-8 a 5 5 0 0 0 -10 0 z" fill={captured ? purple : "#e0e0e0"} opacity="0.8"/>
+               <rect x="6" y="7" width="1" height="2" fill="black"/>
+               <rect x="9" y="7" width="1" height="2" fill="black"/>
+               <path d="M4 14 l2 -2 l2 2 l2 -2 l2 2" fill="none" stroke={captured ? purple : "#e0e0e0"} strokeWidth="1" opacity="0.8"/>
+            </svg>
+        );
+    case 'bomber': // Bomby
+        return (
+            <svg viewBox="0 0 16 16" className={`w-full h-full ${captured ? 'animate-bounce' : ''}`}>
+                <path d="M2 15 a 6 6 0 0 1 12 0 z" fill={captured ? purple : "#333"} />
+                <path d="M3 14 a 5 5 0 0 1 10 0 z" fill={captured ? purple : "#555"} />
+                <rect x="4" y="2" width="8" height="2" fill="#8B4513"/>
+                <rect x="7" y="0" width="2" height="2" fill="#FFA500"/>
+                <rect x="6" y="8" width="4" height="2" fill="#D32F2F"/>
+            </svg>
+        );
     case 'flyer': // Flappy
       return (
         <svg viewBox="0 0 16 12" className={`w-full h-full ${captured ? 'animate-bounce' : ''}`}>
@@ -162,6 +181,16 @@ export const PlayerProjectileSprite = () => (
         <circle cx="4" cy="4" r="2" fill="#ffffff" />
     </svg>
 );
+
+// --- BOMB PROJECTILE SPRITE ---
+export const BombSprite = () => (
+    <svg viewBox="0 0 16 16" className="w-full h-full">
+        <circle cx="8" cy="8" r="7" fill="#222" />
+        <rect x="7" y="1" width="2" height="3" fill="#8B4513" />
+        <rect x="6" y="0" width="4" height="2" fill="#FFA500" className="animate-pulse" />
+    </svg>
+);
+
 
 // --- BOSS CD-ROM PROJECTILE SPRITE ---
 export const CDROMSprite = () => (

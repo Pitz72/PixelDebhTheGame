@@ -30,6 +30,15 @@ export const FLYER_PATROL_RANGE = 50;
 export const ENEMY_JUMP_FORCE = -20;
 export const ENEMY_JUMP_COOLDOWN = 2000; // in ms
 export const LAUNCH_FORCE = 40;
+export const PHASER_SPEED = 1.5;
+export const BOMBER_ATTACK_COOLDOWN = 3000; // in ms
+
+// Bomb Projectile
+export const BOMB_WIDTH = 24;
+export const BOMB_HEIGHT = 24;
+export const BOMB_INITIAL_VY = -15;
+export const BOMB_HORIZONTAL_SPEED_MULTIPLIER = 0.1;
+
 
 // Boss settings
 export const BOSS_INITIAL_HP = 30;

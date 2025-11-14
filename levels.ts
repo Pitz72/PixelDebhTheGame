@@ -24,7 +24,7 @@ const level1: LevelData = {
         { type: 'base', x: 400, y: GAME_HEIGHT - 290, width: 50, height: 50, originalX: 400, originalY: GAME_HEIGHT - 290 },
         { type: 'base', x: 1000, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 1000, originalY: GAME_HEIGHT - 80 },
         { type: 'base', x: 1700, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 1700, originalY: GAME_HEIGHT - 80 },
-        { type: 'base', x: 800, y: GAME_HEIGHT - 440, width: 50, height: 50, originalX: 800, originalY: GAME_HEIGHT - 440 },
+        { type: 'base', x: 1100, y: GAME_HEIGHT - 440, width: 50, height: 50, originalX: 1100, originalY: GAME_HEIGHT - 440 },
     ],
 };
 
@@ -182,18 +182,41 @@ const level6: LevelData = {
     ],
 };
 
-// --- LEVEL 7: Gauntlet ---
-// Length: ~7500px. Enemies: All types. Goal: Complex combat scenarios.
-const level7: LevelData = { ...level6, name: "Level 7: The Gauntlet", playerStart: { x: 50, y: GAME_HEIGHT - 120 }};
-level7.platforms.push({ x: 6000, y: GAME_HEIGHT - 40, width: 1500, height: 40 });
-level7.enemies.push({ type: 'jumper', x: 6200, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 6200, originalY: GAME_HEIGHT - 80 });
-level7.enemies.push({ type: 'flyer', x: 6800, y: 400, width: 60, height: 40, originalX: 6800, originalY: 400 });
+// --- LEVEL 7: The Gauntlet ---
+// Length: ~7500px. Enemies: Introduce Bomber. Goal: Teach area denial.
+const level7: LevelData = {
+    name: "Level 7: The Gauntlet",
+    playerStart: { x: 50, y: GAME_HEIGHT - 120 },
+    platforms: [
+        { x: 0, y: GAME_HEIGHT - 40, width: 7500, height: 40 },
+        { x: 400, y: GAME_HEIGHT - 250, width: 800, height: 30 },
+        { x: 1500, y: GAME_HEIGHT - 400, width: 300, height: 30 },
+        { x: 2000, y: GAME_HEIGHT - 550, width: 1000, height: 30 },
+        { x: 3300, y: GAME_HEIGHT - 200, width: 500, height: 30 },
+        { x: 4000, y: GAME_HEIGHT - 450, width: 200, height: 30 },
+        { x: 4500, y: GAME_HEIGHT - 300, width: 800, height: 30 },
+        { x: 5800, y: GAME_HEIGHT - 500, width: 400, height: 30 },
+        { x: 6500, y: GAME_HEIGHT - 250, width: 600, height: 30 },
+    ],
+    items: [
+        { type: 'shield', x: 4100, y: GAME_HEIGHT - 520, width: 50, height: 50 },
+        { type: 'super-throw', x: 6000, y: GAME_HEIGHT - 570, width: 50, height: 50 },
+    ],
+    enemies: [
+        { type: 'bomber', x: 900, y: GAME_HEIGHT - 290, width: 50, height: 50, originalX: 900, originalY: GAME_HEIGHT - 290 },
+        { type: 'jumper', x: 1800, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 1800, originalY: GAME_HEIGHT - 80 },
+        { type: 'flyer', x: 2500, y: 300, width: 60, height: 40, originalX: 2500, originalY: 300 },
+        { type: 'base', x: 3500, y: GAME_HEIGHT - 240, width: 50, height: 50, originalX: 3500, originalY: GAME_HEIGHT - 240 },
+        { type: 'bomber', x: 4800, y: GAME_HEIGHT - 340, width: 50, height: 50, originalX: 4800, originalY: GAME_HEIGHT - 340 },
+        { type: 'flyer', x: 6800, y: 400, width: 60, height: 40, originalX: 6800, originalY: 400 },
+    ],
+};
 
 // --- BOSS 2 ---
 const bossLevel2: LevelData = { ...bossLevel1, name: "BOSS: Cyclops Frog II"};
 
 // --- LEVEL 9: The Ascent ---
-// Length: ~9000px. Enemies: All types. Goal: Heavily vertical level.
+// Length: ~9000px. Enemies: Introduce Phaser. Goal: Teach threat that ignores terrain.
 const level9: LevelData = {
     name: "Level 9: The Ascent",
     playerStart: { x: 50, y: GAME_HEIGHT - 120 },
@@ -215,10 +238,10 @@ const level9: LevelData = {
         { type: 'cartridge', x: 750, y: GAME_HEIGHT - 1070, width: 50, height: 50 },
     ],
     enemies: [
-        { type: 'flyer', x: 400, y: 100, width: 60, height: 40, originalX: 400, originalY: 100 },
-        { type: 'flyer', x: 800, y: 200, width: 60, height: 40, originalX: 800, originalY: 200 },
-        { type: 'jumper', x: 1750, y: GAME_HEIGHT - 790, width: 50, height: 50, originalX: 1750, originalY: GAME_HEIGHT - 790 },
-        { type: 'base', x: 2200, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 2200, originalY: GAME_HEIGHT - 80 },
+        { type: 'phaser', x: 400, y: 100, width: 50, height: 50, originalX: 400, originalY: 100 },
+        { type: 'bomber', x: 1750, y: GAME_HEIGHT - 790, width: 50, height: 50, originalX: 1750, originalY: GAME_HEIGHT - 790 },
+        { type: 'jumper', x: 3000, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 3000, originalY: GAME_HEIGHT - 80 },
+        { type: 'base', x: 4200, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 4200, originalY: GAME_HEIGHT - 80 },
     ],
 };
 
@@ -246,8 +269,9 @@ const level10: LevelData = {
     ],
     enemies: [
         { type: 'jumper', x: 900, y: 460, width: 50, height: 50, originalX: 900, originalY: 460 },
-        { type: 'flyer', x: 600, y: 700, width: 60, height: 40, originalX: 600, originalY: 700 },
+        { type: 'phaser', x: 600, y: 700, width: 50, height: 50, originalX: 600, originalY: 700 },
         { type: 'base', x: 2500, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 2500, originalY: GAME_HEIGHT - 80 },
+        { type: 'bomber', x: 4000, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 4000, originalY: GAME_HEIGHT - 80 },
     ],
 };
 
@@ -274,10 +298,10 @@ const level11: LevelData = {
         { type: 'cartridge', x: 12000, y: GAME_HEIGHT - 120, width: 50, height: 50 },
     ],
     enemies: [
-        { type: 'base', x: 550, y: 310, width: 50, height: 50, originalX: 550, originalY: 310 },
-        { type: 'flyer', x: 960, y: 450, width: 60, height: 40, originalX: 960, originalY: 450 },
+        { type: 'bomber', x: 550, y: 310, width: 50, height: 50, originalX: 550, originalY: 310 },
+        { type: 'phaser', x: 960, y: 450, width: 50, height: 50, originalX: 960, originalY: 450 },
         { type: 'jumper', x: 100, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 100, originalY: GAME_HEIGHT - 80 },
-        { type: 'jumper', x: 3000, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 3000, originalY: GAME_HEIGHT - 80 },
+        { type: 'flyer', x: 3000, y: GAME_HEIGHT - 80, width: 60, height: 40, originalX: 3000, originalY: GAME_HEIGHT - 300 },
     ],
 };
 

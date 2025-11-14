@@ -22,7 +22,7 @@ export interface Player extends DynamicObject {
   shootCooldown: number;
 }
 
-export type EnemyType = 'base' | 'jumper' | 'flyer';
+export type EnemyType = 'base' | 'jumper' | 'flyer' | 'bomber' | 'phaser';
 export type EnemyState = 'active' | 'captured' | 'launched' | 'defeated' | 'stunned';
 
 export interface Enemy extends DynamicObject {
@@ -34,6 +34,7 @@ export interface Enemy extends DynamicObject {
   direction: 'left' | 'right';
   jumpCooldown?: number;
   stunTimer?: number;
+  attackCooldown?: number;
 }
 
 export type ItemType = 'joystick' | 'floppy' | 'cartridge' | 'speed-boost' | 'shield' | 'super-throw';
@@ -55,6 +56,7 @@ export interface Boss extends DynamicObject {
 
 export interface Projectile extends DynamicObject {
   id: number;
+  isBomb?: boolean;
 }
 
 export interface PlayerProjectile extends DynamicObject {
@@ -72,7 +74,7 @@ export interface LevelData {
   name: string;
   platforms: Omit<Platform, 'id'>[];
   items: Omit<Item, 'id'>[];
-  enemies: Omit<Enemy, 'id' | 'state' | 'vx' | 'vy' | 'direction' | 'jumpCooldown' | 'stunTimer'>[];
+  enemies: Omit<Enemy, 'id' | 'state' | 'vx' | 'vy' | 'direction' | 'jumpCooldown' | 'stunTimer' | 'attackCooldown'>[];
   playerStart: { x: number; y: number };
   boss?: Omit<Boss, 'hp' | 'attackCooldown' | 'isHit' | 'hitTimer' | 'vy' | 'isThrowing' | 'vx'>;
   enemySpawns?: Omit<EnemySpawnPoint, 'timer'>[];
