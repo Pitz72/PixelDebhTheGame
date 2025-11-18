@@ -1,3 +1,4 @@
+
 export interface GameObject {
   x: number;
   y: number;
@@ -13,6 +14,7 @@ export interface DynamicObject extends GameObject {
 export interface Player extends DynamicObject {
   direction: 'left' | 'right';
   isOnGround: boolean;
+  jumpCount: number; // Added for double jump
   isInvincible: boolean;
   invincibilityTimer: number;
   capturedEnemyId: number | null;
@@ -45,8 +47,6 @@ export interface Item extends GameObject {
 
 export interface Platform extends GameObject {}
 
-// FIX: Added 'id' property to Goal interface to resolve a type error in GameScreen.tsx
-// and align with the Omit<Goal, 'id'> usage in LevelData.
 export interface Goal extends GameObject {
   id: number;
 }
@@ -76,8 +76,23 @@ export interface EnemySpawnPoint {
   timer: number;
 }
 
+// New Interface for Particles
+export interface Particle {
+  id: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number; // 0 to 1
+  color: string;
+  size: number;
+}
+
+export type MusicTheme = 'adventure' | 'industrial' | 'ethereal' | 'boss';
+
 export interface LevelData {
   name: string;
+  musicTheme: MusicTheme; // New property for music variety
   platforms: Omit<Platform, 'id'>[];
   items: Omit<Item, 'id'>[];
   enemies: Omit<Enemy, 'id' | 'state' | 'vx' | 'vy' | 'direction' | 'jumpCooldown' | 'stunTimer' | 'attackCooldown'>[];

@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Player as PlayerType, Enemy as EnemyType, Item, Platform as PlatformType, GameState, ItemType, LevelData, Boss, Projectile, PlayerProjectile, Goal } from './types';
+import { Player as PlayerType, Enemy as EnemyType, Item, Platform as PlatformType, GameState, ItemType, LevelData, Boss, Projectile, PlayerProjectile, Goal, Particle } from './types';
 import Player from './components/Player';
 import Enemy from './components/Enemy';
 import Platform from './components/Platform';
@@ -8,11 +9,12 @@ import Background from './components/Background';
 import CyclopsFrogBoss from './components/FrogBoss';
 import { ItemSprite, PlayerProjectileSprite, CDROMSprite, BombSprite, GoalSprite } from './services/assetService';
 import * as soundService from './services/soundService';
+import * as aiService from './services/aiService';
 import { levels } from './levels';
 import {
   GAME_WIDTH, GAME_HEIGHT, GRAVITY, PLAYER_SPEED, PLAYER_FAST_SPEED, JUMP_FORCE, PLAYER_INVINCIBILITY_DURATION,
   ENEMY_SPEED, FLYER_SPEED, FLYER_VERTICAL_SPEED, FLYER_PATROL_RANGE, ENEMY_JUMP_FORCE, ENEMY_JUMP_COOLDOWN, LAUNCH_FORCE, POWER_UP_DURATION, SUPER_THROW_EXPLOSION_RADIUS,
-  COLLECTIBLE_POINTS, ENEMY_DEFEAT_POINTS, INITIAL_LIVES, EXTRA_LIFE_SCORE_START, EXTRA_LIFE_SCORE_MULTIPLIER, PLAYER_WIDTH, PLAYER_HEIGHT, BOSS_INITIAL_VX, BOSS_INITIAL_VY, PLAYER_PROJECTILE_SPEED, PLAYER_PROJECTILE_WIDTH, PLAYER_PROJECTILE_HEIGHT, PLAYER_SHOOT_COOLDOWN, BOSS_PROJECTILE_SPEED, BOSS_PROJECTILE_WIDTH, BOSS_PROJECTILE_HEIGHT, PHASER_SPEED, BOMBER_ATTACK_COOLDOWN, BOMB_WIDTH, BOMB_HEIGHT, BOMB_INITIAL_VY, BOMB_HORIZONTAL_SPEED_MULTIPLIER
+  COLLECTIBLE_POINTS, ENEMY_DEFEAT_POINTS, INITIAL_LIVES, EXTRA_LIFE_SCORE_START, EXTRA_LIFE_SCORE_MULTIPLIER, PLAYER_WIDTH, PLAYER_HEIGHT, BOSS_INITIAL_VX, BOSS_INITIAL_VY, PLAYER_PROJECTILE_SPEED, PLAYER_PROJECTILE_WIDTH, PLAYER_PROJECTILE_HEIGHT, PLAYER_SHOOT_COOLDOWN, BOSS_PROJECTILE_SPEED, BOSS_PROJECTILE_WIDTH, BOSS_PROJECTILE_HEIGHT, PHASER_SPEED, BOMBER_ATTACK_COOLDOWN, BOMB_WIDTH, BOMB_HEIGHT, BOMB_INITIAL_VY, BOMB_HORIZONTAL_SPEED_MULTIPLIER, MAX_JUMPS
 } from './constants';
 
 const areRectsColliding = (rect1: {x: number, y: number, width: number, height: number}, rect2: {x: number, y: number, width: number, height: number}) => {
@@ -42,11 +44,15 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
   const [boss, setBoss] = useState<Boss | null>(null);
   const [projectiles, setProjectiles] = useState<Projectile[]>([]);
   const [playerProjectiles, setPlayerProjectiles] = useState<PlayerProjectile[]>([]);
+  const [particles, setParticles] = useState<Particle[]>([]);
   const [damageFlash, setDamageFlash] = useState(false);
   const [nextExtraLifeScore, setNextExtraLifeScore] = useState(EXTRA_LIFE_SCORE_START);
   const [cameraX, setCameraX] = useState(0);
   const [levelWidth, setLevelWidth] = useState(GAME_WIDTH);
   const [isGodMode, setIsGodMode] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [oracleMessage, setOracleMessage] = useState<string | null>(null);
+  const [isOracleLoading, setIsOracleLoading] = useState(false);
 
   const keysPressed = useRef<{ [key: string]: boolean }>({}).current;
   const gameLoopRef = useRef<number | null>(null);
@@ -54,6 +60,26 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
   const gameStateRef = useRef<GameState>('playing');
   const cameraXRef = useRef(0);
   
+  // Particle Helper
+  const createParticles = (x: number, y: number, color: string, count: number) => {
+    setParticles(prev => {
+        const newParticles: Particle[] = [];
+        for (let i = 0; i < count; i++) {
+            newParticles.push({
+                id: Math.random(),
+                x,
+                y,
+                vx: (Math.random() - 0.5) * 10,
+                vy: (Math.random() - 0.5) * 10,
+                life: 1.0,
+                color,
+                size: Math.random() * 6 + 2
+            });
+        }
+        return [...prev, ...newParticles];
+    });
+  };
+
   const updateScore = useCallback((pointsToAdd: number) => {
     setScore(prevScore => {
         const newScore = prevScore + pointsToAdd;
@@ -102,6 +128,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
       vy: 0,
       direction: 'right',
       isOnGround: false,
+      jumpCount: 0,
       isInvincible: false,
       invincibilityTimer: 0,
       capturedEnemyId: null,
@@ -117,8 +144,10 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     setBoss(null);
     setProjectiles([]);
     setPlayerProjectiles([]);
+    setParticles([]);
     setItems(levelData.items.map((c, i) => ({ id: i, ...c })));
     setGoal(levelData.goal ? { id: 0, ...levelData.goal } : null);
+    setOracleMessage(null);
     
     if (levelData.boss) {
         setBoss({
@@ -177,12 +206,38 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
   // Input Handling
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Pause Toggle
+      if (e.key === 'Escape') {
+          setIsPaused(prev => !prev);
+          setOracleMessage(null); // Reset oracle on toggle
+          return;
+      }
+
+      if (isPaused) return;
+
       const key = e.key.toLowerCase();
       keysPressed[key] = true;
       
       // Toggle God Mode with '0'
       if (e.key === '0') {
         setIsGodMode(prev => !prev);
+      }
+      
+      // Jumping Logic (Including Double Jump)
+      if (e.key === ' ' && gameStateRef.current === 'playing') {
+          setPlayer(p => {
+              if (p.isOnGround || p.jumpCount < MAX_JUMPS) {
+                  soundService.playSound('jump');
+                  createParticles(p.x + p.width / 2, p.y + p.height, '#FFF', 5);
+                  return { 
+                      ...p, 
+                      vy: JUMP_FORCE, 
+                      isOnGround: false, 
+                      jumpCount: p.jumpCount + 1 
+                  };
+              }
+              return p;
+          });
       }
       
       if(e.code === 'ShiftLeft' && gameStateRef.current === 'playing' && boss) {
@@ -254,6 +309,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
             const nearbyEnemy = enemies.find(en => en.state === 'active' && areRectsColliding(captureRange, en));
             if (nearbyEnemy) {
               soundService.playSound('capture');
+              createParticles(nearbyEnemy.x + nearbyEnemy.width/2, nearbyEnemy.y + nearbyEnemy.height/2, '#9472ff', 10);
               setEnemies(prevEnemies => prevEnemies.map(en =>
                 en.id === nearbyEnemy.id ? { ...en, state: 'captured' } : en
               ));
@@ -271,11 +327,21 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [keysPressed, enemies, boss]);
+  }, [keysPressed, enemies, boss, isPaused]);
+
+  // ORACLE INTERACTION
+  const consultOracle = async () => {
+      if (isOracleLoading) return;
+      setIsOracleLoading(true);
+      const levelName = levels[currentLevelIndex]?.name || "Unknown Region";
+      const wisdom = await aiService.getOracleWisdom(levelName, lives, score);
+      setOracleMessage(wisdom);
+      setIsOracleLoading(false);
+  };
 
   // Main Game Loop
   const gameLoop = useCallback((timestamp: number) => {
-    if (gameStateRef.current !== 'playing' || !player.width) {
+    if (isPaused || gameStateRef.current !== 'playing' || !player.width) {
         gameLoopRef.current = requestAnimationFrame(gameLoop);
         return;
     }
@@ -294,16 +360,20 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
 
     let nextPlayer = { ...player };
 
-    // 1. Update Player
+    // 1. Update Particles
+    setParticles(prev => prev.map(p => ({
+        ...p,
+        x: p.x + p.vx,
+        y: p.y + p.vy,
+        vy: p.vy + 0.5, // Gravity
+        life: p.life - 0.02
+    })).filter(p => p.life > 0));
+
+    // 2. Update Player
     const currentSpeed = nextPlayer.activePowerUp === 'speed-boost' ? PLAYER_FAST_SPEED : PLAYER_SPEED;
     if (keysPressed['a'] || keysPressed['arrowleft']) { nextPlayer.vx = -currentSpeed; nextPlayer.direction = 'left'; } 
     else if (keysPressed['d'] || keysPressed['arrowright']) { nextPlayer.vx = currentSpeed; nextPlayer.direction = 'right'; } 
     else { nextPlayer.vx = 0; }
-    if (keysPressed[' '] && nextPlayer.isOnGround) { 
-        nextPlayer.vy = JUMP_FORCE; 
-        nextPlayer.isOnGround = false;
-        soundService.playSound('jump');
-    }
     
     nextPlayer.vy += GRAVITY;
     nextPlayer.x += nextPlayer.vx;
@@ -325,7 +395,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     if (nextPlayer.x < 0) nextPlayer.x = 0;
     if (nextPlayer.x + nextPlayer.width > levelWidth) nextPlayer.x = levelWidth - nextPlayer.width;
 
-    // 2. Player-Platform Collision
+    // 3. Player-Platform Collision
     platforms.forEach(platform => {
       const isHorizontallyAligned = nextPlayer.x + nextPlayer.width > platform.x && nextPlayer.x < platform.x + platform.width;
       
@@ -334,6 +404,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
         nextPlayer.y = platform.y - nextPlayer.height;
         nextPlayer.vy = 0;
         nextPlayer.isOnGround = true;
+        nextPlayer.jumpCount = 0; // Reset double jump
       }
       
       // Collision from bottom (hitting head)
@@ -341,6 +412,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
         nextPlayer.vy = 0;
         nextPlayer.y = platform.y + platform.height;
         soundService.playSound('hit');
+        createParticles(nextPlayer.x + nextPlayer.width/2, nextPlayer.y, '#A8ADBD', 3);
 
         // Check for enemies on top of the platform to stun
         setEnemies(prevEnemies => prevEnemies.map(enemy => {
@@ -372,7 +444,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
             onGameOver(score);
         } else {
             soundService.playJingle('respawn');
-            nextPlayer = { ...player, ...levels[currentLevelIndex].playerStart, width: PLAYER_WIDTH, height: PLAYER_HEIGHT, vx: 0, vy: 0, isInvincible: true, invincibilityTimer: PLAYER_INVINCIBILITY_DURATION, capturedEnemyId: null };
+            nextPlayer = { ...player, ...levels[currentLevelIndex].playerStart, width: PLAYER_WIDTH, height: PLAYER_HEIGHT, vx: 0, vy: 0, isInvincible: true, invincibilityTimer: PLAYER_INVINCIBILITY_DURATION, capturedEnemyId: null, jumpCount: 0 };
         }
     }
 
@@ -439,7 +511,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     setPlayerProjectiles(prev => prev.map(p => ({...p, x: p.x + p.vx, y: p.y + p.vy})).filter(p => p.x > -50 && p.x < levelWidth + 50 && p.y > -50 && p.y < GAME_HEIGHT + 50));
 
 
-    // 3. Update Enemies (non-boss levels)
+    // 4. Update Enemies (non-boss levels)
     setEnemies(prevEnemies => {
         let newEnemies = [...prevEnemies];
         const wasSuperThrow = player.activePowerUp === 'super-throw';
@@ -511,6 +583,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
                  newEnemies.forEach((otherEnemy, otherIndex) => {
                     if (index !== otherIndex && otherEnemy.state === 'active' && areRectsColliding(enemy, otherEnemy)) {
                         soundService.playSound('hit');
+                        createParticles((enemy.x + otherEnemy.x)/2, (enemy.y + otherEnemy.y)/2, '#FF0000', 15);
                         if(wasSuperThrow) {
                             let defeatedCount = 0;
                             newEnemies.forEach(e => {
@@ -530,7 +603,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
         return newEnemies;
     });
 
-    // 4. Player & Projectile Collisions
+    // 5. Player & Projectile Collisions
     if (!nextPlayer.isInvincible) {
         let tookDamage = false;
         
@@ -555,8 +628,10 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
                     nextPlayer.hasShield = false;
                     nextPlayer.isInvincible = true;
                     nextPlayer.invincibilityTimer = 500;
+                    createParticles(nextPlayer.x + nextPlayer.width/2, nextPlayer.y + nextPlayer.height/2, '#00ccff', 10);
                 } else {
                     soundService.playSound('damage');
+                    createParticles(nextPlayer.x + nextPlayer.width/2, nextPlayer.y + nextPlayer.height/2, '#FF0000', 20);
                     const newLives = lives - 1;
                     setLives(newLives);
                     if (newLives <= 0) {
@@ -565,24 +640,26 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
                         onGameOver(score);
                     } else {
                         soundService.playJingle('respawn');
-                        nextPlayer = { ...player, ...levels[currentLevelIndex].playerStart, width: PLAYER_WIDTH, height: PLAYER_HEIGHT, vx: 0, vy: 0, isInvincible: true, invincibilityTimer: PLAYER_INVINCIBILITY_DURATION, capturedEnemyId: null };
+                        nextPlayer = { ...player, ...levels[currentLevelIndex].playerStart, width: PLAYER_WIDTH, height: PLAYER_HEIGHT, vx: 0, vy: 0, isInvincible: true, invincibilityTimer: PLAYER_INVINCIBILITY_DURATION, capturedEnemyId: null, jumpCount: 0 };
                     }
                 }
             }
         }
     }
     
-    // 5. Player Projectiles & Boss Collision
+    // 6. Player Projectiles & Boss Collision
     if (boss && boss.hp > 0) {
         setPlayerProjectiles(prev => prev.filter(p => {
             if(areRectsColliding(p, boss)) {
                 soundService.playSound('bossHit');
+                createParticles(p.x, p.y, '#00FF00', 5);
                 updateScore(ENEMY_DEFEAT_POINTS / 2);
                 setBoss(prevBoss => {
                     if (!prevBoss) return null;
                      const newHp = prevBoss.hp - 1;
                      if (newHp <= 0) {
                         soundService.playSound('bossDefeat');
+                        createParticles(boss.x + boss.width/2, boss.y + boss.height/2, '#00FF00', 50);
                         updateScore(ENEMY_DEFEAT_POINTS * 20);
                         gameStateRef.current = 'level-cleared';
                         setGameState('level-cleared');
@@ -600,7 +677,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
         }));
     }
     
-    // 6. Player & Item Collision
+    // 7. Player & Item Collision
     const remainingItems = items.filter(item => {
         if (areRectsColliding(nextPlayer, item)) {
             switch(item.type) {
@@ -608,26 +685,34 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
                     if (boss) return true; // Don't collect in boss fight
                     updateScore(COLLECTIBLE_POINTS);
                     soundService.playSound('collect');
+                    createParticles(item.x + item.width/2, item.y + item.height/2, '#FFFF00', 5);
                     return false;
                 case 'shield':
-                    nextPlayer.hasShield = true; soundService.playSound('powerup'); return false;
+                    nextPlayer.hasShield = true; soundService.playSound('powerup'); 
+                    createParticles(item.x + item.width/2, item.y + item.height/2, '#00ccff', 8);
+                    return false;
                 case 'speed-boost':
-                    nextPlayer.activePowerUp = 'speed-boost'; nextPlayer.powerUpTimer = POWER_UP_DURATION; soundService.playSound('powerup'); return false;
+                    nextPlayer.activePowerUp = 'speed-boost'; nextPlayer.powerUpTimer = POWER_UP_DURATION; soundService.playSound('powerup'); 
+                    createParticles(item.x + item.width/2, item.y + item.height/2, '#ffee00', 8);
+                    return false;
                 case 'super-throw':
-                    nextPlayer.activePowerUp = 'super-throw'; soundService.playSound('powerup'); return false;
+                    nextPlayer.activePowerUp = 'super-throw'; soundService.playSound('powerup'); 
+                    createParticles(item.x + item.width/2, item.y + item.height/2, '#ff8800', 8);
+                    return false;
             }
         }
         return true;
     });
     setItems(remainingItems);
 
-    // 7. Level Clear Check
+    // 8. Level Clear Check
     if (goal && !boss && gameStateRef.current === 'playing') {
         const collectiblesLeft = remainingItems.filter(item => ['joystick', 'floppy', 'cartridge'].includes(item.type)).length;
         const totalCollectiblesInLevel = levels[currentLevelIndex].items.filter(item => ['joystick', 'floppy', 'cartridge'].includes(item.type)).length;
 
         if (collectiblesLeft === 0 && totalCollectiblesInLevel > 0 && areRectsColliding(nextPlayer, goal)) {
             soundService.playSound('levelClear');
+            createParticles(goal.x + goal.width/2, goal.y + goal.height/2, '#FFFFFF', 30);
             gameStateRef.current = 'level-cleared';
             setGameState('level-cleared');
             setTimeout(() => {
@@ -644,7 +729,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     setPlayer(nextPlayer);
 
     gameLoopRef.current = requestAnimationFrame(gameLoop);
-  }, [items, currentLevelIndex, enemies, keysPressed, platforms, player, onGameOver, onCompleted, setGameState, updateScore, levelWidth, lives, boss, projectiles, isGodMode, score, goal]);
+  }, [items, currentLevelIndex, enemies, keysPressed, platforms, player, onGameOver, onCompleted, setGameState, updateScore, levelWidth, lives, boss, projectiles, isGodMode, score, goal, isPaused]);
 
   useEffect(() => {
     gameLoopRef.current = requestAnimationFrame(gameLoop);
@@ -689,7 +774,56 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
                 <PlayerProjectileSprite />
             </div>
         ))}
+        {/* Render Particles */}
+        {particles.map(p => (
+            <div
+                key={p.id}
+                style={{
+                    position: 'absolute',
+                    left: p.x,
+                    top: p.y,
+                    width: p.size,
+                    height: p.size,
+                    backgroundColor: p.color,
+                    opacity: p.life,
+                    pointerEvents: 'none'
+                }}
+            />
+        ))}
       </div>
+
+      {/* PAUSE MENU OVERLAY */}
+      {isPaused && (
+          <div className="absolute inset-0 bg-black bg-opacity-80 z-50 flex flex-col justify-center items-center text-white">
+              <h2 className="text-6xl mb-8" style={{ fontFamily: "'Press Start 2P', cursive" }}>PAUSED</h2>
+              
+              <div className="bg-gray-800 p-8 border-4 border-white max-w-2xl w-full text-center mb-8">
+                  <h3 className="text-2xl text-yellow-400 mb-4">ORACLE OF THE BITVERSE</h3>
+                  
+                  {!oracleMessage && !isOracleLoading && (
+                      <button 
+                        onClick={consultOracle}
+                        className="bg-blue-600 hover:bg-blue-500 text-white py-4 px-8 border-b-4 border-blue-800 active:border-b-0 active:mt-1"
+                        style={{ fontFamily: "'Press Start 2P', cursive" }}
+                      >
+                          CONSULT THE ORACLE (AI)
+                      </button>
+                  )}
+
+                  {isOracleLoading && (
+                      <p className="animate-pulse text-cyan-400">COMMUNING WITH THE ANCIENTS...</p>
+                  )}
+
+                  {oracleMessage && (
+                      <div className="text-green-400 leading-relaxed text-xl typing-effect">
+                          "{oracleMessage}"
+                      </div>
+                  )}
+              </div>
+
+              <p className="text-gray-400 animate-blink mt-8">PRESS ESC TO RESUME</p>
+          </div>
+      )}
 
       {gameStateRef.current === 'level-cleared' && (
          <div className="absolute inset-0 flex justify-center items-center bg-black bg-opacity-50 z-20">

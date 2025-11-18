@@ -1,3 +1,4 @@
+
 let audioContext: AudioContext | null = null;
 let soundsLoaded = false;
 
@@ -60,39 +61,50 @@ const jingles: { [key: string]: Note[] } = {
 
 const music: { [key: string]: Note[] } = {
   startScreenTheme: [
-    // Bar 1
-    { freq: 392.00, duration: 0.15, type: 'square', volume: 0.1 }, // G4
-    { freq: 523.25, duration: 0.15, type: 'square', volume: 0.1 }, // C5
-    { freq: 659.25, duration: 0.15, type: 'square', volume: 0.1 }, // E5
-    { freq: 783.99, duration: 0.15, type: 'square', volume: 0.1 }, // G5
-    // Bar 2
-    { freq: 698.46, duration: 0.3, type: 'square', volume: 0.1 },  // F5
-    { freq: 659.25, duration: 0.3, type: 'square', volume: 0.1 },  // E5
-    // Bar 3
-    { freq: 349.23, duration: 0.15, type: 'square', volume: 0.1 }, // F4
+    // Energetic Intro
+    { freq: 220.00, duration: 0.15, type: 'square', volume: 0.1 }, // A3
+    { freq: 220.00, duration: 0.15, type: 'square', volume: 0.1 }, // A3
     { freq: 440.00, duration: 0.15, type: 'square', volume: 0.1 }, // A4
-    { freq: 587.33, duration: 0.15, type: 'square', volume: 0.1 }, // D5
-    { freq: 698.46, duration: 0.15, type: 'square', volume: 0.1 }, // F5
-    // Bar 4
-    { freq: 659.25, duration: 0.2, type: 'square', volume: 0.1 },  // E5
-    { freq: 587.33, duration: 0.2, type: 'square', volume: 0.1 },  // D5
-    { freq: 523.25, duration: 0.2, type: 'square', volume: 0.1 },  // C5
-],
-  standardTheme: [
-    { freq: 220.00, duration: 0.15, type: 'square', volume: 0.07 }, // A3
-    { freq: 220.00, duration: 0.15, type: 'square', volume: 0.07 }, // A3
-    { freq: 329.63, duration: 0.15, type: 'square', volume: 0.07 }, // E4
-    { freq: 220.00, duration: 0.15, type: 'square', volume: 0.07 }, // A3
-    { freq: 261.63, duration: 0.15, type: 'square', volume: 0.07 }, // C4
-    { freq: 261.63, duration: 0.15, type: 'square', volume: 0.07 }, // C4
-    { freq: 392.00, duration: 0.15, type: 'square', volume: 0.07 }, // G4
-    { freq: 261.63, duration: 0.15, type: 'square', volume: 0.07 }, // C4
+    { freq: 329.63, duration: 0.15, type: 'square', volume: 0.1 }, // E4
+    { freq: 261.63, duration: 0.15, type: 'square', volume: 0.1 }, // C4
+    { freq: 392.00, duration: 0.15, type: 'square', volume: 0.1 }, // G4
+  ],
+  adventureTheme: [
+    // Upbeat Adventure (C Major scale)
+    { freq: 261.63, duration: 0.2, type: 'square', volume: 0.07 }, // C4
+    { freq: 329.63, duration: 0.2, type: 'square', volume: 0.07 }, // E4
+    { freq: 392.00, duration: 0.2, type: 'square', volume: 0.07 }, // G4
+    { freq: 523.25, duration: 0.4, type: 'square', volume: 0.07 }, // C5
+    { freq: 392.00, duration: 0.2, type: 'square', volume: 0.07 }, // G4
+    { freq: 440.00, duration: 0.2, type: 'square', volume: 0.07 }, // A4
+    { freq: 349.23, duration: 0.2, type: 'square', volume: 0.07 }, // F4
+    { freq: 293.66, duration: 0.4, type: 'square', volume: 0.07 }, // D4
+  ],
+  industrialTheme: [
+    // Mechanical / Bass heavy
+    { freq: 110.00, duration: 0.15, type: 'sawtooth', volume: 0.08 }, // A2
+    { freq: 110.00, duration: 0.15, type: 'sawtooth', volume: 0.08 }, // A2
+    { freq: 146.83, duration: 0.15, type: 'square', volume: 0.06 },   // D3
+    { freq: 110.00, duration: 0.15, type: 'sawtooth', volume: 0.08 }, // A2
+    { freq: 130.81, duration: 0.3, type: 'sawtooth', volume: 0.08 },  // C3
+    { freq: 82.41, duration: 0.3, type: 'sawtooth', volume: 0.09 },   // E2
+  ],
+  etherealTheme: [
+    // Space / Mysterious (High notes)
+    { freq: 659.25, duration: 0.4, type: 'sine', volume: 0.08 }, // E5
+    { freq: 587.33, duration: 0.4, type: 'sine', volume: 0.08 }, // D5
+    { freq: 523.25, duration: 0.4, type: 'sine', volume: 0.08 }, // C5
+    { freq: 783.99, duration: 0.4, type: 'sine', volume: 0.08 }, // G5
+    { freq: 1046.50, duration: 0.8, type: 'sine', volume: 0.06 }, // C6
   ],
   bossTheme: [
-      { freq: 110.00, duration: 0.4, type: 'sawtooth', volume: 0.08 }, // A2
-      { freq: 103.83, duration: 0.4, type: 'sawtooth', volume: 0.08 }, // G#2
-      { freq: 110.00, duration: 0.4, type: 'sawtooth', volume: 0.08 }, // A2
-      { freq: 123.47, duration: 0.4, type: 'sawtooth', volume: 0.08 }, // B2
+      // Intense / Menacing
+      { freq: 110.00, duration: 0.2, type: 'sawtooth', volume: 0.1 }, // A2
+      { freq: 103.83, duration: 0.2, type: 'sawtooth', volume: 0.1 }, // G#2
+      { freq: 110.00, duration: 0.2, type: 'sawtooth', volume: 0.1 }, // A2
+      { freq: 123.47, duration: 0.2, type: 'sawtooth', volume: 0.1 }, // B2
+      { freq: 87.31, duration: 0.2, type: 'sawtooth', volume: 0.12 }, // F2
+      { freq: 82.41, duration: 0.2, type: 'sawtooth', volume: 0.12 }, // E2
   ]
 };
 
@@ -103,8 +115,6 @@ export function initAudio() {
     if (!audioContext) {
       audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
-    // Resume returns a promise, but we can assume it will work after a user gesture.
-    // Set the flag immediately to allow subsequent sound calls to go through.
     audioContext.resume();
     soundsLoaded = true;
   } catch (e) {
@@ -118,10 +128,7 @@ export function playSound(name: string) {
   }
 
   const effect = soundEffects[name];
-  if (!effect) {
-    // console.warn(`Sound effect not found: ${name}`);
-    return;
-  }
+  if (!effect) return;
   
   try {
     const now = audioContext.currentTime;
@@ -131,15 +138,12 @@ export function playSound(name: string) {
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
 
-    // Set parameters
     oscillator.type = effect.type;
     gainNode.gain.setValueAtTime(0, now);
 
-    // Volume envelope
     gainNode.gain.linearRampToValueAtTime(effect.volume, now + effect.attack);
     gainNode.gain.linearRampToValueAtTime(0, now + effect.attack + effect.decay);
 
-    // Frequency envelope
     oscillator.frequency.setValueAtTime(effect.startFreq, now);
     oscillator.frequency.exponentialRampToValueAtTime(effect.endFreq, now + effect.attack + effect.decay);
 
@@ -168,7 +172,6 @@ export function playJingle(name: 'levelStart' | 'respawn' | 'extraLife') {
     oscillator.type = note.type;
     oscillator.frequency.setValueAtTime(note.freq, startTime);
     
-    // Envelope for each note
     gainNode.gain.setValueAtTime(0, startTime);
     gainNode.gain.linearRampToValueAtTime(note.volume, startTime + 0.01);
     gainNode.gain.linearRampToValueAtTime(0, startTime + note.duration);
@@ -176,21 +179,21 @@ export function playJingle(name: 'levelStart' | 'respawn' | 'extraLife') {
     oscillator.start(startTime);
     oscillator.stop(startTime + note.duration);
 
-    startTime += note.duration; // Schedule next note right after
+    startTime += note.duration; 
   });
 }
 
 
-export function playMusicLoop(name: 'startScreenTheme' | 'standardTheme' | 'bossTheme') {
+export function playMusicLoop(name: string) {
     if (!soundsLoaded || !audioContext) return;
-    stopMusic(); // Stop any existing music before starting new one
+    stopMusic(); 
 
     const track = music[name];
     if (!track) return;
 
     let noteIndex = 0;
     const playNote = () => {
-        if (!audioContext || !musicContext) return; // Stop if music has been stopped
+        if (!audioContext || !musicContext) return;
         const note = track[noteIndex % track.length];
         
         const oscillator = audioContext.createOscillator();
@@ -215,8 +218,8 @@ export function playMusicLoop(name: 'startScreenTheme' | 'standardTheme' | 'boss
     };
 
     musicContext = {
-        oscillator: audioContext.createOscillator(), // Dummy, not used directly
-        gainNode: audioContext.createGain(), // Dummy, not used directly
+        oscillator: audioContext.createOscillator(),
+        gainNode: audioContext.createGain(), 
         timer: null,
     };
     playNote();

@@ -1,3 +1,4 @@
+
 // Game dimensions
 export const GAME_WIDTH = 1920;
 export const GAME_HEIGHT = 1080;
@@ -9,6 +10,7 @@ export const PLAYER_SPEED = 8;
 export const PLAYER_FAST_SPEED = 12;
 export const JUMP_FORCE = -25;
 export const GRAVITY = 1;
+export const MAX_JUMPS = 2; // Double jump enabled
 export const PLAYER_INVINCIBILITY_DURATION = 3000; // in ms
 export const PLAYER_SHOOT_COOLDOWN = 500; // in ms
 
