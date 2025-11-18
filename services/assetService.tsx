@@ -1,24 +1,36 @@
+
 import React from 'react';
 
 // --- PLAYER SPRITE ---
 export const PlayerSprite = ({ direction, isInvincible, showGlove = false }: { direction: 'left' | 'right', isInvincible: boolean, showGlove?: boolean }) => (
   <svg viewBox="0 0 16 16" className={`w-full h-full transform ${direction === 'left' ? 'scale-x-[-1]' : ''}`}>
     <g>
-      {/* Hat */}
-      <path d="M4 3 h8 v1 h-1 v1 h-6 v-1 h-1 z" fill="#E43254"/>
-      {/* Head */}
+      {/* Scarf Tail (Dynamic looking) */}
+      <path d="M2 10 h3 v2 h-3 z" fill="#E43254" className="animate-pulse" />
+      
+      {/* Helmet/Hat */}
+      <path d="M4 2 h8 v2 h-1 v1 h-6 v-1 h-1 z" fill="#E43254"/>
+      <rect x="11" y="3" width="2" height="1" fill="#FF8A9F" /> {/* Highlight */}
+
+      {/* Face */}
       <path d="M5 4 h6 v4 h-1 v1 h-4 v-1 h-1 z" fill="#FED7A3"/>
-      {/* Eyes */}
-      <rect x="7" y="5" width="1" height="1" fill="#000"/>
-      <rect x="9" y="5" width="1" height="1" fill="#000"/>
+      
+      {/* Visor (New Tech Look) */}
+      <rect x="6" y="5" width="5" height="2" fill="#333" />
+      <rect x="7" y="5" width="2" height="1" fill="#00ffcc" opacity="0.8" className="animate-pulse" />
+
       {/* Body */}
       <path d="M4 9 h8 v4 h-2 v1 h-4 v-1 h-2 z" fill="#3D50E0"/>
+      {/* Chest Detail */}
+      <rect x="7" y="10" width="2" height="2" fill="#FFFFFF" opacity="0.5" />
+
       {/* Arms */}
       <rect x="3" y="9" width="1" height="3" fill={showGlove ? '#ffee00' : '#FED7A3'}/>
       <rect x="12" y="9" width="1" height="3" fill={showGlove ? '#ffee00' : '#FED7A3'}/>
+      
       {/* Feet */}
-      <rect x="5" y="14" width="2" height="1" fill="#88554A"/>
-      <rect x="9" y="14" width="2" height="1" fill="#88554A"/>
+      <rect x="5" y="14" width="2" height="1" fill="#222"/>
+      <rect x="9" y="14" width="2" height="1" fill="#222"/>
     </g>
   </svg>
 );
@@ -33,52 +45,66 @@ export const EnemySprite = ({ type, state }: { type: string, state: string }) =>
         return (
             <svg viewBox="0 0 16 16" className={`w-full h-full ${captured ? 'animate-bounce' : ''}`}>
                <path d="M3 14 a 5 5 0 0 1 10 0 v-8 a 5 5 0 0 0 -10 0 z" fill={captured ? purple : "#e0e0e0"} opacity="0.8"/>
-               <rect x="6" y="7" width="1" height="2" fill="black"/>
-               <rect x="9" y="7" width="1" height="2" fill="black"/>
+               <rect x="5" y="6" width="2" height="2" fill="black"/>
+               <rect x="9" y="6" width="2" height="2" fill="black"/>
+               <rect x="5" y="6" width="1" height="1" fill="red"/> {/* Evil Eye */}
+               <rect x="9" y="6" width="1" height="1" fill="red"/>
                <path d="M4 14 l2 -2 l2 2 l2 -2 l2 2" fill="none" stroke={captured ? purple : "#e0e0e0"} strokeWidth="1" opacity="0.8"/>
             </svg>
         );
     case 'bomber': // Bomby
         return (
             <svg viewBox="0 0 16 16" className={`w-full h-full ${captured ? 'animate-bounce' : ''}`}>
-                <path d="M2 15 a 6 6 0 0 1 12 0 z" fill={captured ? purple : "#333"} />
-                <path d="M3 14 a 5 5 0 0 1 10 0 z" fill={captured ? purple : "#555"} />
-                <rect x="4" y="2" width="8" height="2" fill="#8B4513"/>
-                <rect x="7" y="0" width="2" height="2" fill="#FFA500"/>
-                <rect x="6" y="8" width="4" height="2" fill="#D32F2F"/>
+                <path d="M2 15 a 6 6 0 0 1 12 0 z" fill={captured ? purple : "#444"} /> {/* Base */}
+                <rect x="4" y="12" width="8" height="1" fill="#222" /> {/* Treads */}
+                <path d="M3 14 a 5 5 0 0 1 10 0 z" fill={captured ? purple : "#666"} /> {/* Dome */}
+                <rect x="7" y="8" width="2" height="4" fill="#222" /> {/* Cannon */}
+                <rect x="6" y="8" width="4" height="1" fill="#D32F2F"/>
+                <rect x="7" y="0" width="2" height="2" fill="#FFA500" className="animate-pulse"/> {/* Fuse */}
             </svg>
         );
-    case 'flyer': // Flappy
+    case 'flyer': // Flappy (Bat-Bot)
       return (
         <svg viewBox="0 0 16 12" className={`w-full h-full ${captured ? 'animate-bounce' : ''}`}>
-           <path d="M4 0 h8 v2 h-1 v1 h-1 v1 h-4 v-1 h-1 v-1 h-1 z" fill={captured ? purple : "#d62261"} /> {/* Head */}
-           <path d="M5 5 h6 v5 h-1 v1 h-4 v-1 h-1 z" fill={captured ? purple : "#ff3f83"} /> {/* Body */}
-           <rect x="7" y="2" width="2" height="2" fill="#FFF"/> {/* Eye */}
-           <rect x="8" y="3" width="1" height="1" fill="#000"/> {/* Pupil */}
-           <path d="M0 3 h4 v2 h-1 v1 h-1 v1 h-2 z" fill={captured ? purple : "#d62261"} /> {/* Left Wing */}
-           <path d="M12 3 h4 v2 h-1 v1 h-1 v1 h-2 z" fill={captured ? purple : "#d62261"} /> {/* Right Wing */}
+           <path d="M6 2 h4 v6 h-4 z" fill={captured ? purple : "#607d8b"} /> {/* Body */}
+           <rect x="6" y="3" width="1" height="1" fill="#00ff00" className="animate-blink"/> {/* Eye L */}
+           <rect x="9" y="3" width="1" height="1" fill="#00ff00" className="animate-blink"/> {/* Eye R */}
+           {/* Left Wing */}
+           <path d="M0 2 h6 v1 h-1 v1 h-1 v1 h-1 v-1 h-2 z" fill={captured ? purple : "#455a64"} />
+           {/* Right Wing */}
+           <path d="M10 2 h6 v1 h-2 v1 h-1 v1 h-1 v-1 h-2 z" fill={captured ? purple : "#455a64"} />
+           <rect x="7" y="8" width="2" height="2" fill="#ff5722" /> {/* Thruster */}
         </svg>
       );
-    case 'jumper': // Hoppy
+    case 'jumper': // Hoppy (Springy)
       return (
         <svg viewBox="0 0 16 16" className={`w-full h-full ${captured ? 'animate-bounce' : 'animate-bounce'}`}>
-          <path d="M3 3 h10 v10 h-10 z" fill={captured ? purple : "#d62231"}/>
-          <rect x="5" y="6" width="2" height="2" fill="white"/>
-          <rect x="9" y="6" width="2" height="2" fill="white"/>
+          {/* Spring */}
+          <path d="M6 12 h4 v1 h-4 z M6 14 h4 v1 h-4 z" fill="#aaa" />
+          <path d="M3 3 h10 v9 h-10 z" fill={captured ? purple : "#d32f2f"}/>
+          <rect x="4" y="4" width="8" height="2" fill="#e57373"/> {/* Highlight */}
+          <rect x="5" y="6" width="2" height="3" fill="white"/>
+          <rect x="9" y="6" width="2" height="3" fill="white"/>
           <rect x="6" y="7" width="1" height="1" fill="black"/>
           <rect x="10" y="7" width="1" height="1" fill="black"/>
-          <path d="M4 13 h8 v1 h-1 v1 h-6 v-1 z" fill={captured ? purple : "#ff3f4c"}/>
+          <path d="M4 10 h8 v2 h-8 z" fill="#b71c1c"/> {/* Mouth */}
         </svg>
       );
-    case 'base': // Globby
+    case 'base': // Globby (Slime)
     default:
       return (
         <svg viewBox="0 0 16 16" className={`w-full h-full ${captured ? 'animate-bounce' : ''}`}>
-          <path d="M2 5 a 6 6 0 0 1 12 0 v8 H2 z" fill={captured ? purple : "#25a854"} />
-          <rect x="5" y="6" width="6" height="3" fill="white" />
-          <rect x="7" y="7" width="2" height="2" fill="black" />
-          <rect x="3" y="13" width="2" height="2" fill={captured ? purple : "#1a7d3d"} />
-          <rect x="11" y="13" width="2" height="2" fill={captured ? purple : "#1a7d3d"} />
+          <path d="M3 6 a 5 5 0 0 1 10 0 v9 H3 z" fill={captured ? purple : "#4caf50"} />
+          <rect x="4" y="13" width="8" height="2" fill={captured ? purple : "#2e7d32"} /> {/* Base darkened */}
+          
+          {/* Bubbles */}
+          <rect x="4" y="5" width="1" height="1" fill="#a5d6a7" />
+          <rect x="11" y="8" width="1" height="1" fill="#a5d6a7" />
+
+          <rect x="5" y="8" width="2" height="2" fill="white" />
+          <rect x="9" y="8" width="2" height="2" fill="white" />
+          <rect x="6" y="9" width="1" height="1" fill="black" />
+          <rect x="10" y="9" width="1" height="1" fill="black" />
         </svg>
       );
   }
@@ -90,69 +116,60 @@ export const ItemSprite = ({ type }: { type: string }) => {
     case 'speed-boost':
         return (
             <svg viewBox="0 0 16 16" className="w-full h-full animate-pulse">
-                <path d="M8 0 l-2 4 h4 l-2 4 h4 l-6 8 v-6 h-2 v-6 z" fill="#ffee00"/>
+                <path d="M8 0 l-3 6 h2 l-3 5 h4 l-1 5 l6 -8 h-3 l4 -5 h-4 z" fill="#ffee00" stroke="#ff9800" strokeWidth="0.5"/>
             </svg>
         );
     case 'shield':
         return (
             <svg viewBox="0 0 16 16" className="w-full h-full animate-pulse">
-                <path d="M2 2 l6 -2 l6 2 v6 l-6 6 l-6 -6 z" fill="#00ccff"/>
-                <path d="M8 1 l4 2 v5 l-4 4 l-4 -4 v-5 z" fill="#ffffff" />
+                <path d="M3 2 l5 -2 l5 2 v5 l-5 8 l-5 -8 z" fill="#00ccff"/>
+                <path d="M8 1 l4 2 v5 l-4 4 l-4 -4 v-5 z" fill="#e0f7fa" />
+                <rect x="7" y="5" width="2" height="4" fill="#006064" />
+                <rect x="5" y="6" width="6" height="2" fill="#006064" />
             </svg>
         );
     case 'super-throw':
         return (
             <svg viewBox="0 0 16 16" className="w-full h-full animate-pulse">
-                <path d="M4 4 h8 v8 h-8 z" fill="#ff8800"/>
-                <rect x="6" y="2" width="4" height="12" fill="#ffaa00"/>
-                <rect x="2" y="6" width="12" height="4" fill="#ffaa00"/>
+                <circle cx="8" cy="8" r="7" fill="#ff5722" />
+                <path d="M8 2 l1 4 h4 l-3 3 l1 4 l-3 -2 l-3 2 l1 -4 l-3 -3 h4 z" fill="#ffeb3b"/>
             </svg>
         );
     case 'joystick':
       return (
         <svg viewBox="0 0 16 16" className="w-full h-full animate-pulse">
             {/* Base */}
-            <path d="M1 12 H15 V15 H1 z" fill="#7B7B7B" />
-            <path d="M2 12 H14 V14 H2 z" fill="#3B3B3B" />
-            <path d="M3 11 H13 V12 H3 z" fill="#5B5B5B" />
+            <path d="M2 12 h12 v3 h-12 z" fill="#424242" />
+            <rect x="3" y="11" width="10" height="1" fill="#616161" />
+            {/* Buttons */}
+            <rect x="10" y="13" width="2" height="1" fill="#f44336"/>
             {/* Stick */}
-            <rect x="7" y="5" width="2" height="6" fill="#1B1B1B"/>
+            <rect x="5" y="7" width="2" height="5" fill="#212121"/>
             {/* Ball */}
-            <path d="M8 1 a 3 3 0 0 1 0 6 a 3 3 0 0 1 0 -6" fill="#E43254"/>
-            <path d="M7 2.5 a 1.5 1.5 0 0 1 1.5 0 v 1 a 0.5 0.5 0 0 1 -1.5 0 z" fill="#FF8A9F"/>
+            <circle cx="6" cy="6" r="3" fill="#f44336"/>
+            <circle cx="5" cy="5" r="1" fill="#ffcdd2"/>
         </svg>
       );
     case 'floppy':
       return (
         <svg viewBox="0 0 16 16" className="w-full h-full animate-pulse">
-            {/* Casing */}
-            <path d="M1 1 H15 V15 H1 z" fill="#3B3B3B"/>
-            <path d="M1 1 H12 V2 H1 z" fill="#5B5B5B"/>
-            {/* Label */}
-            <path d="M2 2 h12 v6 H2 z" fill="#E0E0E0"/>
-            <path d="M3 3 h10 v1 H3 z" fill="#88C0F0"/>
-            <path d="M3 5 h8 v1 H3 z" fill="#B0D0F0"/>
-            {/* Shutter */}
-            <path d="M5 8 h6 v6 H5 z" fill="#9B9B9B"/>
-            <path d="M6 9 h4 v4 H6 z" fill="#BBBBBB"/>
-            <rect x="10" y="2" width="3" height="1" fill="#BBBBBB" />
+            <path d="M2 1 h12 v14 h-12 z" fill="#1e88e5"/>
+            <rect x="4" y="2" width="8" height="5" fill="white"/> {/* Label */}
+            <rect x="5" y="3" width="6" height="1" fill="#1e88e5"/>
+            <rect x="5" y="9" width="6" height="6" fill="#bdbdbd"/> {/* Shutter */}
+            <rect x="6" y="10" width="2" height="3" fill="#212121"/>
         </svg>
       );
     case 'cartridge':
       return (
         <svg viewBox="0 0 16 16" className="w-full h-full animate-pulse">
-            {/* Casing */}
-            <path d="M2 0 h12 v15 a 1 1 0 0 1 -1 1 H3 a 1 1 0 0 1 -1 -1 z" fill="#A9A9A9"/>
-            <path d="M3 1 h10 v14 H3 z" fill="#8B8B8B"/>
-             {/* Grip Lines */}
-            <path d="M3 12 h2 v2 H3z M11 12 h2 v2 h-2z" fill="#7B7B7B" />
-            {/* Label Area */}
-            <path d="M4 2 h8 v8 H4 z" fill="#222"/>
-            {/* Label Art */}
-            <path d="M5 8 h6 v1 h-6 z" fill="#e8175d"/>
-            <path d="M5 3 h2 v2 H5 z" fill="#3D50E0"/>
-            <path d="M9 3 h2 v2 H9 z" fill="#3D50E0"/>
-            <path d="M7 5 h2 v1 H7 z" fill="#fef200"/>
+            <path d="M2 1 h12 v14 h-12 z" fill="#757575"/>
+            <rect x="3" y="3" width="10" height="8" fill="#ffeb3b"/> {/* Sticker */}
+            <rect x="3" y="12" width="2" height="3" fill="#424242"/> {/* Pins */}
+            <rect x="6" y="12" width="2" height="3" fill="#424242"/>
+            <rect x="9" y="12" width="2" height="3" fill="#424242"/>
+            <rect x="12" y="12" width="1" height="3" fill="#424242"/>
+            <path d="M4 5 h8 v4 h-8 z" fill="#d32f2f"/> {/* Art */}
         </svg>
       );
     default:
@@ -163,16 +180,17 @@ export const ItemSprite = ({ type }: { type: string }) => {
 // --- GOAL SPRITE ---
 export const GoalSprite = () => (
     <svg viewBox="0 0 24 40" className="w-full h-full">
-        {/* Frame */}
-        <path d="M0 0 h24 v40 h-24 z" fill="#593d2b" />
-        <path d="M2 2 h20 v36 h-20 z" fill="#8c6246" />
-        {/* Door */}
-        <path d="M4 4 h16 v32 h-16 z" fill="#593d2b" />
-        {/* Panels */}
-        <path d="M6 6 h12 v12 h-12 z" fill="#402c1e" />
-        <path d="M6 20 h12 v12 h-12 z" fill="#402c1e" />
-        {/* Doorknob */}
-        <rect x="17" y="19" width="2" height="2" fill="#ffd700" />
+        {/* Portal Frame */}
+        <path d="M0 0 h24 v40 h-24 z" fill="#212121" />
+        <path d="M2 2 h20 v36 h-20 z" fill="#424242" />
+        {/* Energy Field */}
+        <rect x="4" y="4" width="16" height="32" fill="#00e5ff" opacity="0.5">
+           <animate attributeName="opacity" values="0.5;0.8;0.5" dur="2s" repeatCount="indefinite" />
+        </rect>
+        {/* Swirl */}
+        <circle cx="12" cy="20" r="6" fill="none" stroke="#fff" strokeWidth="1" strokeDasharray="4 2">
+            <animateTransform attributeName="transform" type="rotate" from="0 12 20" to="360 12 20" dur="3s" repeatCount="indefinite" />
+        </circle>
     </svg>
 );
 
@@ -180,7 +198,7 @@ export const GoalSprite = () => (
 // --- HEART SPRITE ---
 export const HeartSprite = () => (
     <svg viewBox="0 0 16 16" className="w-full h-full">
-        <path d="M8 4 C 5 2, 2 5, 8 14 C 14 5, 11 2, 8 4" fill="#ff4444"/>
+        <path d="M8 4 C 5 2, 2 5, 8 14 C 14 5, 11 2, 8 4" fill="#ff1744" stroke="#fff" strokeWidth="0.5"/>
     </svg>
 );
 
@@ -188,6 +206,7 @@ export const HeartSprite = () => (
 export const ShieldSprite = () => (
     <svg viewBox="0 0 20 20" className="w-full h-full opacity-60">
         <circle cx="10" cy="10" r="9" stroke="#00d5ff" strokeWidth="2" fill="rgba(0, 213, 255, 0.3)" />
+        <circle cx="10" cy="10" r="7" stroke="#fff" strokeWidth="1" fill="none" opacity="0.5" />
     </svg>
 );
 
@@ -202,9 +221,10 @@ export const PlayerProjectileSprite = () => (
 // --- BOMB PROJECTILE SPRITE ---
 export const BombSprite = () => (
     <svg viewBox="0 0 16 16" className="w-full h-full">
-        <circle cx="8" cy="8" r="7" fill="#222" />
-        <rect x="7" y="1" width="2" height="3" fill="#8B4513" />
-        <rect x="6" y="0" width="4" height="2" fill="#FFA500" className="animate-pulse" />
+        <circle cx="8" cy="8" r="6" fill="#212121" />
+        <rect x="7" y="1" width="2" height="3" fill="#8d6e63" />
+        <rect x="6" y="0" width="4" height="2" fill="#ffca28" className="animate-pulse" />
+        <path d="M9 5 L11 7" stroke="#fff" strokeWidth="1" /> {/* Shine */}
     </svg>
 );
 
@@ -223,8 +243,8 @@ export const CDROMSprite = () => (
                 <stop offset="100%" stopColor="#ee82ee" />
             </linearGradient>
         </defs>
-        <circle cx="8" cy="8" r="7.5" fill="#c0c0c0" stroke="#808080" strokeWidth="0.5"/>
-        <path d="M8 1.5 a 6.5 6.5 0 0 0 0 13" fill="none" stroke="url(#rainbow)" strokeWidth="1"/>
-        <circle cx="8" cy="8" r="2.5" fill="#0c0c17" stroke="#ffffff" strokeWidth="0.5"/>
+        <circle cx="8" cy="8" r="7.5" fill="#e0e0e0" stroke="#9e9e9e" strokeWidth="0.5"/>
+        <path d="M8 2 a 6 6 0 0 1 0 12 a 6 6 0 0 1 0 -12" fill="none" stroke="url(#rainbow)" strokeWidth="2" opacity="0.8"/>
+        <circle cx="8" cy="8" r="2" fill="#000" stroke="#fff" strokeWidth="0.5"/>
     </svg>
 );

@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface BackgroundProps {
@@ -9,7 +10,7 @@ const Background: React.FC<BackgroundProps> = React.memo(({ cameraX }) => {
     <>
       {/* Layer 1: Sfondo statico (cielo) */}
       <div 
-        className="absolute inset-0 bg-gradient-to-b from-[#0c1a4d] to-[#200e3d]" 
+        className="absolute inset-0 bg-gradient-to-b from-[#050014] via-[#1a0b2e] to-[#2d1b4e]" 
       />
       
       {/* Layer 2: Stelle distanti (movimento lento) */}
@@ -19,18 +20,37 @@ const Background: React.FC<BackgroundProps> = React.memo(({ cameraX }) => {
           backgroundImage: 'radial-gradient(circle, white 0.5px, transparent 1px)',
           backgroundSize: '50px 50px',
           opacity: 0.5,
-          transform: `translateX(-${cameraX * 0.1}px)`,
+          transform: `translateX(-${cameraX * 0.05}px)`,
           willChange: 'transform',
         }}
       />
+
+      {/* Layer 3: Montagne/Città digitale (Parallasse medio) */}
+      <div 
+        className="absolute bottom-0 left-0 h-64 w-[200%]"
+        style={{
+            transform: `translateX(-${cameraX * 0.15}px)`,
+            willChange: 'transform',
+            background: 'linear-gradient(to top, #1a0b2e 0%, transparent 100%)',
+        }}
+      >
+         {/* Silhouette using repeating-linear-gradient trick for buildings */}
+         <div className="w-full h-full" style={{
+             backgroundImage: 'linear-gradient(to right, #100520 5px, transparent 5px), linear-gradient(to right, #100520 10px, transparent 10px)',
+             backgroundSize: '40px 100px, 90px 150px',
+             backgroundPosition: 'bottom',
+             backgroundRepeat: 'repeat-x',
+             opacity: 0.7
+         }} />
+      </div>
       
-      {/* Layer 3: Stelle vicine (movimento più veloce) */}
+      {/* Layer 4: Stelle vicine (movimento più veloce) */}
       <div 
         className="absolute inset-0"
         style={{
           backgroundImage: 'radial-gradient(circle, white 0.5px, transparent 1px)',
           backgroundSize: '25px 25px',
-          opacity: 1,
+          opacity: 0.8,
           transform: `translateX(-${cameraX * 0.3}px)`,
           willChange: 'transform',
         }}

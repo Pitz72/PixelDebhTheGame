@@ -191,11 +191,14 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     if (currentLevelIndex === levels.length - 1) {
       return;
     }
-
-    if (levelData.boss) {
+    
+    // Play theme based on Level Data
+    if (levelData.musicTheme) {
+        soundService.playMusicLoop(levelData.musicTheme);
+    } else if (levelData.boss) {
       soundService.playMusicLoop('bossTheme');
     } else {
-      soundService.playMusicLoop('standardTheme');
+      soundService.playMusicLoop('adventureTheme');
     }
   }, [currentLevelIndex]);
 

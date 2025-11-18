@@ -13,7 +13,7 @@ const PixelArcadeIntro: React.FC<PixelArcadeIntroProps> = ({ onIntroComplete }) 
   useEffect(() => {
     const timer = setTimeout(() => {
       setAnimationComplete(true);
-    }, 4000);
+    }, 3000); // Intro leggermente più veloce
 
     return () => clearTimeout(timer);
   }, []);
@@ -25,98 +25,126 @@ const PixelArcadeIntro: React.FC<PixelArcadeIntroProps> = ({ onIntroComplete }) 
     setIsFadingOut(true);
     setTimeout(() => {
       onIntroComplete();
-    }, 500);
+    }, 800);
   }, [onIntroComplete, isFadingOut]);
 
   useEffect(() => {
-    if (animationComplete) {
-      const handleKeyDown = () => handleContinue();
-      window.addEventListener('keydown', handleKeyDown);
-      return () => window.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [animationComplete, handleContinue]);
+    const handleKeyDown = () => handleContinue();
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleContinue]);
 
   return (
-    <div className={`relative w-full h-full bg-black overflow-hidden flex flex-col justify-center items-center perspective-container ${isFadingOut ? 'opacity-0 transition-opacity duration-500' : ''}`}>
+    <div 
+        className={`relative w-full h-full bg-gray-900 overflow-hidden flex flex-col justify-center items-center cursor-pointer transition-opacity duration-1000 ${isFadingOut ? 'opacity-0' : 'opacity-100'}`}
+        onClick={handleContinue}
+    >
       <style>{`
-        .perspective-container {
-            perspective: 600px;
-            background: linear-gradient(to bottom, #110022 0%, #220033 60%, #ff00cc 100%);
+        .retro-sun {
+            width: 300px;
+            height: 300px;
+            background: linear-gradient(to bottom, #ffeb3b 0%, #ff9800 40%, #f44336 100%);
+            border-radius: 50%;
+            position: absolute;
+            top: 15%;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 0 60px #ff9800, 0 0 100px #f44336;
+            clip-path: polygon(
+                0% 0%, 100% 0%, 100% 55%, 
+                0% 55%, 0% 60%, 100% 60%, 100% 65%, 
+                0% 65%, 0% 70%, 100% 70%, 100% 75%, 
+                0% 75%, 0% 80%, 100% 80%, 100% 85%, 
+                0% 85%, 0% 90%, 100% 90%, 100% 100%, 
+                0% 100%
+            );
+            animation: sunPulse 4s ease-in-out infinite alternate;
         }
         
-        .grid-floor {
+        @keyframes sunPulse {
+            0% { transform: translateX(-50%) scale(1); filter: brightness(1); }
+            100% { transform: translateX(-50%) scale(1.05); filter: brightness(1.2); }
+        }
+
+        .synth-grid {
             position: absolute;
-            bottom: -50%;
+            bottom: -30%;
             left: -50%;
             width: 200%;
             height: 100%;
-            background-image: 
-                linear-gradient(0deg, transparent 24%, rgba(255, 0, 204, .5) 25%, rgba(255, 0, 204, .5) 26%, transparent 27%, transparent 74%, rgba(255, 0, 204, .5) 75%, rgba(255, 0, 204, .5) 76%, transparent 77%, transparent),
-                linear-gradient(90deg, transparent 24%, rgba(255, 0, 204, .5) 25%, rgba(255, 0, 204, .5) 26%, transparent 27%, transparent 74%, rgba(255, 0, 204, .5) 75%, rgba(255, 0, 204, .5) 76%, transparent 77%, transparent);
-            background-size: 60px 60px;
-            transform: rotateX(60deg);
-            animation: gridMove 1s linear infinite;
+            background: 
+                linear-gradient(transparent 0%, rgba(200, 0, 255, 0.4) 2%, transparent 3%),
+                linear-gradient(90deg, transparent 0%, rgba(200, 0, 255, 0.4) 2%, transparent 3%);
+            background-size: 40px 40px;
+            transform: perspective(300px) rotateX(60deg);
+            animation: gridScroll 2s linear infinite;
+            box-shadow: 0 -50px 100px rgba(200, 0, 255, 0.3) inset;
         }
 
-        @keyframes gridMove {
-            0% { transform: rotateX(60deg) translateY(0); }
-            100% { transform: rotateX(60deg) translateY(60px); }
+        @keyframes gridScroll {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 40px; }
         }
 
-        .sun {
+        .mountain-silhouette {
             position: absolute;
-            top: 20%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 200px;
-            height: 200px;
-            background: linear-gradient(to bottom, #ffcc00, #ff00cc);
-            border-radius: 50%;
-            box-shadow: 0 0 40px #ff00cc;
-            clip-path: polygon(0 0, 100% 0, 100% 60%, 0 60%, 0 65%, 100% 65%, 100% 70%, 0 70%, 0 75%, 100% 75%, 100% 80%, 0 80%, 0 85%, 100% 85%, 100% 100%, 0 100%);
-            animation: sunRise 3s ease-out forwards;
+            bottom: 35%;
+            left: 0;
+            width: 100%;
+            height: 150px;
+            background-color: #1a0b2e;
+            clip-path: polygon(
+                0% 100%, 0% 80%, 10% 40%, 20% 90%, 30% 50%, 40% 80%, 
+                50% 20%, 60% 70%, 70% 40%, 80% 90%, 90% 60%, 100% 80%, 100% 100%
+            );
+            z-index: 1;
         }
 
-        @keyframes sunRise {
-            from { bottom: -200px; opacity: 0; }
-            to { top: 20%; opacity: 1; }
-        }
-
-        .logo-container {
-            z-index: 10;
-            text-align: center;
-            transform: translateZ(50px);
-        }
-
-        .glitch-text {
-            font-size: 6rem;
-            font-weight: bold;
-            text-transform: uppercase;
+        .title-glitch {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 5rem;
+            color: #fff;
+            text-shadow: 4px 4px #00eaff, -4px -4px #ff0055;
             position: relative;
-            text-shadow: 0.05em 0 0 #00fffc, -0.03em -0.04em 0 #fc00ff,
-                        0.025em 0.04em 0 #fffc00;
-            animation: glitch 725ms infinite;
+            z-index: 10;
+            animation: glitch 3s infinite;
         }
 
         @keyframes glitch {
-            0% { text-shadow: 0.05em 0 0 #00fffc, -0.03em -0.04em 0 #fc00ff, 0.025em 0.04em 0 #fffc00; }
-            15% { text-shadow: 0.05em 0 0 #00fffc, -0.03em -0.04em 0 #fc00ff, 0.025em 0.04em 0 #fffc00; }
-            16% { text-shadow: -0.05em -0.025em 0 #00fffc, 0.025em 0.035em 0 #fc00ff, -0.05em -0.05em 0 #fffc00; }
-            49% { text-shadow: -0.05em -0.025em 0 #00fffc, 0.025em 0.035em 0 #fc00ff, -0.05em -0.05em 0 #fffc00; }
-            50% { text-shadow: 0.05em 0.035em 0 #00fffc, 0.03em 0 0 #fc00ff, 0 -0.04em 0 #fffc00; }
-            99% { text-shadow: 0.05em 0.035em 0 #00fffc, 0.03em 0 0 #fc00ff, 0 -0.04em 0 #fffc00; }
-            100% { text-shadow: -0.05em 0 0 #00fffc, -0.025em -0.04em 0 #fc00ff, -0.04em -0.025em 0 #fffc00; }
+            0% { transform: skew(0deg); text-shadow: 4px 4px #00eaff, -4px -4px #ff0055; }
+            20% { transform: skew(-2deg); text-shadow: -4px 4px #ff0055, 4px -4px #00eaff; }
+            21% { transform: skew(10deg); }
+            22% { transform: skew(0deg); }
+            100% { transform: skew(0deg); }
+        }
+
+        .subtitle {
+            font-family: 'Press Start 2P', cursive;
+            color: #00eaff;
+            margin-top: 20px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            z-index: 10;
         }
       `}</style>
 
-      <div className="grid-floor"></div>
-      <div className="sun"></div>
+      <div className="retro-sun"></div>
+      <div className="mountain-silhouette"></div>
+      <div className="synth-grid"></div>
+
+      <div className="z-10 text-center flex flex-col items-center">
+          <h1 className="title-glitch mb-4">PixelDebh</h1>
+          <h2 className="text-3xl text-yellow-300" style={{ textShadow: '2px 2px #ff0055', fontFamily: "'Press Start 2P', cursive" }}>
+            RETRO-RESCUE!
+          </h2>
+          
+          <div className={`mt-16 transition-opacity duration-500 ${animationComplete ? 'opacity-100' : 'opacity-0'}`}>
+             <p className="subtitle animate-pulse text-xl">PRESS ANY KEY TO START</p>
+          </div>
+      </div>
       
-      <div className="logo-container">
-          <h1 className="glitch-text text-white mb-8 font-sans tracking-widest">PixelDebh</h1>
-          {animationComplete && (
-            <p className="text-2xl text-cyan-400 animate-pulse font-mono">PRESS ANY KEY TO START</p>
-          )}
+      <div className="absolute bottom-4 text-white text-xs opacity-50 font-sans">
+         V.0.2.6 - SYNTHWAVE UPDATE
       </div>
     </div>
   );

@@ -57,45 +57,51 @@ const jingles: { [key: string]: Note[] } = {
     { freq: 783.99, duration: 0.1, type: 'square', volume: 0.15 }, // G5
     { freq: 1046.50, duration: 0.2, type: 'square', volume: 0.15 }, // C6
   ],
+  standardTheme: [], // Fallback
 };
 
 const music: { [key: string]: Note[] } = {
   startScreenTheme: [
-    // Energetic Intro
-    { freq: 220.00, duration: 0.15, type: 'square', volume: 0.1 }, // A3
-    { freq: 220.00, duration: 0.15, type: 'square', volume: 0.1 }, // A3
-    { freq: 440.00, duration: 0.15, type: 'square', volume: 0.1 }, // A4
-    { freq: 329.63, duration: 0.15, type: 'square', volume: 0.1 }, // E4
-    { freq: 261.63, duration: 0.15, type: 'square', volume: 0.1 }, // C4
-    { freq: 392.00, duration: 0.15, type: 'square', volume: 0.1 }, // G4
+    { freq: 220.00, duration: 0.15, type: 'square', volume: 0.1 },
+    { freq: 220.00, duration: 0.15, type: 'square', volume: 0.1 },
+    { freq: 440.00, duration: 0.15, type: 'square', volume: 0.1 },
+    { freq: 329.63, duration: 0.15, type: 'square', volume: 0.1 },
+    { freq: 261.63, duration: 0.15, type: 'square', volume: 0.1 },
+    { freq: 392.00, duration: 0.15, type: 'square', volume: 0.1 },
   ],
   adventureTheme: [
-    // Upbeat Adventure (C Major scale)
-    { freq: 261.63, duration: 0.2, type: 'square', volume: 0.07 }, // C4
-    { freq: 329.63, duration: 0.2, type: 'square', volume: 0.07 }, // E4
-    { freq: 392.00, duration: 0.2, type: 'square', volume: 0.07 }, // G4
-    { freq: 523.25, duration: 0.4, type: 'square', volume: 0.07 }, // C5
-    { freq: 392.00, duration: 0.2, type: 'square', volume: 0.07 }, // G4
-    { freq: 440.00, duration: 0.2, type: 'square', volume: 0.07 }, // A4
-    { freq: 349.23, duration: 0.2, type: 'square', volume: 0.07 }, // F4
-    { freq: 293.66, duration: 0.4, type: 'square', volume: 0.07 }, // D4
+    // Upbeat C Major - Fast paced
+    { freq: 261.63, duration: 0.2, type: 'square', volume: 0.08 }, // C4
+    { freq: 329.63, duration: 0.2, type: 'square', volume: 0.08 }, // E4
+    { freq: 392.00, duration: 0.2, type: 'square', volume: 0.08 }, // G4
+    { freq: 523.25, duration: 0.2, type: 'square', volume: 0.08 }, // C5
+    { freq: 392.00, duration: 0.2, type: 'square', volume: 0.08 }, // G4
+    { freq: 329.63, duration: 0.2, type: 'square', volume: 0.08 }, // E4
+    { freq: 440.00, duration: 0.4, type: 'square', volume: 0.08 }, // A4
+    { freq: 349.23, duration: 0.4, type: 'square', volume: 0.08 }, // F4
+    { freq: 293.66, duration: 0.2, type: 'square', volume: 0.08 }, // D4
+    { freq: 392.00, duration: 0.2, type: 'square', volume: 0.08 }, // G4
   ],
   industrialTheme: [
-    // Mechanical / Bass heavy
-    { freq: 110.00, duration: 0.15, type: 'sawtooth', volume: 0.08 }, // A2
-    { freq: 110.00, duration: 0.15, type: 'sawtooth', volume: 0.08 }, // A2
-    { freq: 146.83, duration: 0.15, type: 'square', volume: 0.06 },   // D3
-    { freq: 110.00, duration: 0.15, type: 'sawtooth', volume: 0.08 }, // A2
-    { freq: 130.81, duration: 0.3, type: 'sawtooth', volume: 0.08 },  // C3
-    { freq: 82.41, duration: 0.3, type: 'sawtooth', volume: 0.09 },   // E2
+    // Mechanical / Bass heavy - Minor key
+    { freq: 110.00, duration: 0.15, type: 'sawtooth', volume: 0.1 }, // A2
+    { freq: 110.00, duration: 0.15, type: 'sawtooth', volume: 0.1 }, // A2
+    { freq: 0,      duration: 0.1,  type: 'sawtooth', volume: 0 },   // Rest
+    { freq: 146.83, duration: 0.2, type: 'square', volume: 0.08 },   // D3
+    { freq: 110.00, duration: 0.2, type: 'sawtooth', volume: 0.1 }, // A2
+    { freq: 82.41, duration: 0.4, type: 'sawtooth', volume: 0.12 }, // E2
+    { freq: 123.47, duration: 0.2, type: 'square', volume: 0.08 },   // B2
+    { freq: 130.81, duration: 0.2, type: 'square', volume: 0.08 },   // C3
   ],
   etherealTheme: [
-    // Space / Mysterious (High notes)
-    { freq: 659.25, duration: 0.4, type: 'sine', volume: 0.08 }, // E5
-    { freq: 587.33, duration: 0.4, type: 'sine', volume: 0.08 }, // D5
-    { freq: 523.25, duration: 0.4, type: 'sine', volume: 0.08 }, // C5
-    { freq: 783.99, duration: 0.4, type: 'sine', volume: 0.08 }, // G5
-    { freq: 1046.50, duration: 0.8, type: 'sine', volume: 0.06 }, // C6
+    // Space / High pitch - Slow
+    { freq: 659.25, duration: 0.6, type: 'sine', volume: 0.08 }, // E5
+    { freq: 587.33, duration: 0.6, type: 'sine', volume: 0.08 }, // D5
+    { freq: 523.25, duration: 0.6, type: 'sine', volume: 0.08 }, // C5
+    { freq: 783.99, duration: 0.6, type: 'sine', volume: 0.08 }, // G5
+    { freq: 1046.50, duration: 0.6, type: 'sine', volume: 0.08 }, // C6
+    { freq: 0, duration: 0.2, type: 'sine', volume: 0 },
+    { freq: 1318.51, duration: 0.8, type: 'sine', volume: 0.06 }, // E6
   ],
   bossTheme: [
       // Intense / Menacing
@@ -188,7 +194,11 @@ export function playMusicLoop(name: string) {
     if (!soundsLoaded || !audioContext) return;
     stopMusic(); 
 
-    const track = music[name];
+    // Handle legacy call or fallback
+    let trackName = name;
+    if(name === 'standardTheme') trackName = 'adventureTheme';
+    
+    const track = music[trackName];
     if (!track) return;
 
     let noteIndex = 0;

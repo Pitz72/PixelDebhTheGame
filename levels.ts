@@ -5,14 +5,14 @@ import { GAME_WIDTH, GAME_HEIGHT, BOSS_INITIAL_HP } from './constants';
 const GOAL_WIDTH = 90;
 const GOAL_HEIGHT = 150;
 
-// --- LEVEL 1: The Beginning ---
-// Extended to 4000px with split paths.
+// --- LEVEL 1: Neon Outskirts ---
+// Extended to 4500px with split paths.
 const level1: LevelData = {
     name: "Level 1: Neon Outskirts",
     musicTheme: 'adventure',
     playerStart: { x: 100, y: GAME_HEIGHT - 120 },
     platforms: [
-        { x: 0, y: GAME_HEIGHT - 40, width: 4000, height: 40 }, // Floor
+        { x: 0, y: GAME_HEIGHT - 40, width: 4500, height: 40 }, // Floor
         
         // Intro jumps
         { x: 300, y: GAME_HEIGHT - 200, width: 200, height: 30 },
@@ -30,10 +30,11 @@ const level1: LevelData = {
         // Bridge section
         { x: 2200, y: GAME_HEIGHT - 450, width: 600, height: 30 },
         
-        // Stairs to finish
-        { x: 3000, y: GAME_HEIGHT - 250, width: 200, height: 30 },
-        { x: 3300, y: GAME_HEIGHT - 400, width: 200, height: 30 },
-        { x: 3600, y: GAME_HEIGHT - 200, width: 400, height: 30 },
+        // New Extended Section
+        { x: 2900, y: GAME_HEIGHT - 300, width: 200, height: 30 },
+        { x: 3200, y: GAME_HEIGHT - 450, width: 200, height: 30 },
+        { x: 3500, y: GAME_HEIGHT - 600, width: 400, height: 30 },
+        { x: 4000, y: GAME_HEIGHT - 200, width: 400, height: 30 },
     ],
     items: [
         { type: 'joystick', x: 350, y: GAME_HEIGHT - 270, width: 50, height: 50 },
@@ -41,7 +42,8 @@ const level1: LevelData = {
         { type: 'cartridge', x: 1900, y: GAME_HEIGHT - 720, width: 50, height: 50 }, // High platform reward
         { type: 'shield', x: 1500, y: GAME_HEIGHT - 420, width: 50, height: 50 },
         { type: 'super-throw', x: 2500, y: GAME_HEIGHT - 520, width: 50, height: 50 },
-        { type: 'joystick', x: 3400, y: GAME_HEIGHT - 470, width: 50, height: 50 },
+        { type: 'joystick', x: 3600, y: GAME_HEIGHT - 670, width: 50, height: 50 }, // Extended reward
+        { type: 'floppy', x: 4100, y: GAME_HEIGHT - 270, width: 50, height: 50 },
     ],
     enemies: [
         { type: 'base', x: 400, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 400, originalY: GAME_HEIGHT - 80 },
@@ -49,9 +51,10 @@ const level1: LevelData = {
         { type: 'base', x: 1000, y: GAME_HEIGHT - 270, width: 50, height: 50, originalX: 1000, originalY: GAME_HEIGHT - 270 }, // Lower path enemy
         { type: 'base', x: 2300, y: GAME_HEIGHT - 520, width: 50, height: 50, originalX: 2300, originalY: GAME_HEIGHT - 520 },
         { type: 'base', x: 2600, y: GAME_HEIGHT - 520, width: 50, height: 50, originalX: 2600, originalY: GAME_HEIGHT - 520 },
-        { type: 'base', x: 3700, y: GAME_HEIGHT - 270, width: 50, height: 50, originalX: 3700, originalY: GAME_HEIGHT - 270 },
+        { type: 'base', x: 3300, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 3300, originalY: GAME_HEIGHT - 80 },
+        { type: 'base', x: 3700, y: GAME_HEIGHT - 650, width: 50, height: 50, originalX: 3700, originalY: GAME_HEIGHT - 650 },
     ],
-    goal: { x: 3900, y: GAME_HEIGHT - 40 - GOAL_HEIGHT, width: GOAL_WIDTH, height: GOAL_HEIGHT },
+    goal: { x: 4350, y: GAME_HEIGHT - 40 - GOAL_HEIGHT, width: GOAL_WIDTH, height: GOAL_HEIGHT },
 };
 
 // --- LEVEL 2: Circuit City ---
@@ -60,7 +63,7 @@ const level2: LevelData = {
     musicTheme: 'adventure',
     playerStart: { x: 100, y: GAME_HEIGHT - 120 },
     platforms: [
-        { x: 0, y: GAME_HEIGHT - 40, width: 4200, height: 40 }, // Floor
+        { x: 0, y: GAME_HEIGHT - 40, width: 4800, height: 40 }, // Extended Floor
         
         { x: 400, y: GAME_HEIGHT - 200, width: 200, height: 30 },
         { x: 700, y: GAME_HEIGHT - 350, width: 200, height: 30 },
@@ -75,16 +78,18 @@ const level2: LevelData = {
         { x: 2300, y: GAME_HEIGHT - 400, width: 800, height: 30 },
         { x: 2500, y: GAME_HEIGHT - 700, width: 400, height: 30 },
         
-        // End challenge
-        { x: 3200, y: GAME_HEIGHT - 250, width: 200, height: 30 },
-        { x: 3500, y: GAME_HEIGHT - 400, width: 200, height: 30 },
+        // Extended Challenge
+        { x: 3200, y: GAME_HEIGHT - 250, width: 300, height: 30 },
+        { x: 3600, y: GAME_HEIGHT - 450, width: 300, height: 30 },
+        { x: 4000, y: GAME_HEIGHT - 650, width: 300, height: 30 },
     ],
     items: [
         { type: 'joystick', x: 450, y: GAME_HEIGHT - 270, width: 50, height: 50 },
         { type: 'floppy', x: 1100, y: GAME_HEIGHT - 570, width: 50, height: 50 },
         { type: 'cartridge', x: 2600, y: GAME_HEIGHT - 770, width: 50, height: 50 },
         { type: 'speed-boost', x: 2400, y: GAME_HEIGHT - 470, width: 50, height: 50 },
-        { type: 'shield', x: 3550, y: GAME_HEIGHT - 470, width: 50, height: 50 },
+        { type: 'shield', x: 3700, y: GAME_HEIGHT - 520, width: 50, height: 50 },
+        { type: 'joystick', x: 4100, y: GAME_HEIGHT - 720, width: 50, height: 50 },
     ],
     enemies: [
         { type: 'base', x: 750, y: GAME_HEIGHT - 420, width: 50, height: 50, originalX: 750, originalY: GAME_HEIGHT - 420 },
@@ -92,9 +97,10 @@ const level2: LevelData = {
         { type: 'base', x: 2500, y: GAME_HEIGHT - 470, width: 50, height: 50, originalX: 2500, originalY: GAME_HEIGHT - 470 },
         { type: 'base', x: 2800, y: GAME_HEIGHT - 470, width: 50, height: 50, originalX: 2800, originalY: GAME_HEIGHT - 470 },
         { type: 'base', x: 2700, y: GAME_HEIGHT - 770, width: 50, height: 50, originalX: 2700, originalY: GAME_HEIGHT - 770 },
-        { type: 'base', x: 3800, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 3800, originalY: GAME_HEIGHT - 80 },
+        { type: 'base', x: 3700, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 3700, originalY: GAME_HEIGHT - 80 },
+        { type: 'base', x: 4100, y: GAME_HEIGHT - 720, width: 50, height: 50, originalX: 4100, originalY: GAME_HEIGHT - 720 },
     ],
-    goal: { x: 4100, y: GAME_HEIGHT - 40 - GOAL_HEIGHT, width: GOAL_WIDTH, height: GOAL_HEIGHT },
+    goal: { x: 4600, y: GAME_HEIGHT - 40 - GOAL_HEIGHT, width: GOAL_WIDTH, height: GOAL_HEIGHT },
 };
 
 // --- LEVEL 3: Hoppy Hills ---

@@ -1,3 +1,4 @@
+
 # PixelDebh: Retro-Rescue!
 
 ![Gameplay Screenshot](gameplay.png) <!-- I can't add an image, but this is a good placeholder -->
@@ -10,12 +11,15 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 
 -   **Capture:** Get close to an enemy and press the capture button.
 -   **Launch:** While holding a captured enemy, press the button again to launch it in the direction you're facing.
+-   **Double Jump:** Press jump again in mid-air to reach higher platforms!
 -   **Stun Enemies:** Jump and hit a platform from below to stun any enemies walking on top of it, giving you a strategic advantage!
 -   **Goal:** To complete a level, you must first collect all the retro-themed items (joysticks, floppy disks, cartridges). Once all items are collected, a goal door at the far right of the level becomes active. Reach the door to advance!
 -   **Boss Battle:** Face off against the mighty Cyclops Frog! In an epic showdown, the boss now floats with unpredictable movement and attacks by launching spinning CD-ROMs at you. Use your special shooting ability (`Left Shift`) to win this dynamic encounter. You can aim in 8 directions by holding the movement keys while you shoot, giving you full control to target the floating menace.
 
 ## Features
 
+-   **New: Synthwave Aesthetics:** A brand new intro sequence featuring a neon grid horizon and a retro sun, plus enhanced sprite details like a tactical visor and scarf for the hero.
+-   **New: Oracle AI:** Stuck? Pause the game and consult the "Oracle of the Bitverse" (powered by Gemini API) for cryptic, context-aware hints based on your current level, score, and lives.
 -   **Structured Game Progression:** A full adventure across 13 levels, with a carefully designed difficulty curve. Each standard level is progressively longer than the last, mixing horizontal and vertical platforming challenges.
 -   **Gradual Enemy Introduction:** New enemy types are introduced gradually, giving players time to learn their patterns:
     -   **Globby (Base):** The standard ground enemy.
@@ -25,7 +29,7 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
     -   **Ghosty (Phaser):** A persistent threat that slowly follows the player, passing through walls and platforms.
 -   **Arcade High Score Leaderboard:** Compete for the top score! If you make it into the top 5, the game features a fully immersive highscore entry screen where you select your initials by scrolling through the alphabet, just like on a real arcade cabinet. The leaderboard is pre-filled with default scores.
 -   **Arcade-Style Attract Mode:** The title screen simulates a classic arcade cabinet, automatically and seamlessly alternating between the "Character Parade" intro and the high score leaderboard. The player can press Enter on either screen to start the game. The chiptune theme plays continuously throughout, creating a fluid attract mode experience.
--   **Dynamic Background Music:** Each level features a dynamic chiptune soundtrack. A pleasant, upbeat theme accompanies standard levels, while a tense, ominous track plays during boss battles to heighten the drama.
+-   **Dynamic Background Music:** Three distinct musical themes (Adventure, Industrial, Ethereal) that change as you progress through the world, plus a tense boss theme.
 -   **Dynamic Arcade-Style Intro:** A vibrant, animated intro sequence to welcome players.
 -   **Epic Boss Battles:** Reworked boss battles with a floating, unpredictable boss that throws targeted projectiles.
 -   Classic 2D platforming action with a consistent pixel-perfect look
@@ -33,7 +37,7 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 -   Immersive parallax background for a sense of depth
 -   Special power-ups: Speed Boost, Shield, and the powerful Super Throw!
 -   Programmatically generated chiptune sound effects, jingles, and music
--   Enhanced visual feedback (screen flash, fade-to-black transitions)
+-   Enhanced visual feedback (screen flash, fade-to-black transitions, particle effects)
 -   Dynamic extra life system that rewards high scores (up to a maximum of 3 lives)
 -   Score tracking and a lives system
 -   Enlarged HUD with level names for better readability
@@ -42,9 +46,10 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 
 -   **Move Left:** `A` or `Left Arrow`
 -   **Move Right:** `D` or `Right Arrow`
--   **Jump:** `Spacebar`
+-   **Jump:** `Spacebar` (Press twice for Double Jump)
 -   **Capture / Launch:** `C` or `X`
 -   **Shoot (Boss Battle Only):** `Left Shift` (Hold movement keys to aim in 8 directions)
+-   **Pause / Oracle:** `ESC`
 
 ## Developer Features
 
@@ -55,7 +60,7 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 -   **React:** For the component-based UI and game structure.
 -   **TypeScript:** For strong typing and code quality.
 -   **TailwindCSS:** For styling the UI components.
--   **Gemini API:** To assist in development and asset creation.
+-   **Gemini API:** To assist in development, asset creation, and the in-game Oracle feature.
 
 ---
 *This project is a demonstration of building a simple game using web technologies.*
