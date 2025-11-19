@@ -222,6 +222,13 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
           setOracleMessage(null); // Reset oracle on toggle
           return;
       }
+      
+      // DEBUG CHEAT: PRESS '9' TO JUMP TO BOSS 3
+      if (e.key === '9') {
+        soundService.playSound('powerup');
+        setCurrentLevelIndex(10); // 10 is the index for CapocciaNelBuio
+        return;
+      }
 
       if (isPaused) return;
 
