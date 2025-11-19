@@ -1,6 +1,6 @@
 
 import { LevelData } from './types';
-import { GAME_WIDTH, GAME_HEIGHT, BOSS_INITIAL_HP } from './constants';
+import { GAME_WIDTH, GAME_HEIGHT, BOSS_INITIAL_HP, BOSS_2_HP, BOSS_3_HP } from './constants';
 
 const GOAL_WIDTH = 90;
 const GOAL_HEIGHT = 150;
@@ -150,6 +150,7 @@ const bossLevel1: LevelData = {
     items: [],
     enemies: [],
     boss: {
+      type: 'frog',
       x: (GAME_WIDTH / 2) - 160,
       y: GAME_HEIGHT / 2 - 200, 
       width: 320,
@@ -233,6 +234,26 @@ const level6: LevelData = {
     goal: { x: 5900, y: GAME_HEIGHT - 40 - GOAL_HEIGHT, width: GOAL_WIDTH, height: GOAL_HEIGHT },
 };
 
+// --- BOSS 2: LeGallineNellOcchi ---
+const bossLevel2: LevelData = {
+    name: "BOSS: LeGallineNellOcchi",
+    musicTheme: 'boss',
+    playerStart: { x: 100, y: GAME_HEIGHT - 120 },
+    platforms: [
+      { x: 0, y: GAME_HEIGHT - 40, width: GAME_WIDTH, height: 40 },
+    ],
+    items: [],
+    enemies: [],
+    boss: {
+      type: 'chickenEye',
+      x: (GAME_WIDTH / 2) - 150,
+      y: GAME_HEIGHT / 2 - 200, 
+      width: 300,
+      height: 300,
+      maxHp: BOSS_2_HP,
+    },
+};
+
 // --- LEVEL 7: The Gauntlet ---
 const level7: LevelData = {
     name: "Level 7: The Gauntlet",
@@ -264,12 +285,9 @@ const level7: LevelData = {
     goal: { x: 7400, y: GAME_HEIGHT - 40 - GOAL_HEIGHT, width: GOAL_WIDTH, height: GOAL_HEIGHT },
 };
 
-// --- BOSS 2 ---
-const bossLevel2: LevelData = { ...bossLevel1, name: "BOSS: Cyclops Frog II", musicTheme: 'boss'};
-
-// --- LEVEL 9: The Ascent ---
-const level9: LevelData = {
-    name: "Level 9: The Ascent",
+// --- LEVEL 8: The Ascent (Previously Level 9) ---
+const level8: LevelData = {
+    name: "Level 8: The Ascent",
     musicTheme: 'ethereal',
     playerStart: { x: 50, y: GAME_HEIGHT - 120 },
     platforms: [
@@ -299,9 +317,9 @@ const level9: LevelData = {
     goal: { x: 8900, y: GAME_HEIGHT - 40 - GOAL_HEIGHT, width: GOAL_WIDTH, height: GOAL_HEIGHT },
 };
 
-// --- LEVEL 10: The Drop ---
-const level10: LevelData = {
-    name: "Level 10: The Drop",
+// --- LEVEL 9: The Drop (Previously Level 10) ---
+const level9: LevelData = {
+    name: "Level 9: The Drop",
     musicTheme: 'ethereal',
     playerStart: { x: 100, y: 100 },
     platforms: [
@@ -327,33 +345,22 @@ const level10: LevelData = {
     goal: { x: 10900, y: GAME_HEIGHT - 40 - GOAL_HEIGHT, width: GOAL_WIDTH, height: GOAL_HEIGHT },
 };
 
-// --- BOSS 3 ---
-const bossLevel3: LevelData = { ...bossLevel1, name: "BOSS: Final Frog", musicTheme: 'boss'};
-
-// --- LEVEL 12: The Factory ---
-const level12: LevelData = {
-    name: "Level 12: The Factory",
-    musicTheme: 'industrial',
-    playerStart: { x: 100, y: GAME_HEIGHT - 120 },
-    platforms: [
-        { x: 0, y: GAME_HEIGHT - 40, width: 13500, height: 40 },
-        { x: 500, y: GAME_HEIGHT - 200, width: 1000, height: 30 },
-        { x: 1800, y: GAME_HEIGHT - 350, width: 1000, height: 30 },
-        { x: 3100, y: GAME_HEIGHT - 500, width: 1000, height: 30 },
-        { x: 4400, y: GAME_HEIGHT - 650, width: 1000, height: 30 },
-        // Conveyor belts (visual distinction would be needed in component)
-        { x: 6000, y: GAME_HEIGHT - 300, width: 1500, height: 30 },
-        { x: 8000, y: GAME_HEIGHT - 500, width: 1500, height: 30 },
-    ],
+// --- BOSS 3: CapocciaNelBuio ---
+const bossLevel3: LevelData = {
+    name: "BOSS: CapocciaNelBuio",
+    musicTheme: 'boss',
+    playerStart: { x: GAME_WIDTH / 2, y: GAME_HEIGHT - 200 },
+    platforms: [], // NO PLATFORMS - ZERO G
     items: [],
-    enemies: [
-        { type: 'base', x: 800, y: GAME_HEIGHT - 240, width: 50, height: 50, originalX: 800, originalY: GAME_HEIGHT - 240 },
-        { type: 'jumper', x: 2200, y: GAME_HEIGHT - 390, width: 50, height: 50, originalX: 2200, originalY: GAME_HEIGHT - 390 },
-        { type: 'bomber', x: 3500, y: GAME_HEIGHT - 540, width: 50, height: 50, originalX: 3500, originalY: GAME_HEIGHT - 540 },
-        { type: 'phaser', x: 9000, y: 100, width: 50, height: 50, originalX: 9000, originalY: 100 },
-        { type: 'flyer', x: 11000, y: 300, width: 60, height: 40, originalX: 11000, originalY: 300 },
-    ],
-    goal: { x: 13400, y: GAME_HEIGHT - 40 - GOAL_HEIGHT, width: GOAL_WIDTH, height: GOAL_HEIGHT },
+    enemies: [],
+    boss: {
+      type: 'shadowHead',
+      x: (GAME_WIDTH / 2) - 150,
+      y: GAME_HEIGHT / 2 - 200, 
+      width: 300,
+      height: 300,
+      maxHp: BOSS_3_HP,
+    },
 };
 
 // --- FINAL LEVEL: The Labyrinth ---
@@ -389,11 +396,10 @@ export const levels: LevelData[] = [
     bossLevel1,
     level5,
     level6,
-    level7,
     bossLevel2,
+    level7,
+    level8,
     level9,
-    level10,
-    level12,
     bossLevel3,
     finalLevel,
 ];

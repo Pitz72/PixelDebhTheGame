@@ -7,14 +7,16 @@ import Platform from './components/Platform';
 import Hud from './components/Hud';
 import Background from './components/Background';
 import CyclopsFrogBoss from './components/FrogBoss';
-import { ItemSprite, PlayerProjectileSprite, CDROMSprite, BombSprite, GoalSprite } from './services/assetService';
+import ChickenEyeBoss from './components/ChickenEyeBoss';
+import ShadowHeadBoss from './components/ShadowHeadBoss';
+import { ItemSprite, PlayerProjectileSprite, CDROMSprite, BombSprite, GoalSprite, EggSprite, FireballSprite } from './services/assetService';
 import * as soundService from './services/soundService';
 import * as aiService from './services/aiService';
 import { levels } from './levels';
 import {
   GAME_WIDTH, GAME_HEIGHT, GRAVITY, PLAYER_SPEED, PLAYER_FAST_SPEED, JUMP_FORCE, PLAYER_INVINCIBILITY_DURATION,
   ENEMY_SPEED, FLYER_SPEED, FLYER_VERTICAL_SPEED, FLYER_PATROL_RANGE, ENEMY_JUMP_FORCE, ENEMY_JUMP_COOLDOWN, LAUNCH_FORCE, POWER_UP_DURATION, SUPER_THROW_EXPLOSION_RADIUS,
-  COLLECTIBLE_POINTS, ENEMY_DEFEAT_POINTS, INITIAL_LIVES, EXTRA_LIFE_SCORE_START, EXTRA_LIFE_SCORE_MULTIPLIER, PLAYER_WIDTH, PLAYER_HEIGHT, BOSS_INITIAL_VX, BOSS_INITIAL_VY, PLAYER_PROJECTILE_SPEED, PLAYER_PROJECTILE_WIDTH, PLAYER_PROJECTILE_HEIGHT, PLAYER_SHOOT_COOLDOWN, BOSS_PROJECTILE_SPEED, BOSS_PROJECTILE_WIDTH, BOSS_PROJECTILE_HEIGHT, PHASER_SPEED, BOMBER_ATTACK_COOLDOWN, BOMB_WIDTH, BOMB_HEIGHT, BOMB_INITIAL_VY, BOMB_HORIZONTAL_SPEED_MULTIPLIER, MAX_JUMPS
+  COLLECTIBLE_POINTS, ENEMY_DEFEAT_POINTS, INITIAL_LIVES, EXTRA_LIFE_SCORE_START, EXTRA_LIFE_SCORE_MULTIPLIER, PLAYER_WIDTH, PLAYER_HEIGHT, BOSS_INITIAL_VX, BOSS_INITIAL_VY, PLAYER_PROJECTILE_SPEED, PLAYER_PROJECTILE_WIDTH, PLAYER_PROJECTILE_HEIGHT, PLAYER_SHOOT_COOLDOWN, BOSS_PROJECTILE_SPEED, BOSS_PROJECTILE_WIDTH, BOSS_PROJECTILE_HEIGHT, PHASER_SPEED, BOMBER_ATTACK_COOLDOWN, BOMB_WIDTH, BOMB_HEIGHT, BOMB_INITIAL_VY, BOMB_HORIZONTAL_SPEED_MULTIPLIER, MAX_JUMPS, EGG_PROJECTILE_WIDTH, EGG_PROJECTILE_HEIGHT, FIREBALL_SPEED, FIREBALL_WIDTH, FIREBALL_HEIGHT
 } from './constants';
 
 const areRectsColliding = (rect1: {x: number, y: number, width: number, height: number}, rect2: {x: number, y: number, width: number, height: number}) => {
@@ -159,6 +161,11 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
             isHit: false,
             hitTimer: 0,
             isThrowing: false,
+            movementTimer: 0,
+            // ShadowHead initial state
+            opacity: levelData.boss.type === 'shadowHead' ? 0 : 1,
+            visibilityState: 'hidden',
+            teleportTimer: 2000
         });
         setEnemies([]); // No initial enemies in boss room
     } else {
@@ -227,7 +234,9 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
       }
       
       // Jumping Logic (Including Double Jump)
-      if (e.key === ' ' && gameStateRef.current === 'playing') {
+      // DISABLE JUMP IF SHADOW HEAD BOSS (Zero G)
+      const isZeroG = boss && boss.type === 'shadowHead';
+      if (e.key === ' ' && gameStateRef.current === 'playing' && !isZeroG) {
           setPlayer(p => {
               if (p.isOnGround || p.jumpCount < MAX_JUMPS) {
                   soundService.playSound('jump');
@@ -362,13 +371,14 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     setCameraX(cameraXRef.current);
 
     let nextPlayer = { ...player };
+    const isZeroG = boss && boss.type === 'shadowHead';
 
     // 1. Update Particles
     setParticles(prev => prev.map(p => ({
         ...p,
         x: p.x + p.vx,
         y: p.y + p.vy,
-        vy: p.vy + 0.5, // Gravity
+        vy: p.vy + (isZeroG ? 0 : 0.5), // Zero G affects particles too? Maybe not, keeps them floaty
         life: p.life - 0.02
     })).filter(p => p.life > 0));
 
@@ -378,7 +388,15 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     else if (keysPressed['d'] || keysPressed['arrowright']) { nextPlayer.vx = currentSpeed; nextPlayer.direction = 'right'; } 
     else { nextPlayer.vx = 0; }
     
-    nextPlayer.vy += GRAVITY;
+    if (isZeroG) {
+         // Zero-G Vertical Movement
+         if (keysPressed['w'] || keysPressed['arrowup']) { nextPlayer.vy = -currentSpeed; }
+         else if (keysPressed['s'] || keysPressed['arrowdown']) { nextPlayer.vy = currentSpeed; }
+         else { nextPlayer.vy = 0; }
+    } else {
+         nextPlayer.vy += GRAVITY;
+    }
+    
     nextPlayer.x += nextPlayer.vx;
     nextPlayer.y += nextPlayer.vy;
     nextPlayer.isOnGround = false;
@@ -397,45 +415,48 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
 
     if (nextPlayer.x < 0) nextPlayer.x = 0;
     if (nextPlayer.x + nextPlayer.width > levelWidth) nextPlayer.x = levelWidth - nextPlayer.width;
+    if (isZeroG) {
+         if (nextPlayer.y < 0) nextPlayer.y = 0;
+         if (nextPlayer.y + nextPlayer.height > GAME_HEIGHT) nextPlayer.y = GAME_HEIGHT - nextPlayer.height;
+    }
 
-    // 3. Player-Platform Collision
-    platforms.forEach(platform => {
-      const isHorizontallyAligned = nextPlayer.x + nextPlayer.width > platform.x && nextPlayer.x < platform.x + platform.width;
-      
-      // Collision from top (landing)
-      if (player.y + player.height <= platform.y && nextPlayer.y + nextPlayer.height >= platform.y && isHorizontallyAligned) {
-        nextPlayer.y = platform.y - nextPlayer.height;
-        nextPlayer.vy = 0;
-        nextPlayer.isOnGround = true;
-        nextPlayer.jumpCount = 0; // Reset double jump
-      }
-      
-      // Collision from bottom (hitting head)
-      if (player.y >= platform.y + platform.height && nextPlayer.y < platform.y + platform.height && isHorizontallyAligned) {
-        nextPlayer.vy = 0;
-        nextPlayer.y = platform.y + platform.height;
-        soundService.playSound('hit');
-        createParticles(nextPlayer.x + nextPlayer.width/2, nextPlayer.y, '#A8ADBD', 3);
+    // 3. Player-Platform Collision (Skip if Zero G)
+    if (!isZeroG) {
+        platforms.forEach(platform => {
+          const isHorizontallyAligned = nextPlayer.x + nextPlayer.width > platform.x && nextPlayer.x < platform.x + platform.width;
+          
+          // Collision from top (landing)
+          if (player.y + player.height <= platform.y && nextPlayer.y + nextPlayer.height >= platform.y && isHorizontallyAligned) {
+            nextPlayer.y = platform.y - nextPlayer.height;
+            nextPlayer.vy = 0;
+            nextPlayer.isOnGround = true;
+            nextPlayer.jumpCount = 0; // Reset double jump
+          }
+          
+          // Collision from bottom (hitting head)
+          if (player.y >= platform.y + platform.height && nextPlayer.y < platform.y + platform.height && isHorizontallyAligned) {
+            nextPlayer.vy = 0;
+            nextPlayer.y = platform.y + platform.height;
+            soundService.playSound('hit');
+            createParticles(nextPlayer.x + nextPlayer.width/2, nextPlayer.y, '#A8ADBD', 3);
+    
+            // Check for enemies on top of the platform to stun
+            setEnemies(prevEnemies => prevEnemies.map(enemy => {
+                if (
+                    enemy.state === 'active' &&
+                    Math.abs((enemy.y + enemy.height) - platform.y) < 5 &&
+                    enemy.x + enemy.width > platform.x && enemy.x < platform.x + platform.width &&
+                    enemy.x + enemy.width > nextPlayer.x && enemy.x < nextPlayer.x + nextPlayer.width
+                ) {
+                    return { ...enemy, state: 'stunned', stunTimer: 3000, vx: 0 };
+                }
+                return enemy;
+            }));
+          }
+        });
+    }
 
-        // Check for enemies on top of the platform to stun
-        setEnemies(prevEnemies => prevEnemies.map(enemy => {
-            if (
-                enemy.state === 'active' &&
-                // Is the enemy on top of this platform?
-                Math.abs((enemy.y + enemy.height) - platform.y) < 5 &&
-                // Is the enemy horizontally aligned with the platform?
-                enemy.x + enemy.width > platform.x && enemy.x < platform.x + platform.width &&
-                // Is the enemy roughly above the player?
-                enemy.x + enemy.width > nextPlayer.x && enemy.x < nextPlayer.x + nextPlayer.width
-            ) {
-                return { ...enemy, state: 'stunned', stunTimer: 3000, vx: 0 };
-            }
-            return enemy;
-        }));
-      }
-    });
-
-    if (nextPlayer.y > GAME_HEIGHT) {
+    if (nextPlayer.y > GAME_HEIGHT && !isZeroG) {
         setDamageFlash(true);
         setTimeout(() => setDamageFlash(false), 200);
         soundService.playSound('damage');
@@ -457,48 +478,162 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
             if (!prevBoss) return null;
             let nextBoss = {...prevBoss, isThrowing: false};
 
-            // Movement
-            nextBoss.x += nextBoss.vx;
-            nextBoss.y += nextBoss.vy;
+            if (nextBoss.type === 'frog') {
+                // FROG BEHAVIOR (Random Float)
+                nextBoss.x += nextBoss.vx;
+                nextBoss.y += nextBoss.vy;
 
-            // Boundary checks and direction change
-            if (nextBoss.x <= 0 || nextBoss.x + nextBoss.width >= GAME_WIDTH) {
-                nextBoss.vx *= -1;
+                if (nextBoss.x <= 0 || nextBoss.x + nextBoss.width >= GAME_WIDTH) {
+                    nextBoss.vx *= -1;
+                }
+                if (nextBoss.y <= 50 || nextBoss.y + nextBoss.height >= GAME_HEIGHT - 200) {
+                    nextBoss.vy *= -1;
+                }
+                if (Math.random() < 0.005) nextBoss.vx *= -1;
+                if (Math.random() < 0.01) nextBoss.vy *= -1;
+
+                 // Attack (Frog)
+                nextBoss.attackCooldown -= deltaTime;
+                if (nextBoss.attackCooldown <= 0) {
+                    nextBoss.attackCooldown = 2000 + Math.random() * 1500;
+                    nextBoss.isThrowing = true;
+                    soundService.playSound('bossShoot');
+                    
+                    const dx = player.x - (nextBoss.x + nextBoss.width / 2);
+                    const dy = player.y - (nextBoss.y + nextBoss.height / 2);
+                    const distance = Math.sqrt(dx*dx + dy*dy) || 1;
+                    const projectileSpeed = BOSS_PROJECTILE_SPEED;
+
+                    setProjectiles(prev => [
+                        ...prev,
+                        {
+                            id: Date.now(), x: nextBoss.x + nextBoss.width / 2, y: nextBoss.y + nextBoss.height / 2,
+                            width: BOSS_PROJECTILE_WIDTH, height: BOSS_PROJECTILE_HEIGHT, 
+                            vx: (dx / distance) * projectileSpeed, 
+                            vy: (dy / distance) * projectileSpeed,
+                            isBomb: false,
+                        }
+                    ]);
+                }
+
+            } else if (nextBoss.type === 'chickenEye') {
+                // CHICKEN EYE BEHAVIOR (Figure-8)
+                nextBoss.movementTimer += deltaTime * 0.001; // seconds
+                
+                // Figure-8 Logic: x = A * sin(t), y = B * sin(2t)
+                const t = nextBoss.movementTimer;
+                const centerX = (GAME_WIDTH - nextBoss.width) / 2;
+                const centerY = (GAME_HEIGHT / 2) - 150;
+                const amplitudeX = 400;
+                const amplitudeY = 150;
+
+                nextBoss.x = centerX + Math.sin(t) * amplitudeX;
+                nextBoss.y = centerY + Math.sin(2 * t) * amplitudeY;
+
+                 // Attack (Chicken - Burst Eggs)
+                 nextBoss.attackCooldown -= deltaTime;
+                 if (nextBoss.attackCooldown <= 0) {
+                    nextBoss.attackCooldown = 3000 + Math.random() * 1000;
+                    soundService.playSound('bossShoot');
+                    
+                    const dx = player.x - (nextBoss.x + nextBoss.width / 2);
+                    const dy = player.y - (nextBoss.y + nextBoss.height / 2);
+                    const distance = Math.sqrt(dx*dx + dy*dy) || 1;
+                    const projectileSpeed = BOSS_PROJECTILE_SPEED * 1.2;
+
+                    // Burst of 4 eggs with slightly different angles
+                    const baseAngle = Math.atan2(dy, dx);
+                    const spread = 0.2; // Radians spread
+
+                    const newProjectiles = [];
+                    for (let i = -1.5; i <= 1.5; i+=1) {
+                        const angle = baseAngle + (i * spread);
+                        newProjectiles.push({
+                            id: Date.now() + i, 
+                            x: nextBoss.x + nextBoss.width / 2, 
+                            y: nextBoss.y + nextBoss.height / 2,
+                            width: EGG_PROJECTILE_WIDTH, 
+                            height: EGG_PROJECTILE_HEIGHT, 
+                            vx: Math.cos(angle) * projectileSpeed, 
+                            vy: Math.sin(angle) * projectileSpeed,
+                            isBomb: false,
+                            isEgg: true
+                        });
+                    }
+
+                    setProjectiles(prev => [...prev, ...newProjectiles]);
+                 }
+            } else if (nextBoss.type === 'shadowHead') {
+                // SHADOW HEAD BEHAVIOR
+                // State Machine: hidden -> fadingIn -> visible -> fadingOut -> hidden
+                if (!nextBoss.visibilityState) nextBoss.visibilityState = 'hidden';
+                if (nextBoss.opacity === undefined) nextBoss.opacity = 0;
+                if (nextBoss.teleportTimer === undefined) nextBoss.teleportTimer = 0;
+
+                const fadeSpeed = 0.02;
+
+                if (nextBoss.visibilityState === 'hidden') {
+                    nextBoss.opacity = 0;
+                    nextBoss.teleportTimer -= deltaTime;
+                    if (nextBoss.teleportTimer <= 0) {
+                        // Teleport
+                        nextBoss.x = Math.random() * (GAME_WIDTH - nextBoss.width);
+                        nextBoss.y = Math.random() * (GAME_HEIGHT - nextBoss.height - 100);
+                        nextBoss.visibilityState = 'fadingIn';
+                        soundService.playSound('powerup'); // Teleport sound
+                    }
+                } else if (nextBoss.visibilityState === 'fadingIn') {
+                    nextBoss.opacity += fadeSpeed;
+                    if (nextBoss.opacity >= 1) {
+                        nextBoss.opacity = 1;
+                        nextBoss.visibilityState = 'visible';
+                        nextBoss.attackCooldown = 500; // Attack soon after appearing
+                        nextBoss.teleportTimer = 3000; // Stay visible for 3 seconds
+                    }
+                } else if (nextBoss.visibilityState === 'visible') {
+                    nextBoss.teleportTimer -= deltaTime;
+                    if (nextBoss.teleportTimer <= 0) {
+                         nextBoss.visibilityState = 'fadingOut';
+                    }
+
+                    // Rapid Fire Attack
+                    nextBoss.attackCooldown -= deltaTime;
+                    if (nextBoss.attackCooldown <= 0) {
+                        nextBoss.attackCooldown = 200; // Very fast fire rate
+                        soundService.playSound('bossShoot');
+                        
+                        const dx = player.x - (nextBoss.x + nextBoss.width / 2);
+                        const dy = player.y - (nextBoss.y + nextBoss.height / 2);
+                        const distance = Math.sqrt(dx*dx + dy*dy) || 1;
+                        const projectileSpeed = FIREBALL_SPEED;
+
+                        setProjectiles(prev => [
+                            ...prev,
+                            {
+                                id: Date.now(), x: nextBoss.x + nextBoss.width / 2, y: nextBoss.y + nextBoss.height / 2,
+                                width: FIREBALL_WIDTH, height: FIREBALL_HEIGHT, 
+                                vx: (dx / distance) * projectileSpeed, 
+                                vy: (dy / distance) * projectileSpeed,
+                                isFireball: true,
+                            }
+                        ]);
+                    }
+
+                } else if (nextBoss.visibilityState === 'fadingOut') {
+                    nextBoss.opacity -= fadeSpeed;
+                    if (nextBoss.opacity <= 0) {
+                        nextBoss.opacity = 0;
+                        nextBoss.visibilityState = 'hidden';
+                        nextBoss.teleportTimer = 2000; // Stay hidden for 2s
+                    }
+                }
             }
-            if (nextBoss.y <= 50 || nextBoss.y + nextBoss.height >= GAME_HEIGHT - 200) {
-                nextBoss.vy *= -1;
-            }
-            if (Math.random() < 0.005) nextBoss.vx *= -1;
-            if (Math.random() < 0.01) nextBoss.vy *= -1;
 
             if (nextBoss.isHit) {
                 nextBoss.hitTimer -= deltaTime;
                 if (nextBoss.hitTimer <= 0) nextBoss.isHit = false;
             }
 
-            // Attack
-            nextBoss.attackCooldown -= deltaTime;
-            if (nextBoss.attackCooldown <= 0) {
-                nextBoss.attackCooldown = 2000 + Math.random() * 1500;
-                nextBoss.isThrowing = true;
-                soundService.playSound('bossShoot');
-                
-                const dx = player.x - (nextBoss.x + nextBoss.width / 2);
-                const dy = player.y - (nextBoss.y + nextBoss.height / 2);
-                const distance = Math.sqrt(dx*dx + dy*dy) || 1;
-                const projectileSpeed = BOSS_PROJECTILE_SPEED;
-
-                setProjectiles(prev => [
-                    ...prev,
-                    {
-                        id: Date.now(), x: nextBoss.x + nextBoss.width / 2, y: nextBoss.y + nextBoss.height / 2,
-                        width: BOSS_PROJECTILE_WIDTH, height: BOSS_PROJECTILE_HEIGHT, 
-                        vx: (dx / distance) * projectileSpeed, 
-                        vy: (dy / distance) * projectileSpeed,
-                        isBomb: false,
-                    }
-                ]);
-            }
             return nextBoss;
         });
     }
@@ -507,10 +642,12 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     setProjectiles(prev => prev.map(p => {
         let nextP = { ...p, x: p.x + p.vx, y: p.y + p.vy };
         if (p.isBomb) {
-            nextP.vy += GRAVITY;
+             nextP.vy += GRAVITY;
         }
+        // Eggs and Fireballs fly straight
         return nextP;
     }).filter(p => p.y < GAME_HEIGHT && p.y > -50 && p.x > -50 && p.x < levelWidth + 50));
+    
     setPlayerProjectiles(prev => prev.map(p => ({...p, x: p.x + p.vx, y: p.y + p.vy})).filter(p => p.x > -50 && p.x < levelWidth + 50 && p.y > -50 && p.y < GAME_HEIGHT + 50));
 
 
@@ -653,6 +790,9 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     // 6. Player Projectiles & Boss Collision
     if (boss && boss.hp > 0) {
         setPlayerProjectiles(prev => prev.filter(p => {
+            // For ShadowHead, collision only counts if opacity is high enough (visible)
+            if (boss.type === 'shadowHead' && (boss.opacity || 0) < 0.5) return true;
+
             if(areRectsColliding(p, boss)) {
                 soundService.playSound('bossHit');
                 createParticles(p.x, p.y, '#00FF00', 5);
@@ -741,12 +881,19 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
 
   const collectiblesLeft = items.filter(item => ['joystick', 'floppy', 'cartridge'].includes(item.type)).length;
   const levelName = levels[currentLevelIndex]?.name || `Level ${currentLevelIndex + 1}`;
+  const isShadowHeadBoss = boss && boss.type === 'shadowHead';
 
   return (
     <div className="w-full h-full relative overflow-hidden bg-black" style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}>
       {damageFlash && <div className="absolute inset-0 bg-red-600 bg-opacity-40 z-50 pointer-events-none"></div>}
       
-      <Background cameraX={cameraX} />
+      {/* Black Overlay for Boss 3 */}
+      {isShadowHeadBoss ? (
+          <div className="absolute inset-0 bg-black z-0"></div>
+      ) : (
+          <Background cameraX={cameraX} />
+      )}
+      
       <Hud score={score} lives={lives} level={currentLevelIndex + 1} levelName={levelName} collectiblesLeft={collectiblesLeft} activePowerUp={player.activePowerUp} boss={boss} isGodMode={isGodMode} />
 
       <div
@@ -766,10 +913,16 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
         ))}
         {player.width && <Player player={player} />}
         {enemies.map(e => <Enemy key={e.id} enemy={e} />)}
-        {boss && <CyclopsFrogBoss boss={boss} />}
+        
+        {/* Render appropriate boss component based on type */}
+        {boss && boss.type === 'frog' && <CyclopsFrogBoss boss={boss} />}
+        {boss && boss.type === 'chickenEye' && <ChickenEyeBoss boss={boss} />}
+        {boss && boss.type === 'shadowHead' && <ShadowHeadBoss boss={boss} />}
+
+
         {projectiles.map(p => (
             <div key={p.id} style={{ position: 'absolute', left: p.x, top: p.y, width: p.width, height: p.height }}>
-                {p.isBomb ? <BombSprite /> : <CDROMSprite />}
+                {p.isBomb ? <BombSprite /> : (p.isEgg ? <EggSprite /> : (p.isFireball ? <FireballSprite /> : <CDROMSprite />))}
             </div>
         ))}
         {playerProjectiles.map(p => (

@@ -50,6 +50,17 @@ export const BOSS_PROJECTILE_WIDTH = 35;
 export const BOSS_PROJECTILE_HEIGHT = 35;
 export const BOSS_PROJECTILE_SPEED = 8;
 
+// Boss 2 Specifics
+export const BOSS_2_HP = 45;
+export const EGG_PROJECTILE_WIDTH = 30;
+export const EGG_PROJECTILE_HEIGHT = 40;
+
+// Boss 3 Specifics (CapocciaNelBuio)
+export const BOSS_3_HP = 60;
+export const FIREBALL_WIDTH = 40;
+export const FIREBALL_HEIGHT = 40;
+export const FIREBALL_SPEED = 12;
+
 // Scoring
 export const COLLECTIBLE_POINTS = 100;
 export const ENEMY_DEFEAT_POINTS = 500;

@@ -51,18 +51,29 @@ export interface Goal extends GameObject {
   id: number;
 }
 
+export type BossType = 'frog' | 'chickenEye' | 'shadowHead';
+
 export interface Boss extends DynamicObject {
+  type: BossType;
   hp: number;
   maxHp: number;
   attackCooldown: number;
   isHit: boolean;
   hitTimer: number;
   isThrowing: boolean;
+  movementTimer: number; // Used for complex patterns (like figure-8)
+  
+  // ShadowHead Specifics
+  opacity?: number;
+  visibilityState?: 'fadingIn' | 'visible' | 'fadingOut' | 'hidden';
+  teleportTimer?: number;
 }
 
 export interface Projectile extends DynamicObject {
   id: number;
   isBomb?: boolean;
+  isEgg?: boolean;
+  isFireball?: boolean;
 }
 
 export interface PlayerProjectile extends DynamicObject {
@@ -98,7 +109,7 @@ export interface LevelData {
   enemies: Omit<Enemy, 'id' | 'state' | 'vx' | 'vy' | 'direction' | 'jumpCooldown' | 'stunTimer' | 'attackCooldown'>[];
   playerStart: { x: number; y: number };
   goal?: Omit<Goal, 'id'>;
-  boss?: Omit<Boss, 'hp' | 'attackCooldown' | 'isHit' | 'hitTimer' | 'vy' | 'isThrowing' | 'vx'>;
+  boss?: Omit<Boss, 'hp' | 'attackCooldown' | 'isHit' | 'hitTimer' | 'vy' | 'isThrowing' | 'vx' | 'movementTimer'>;
   enemySpawns?: Omit<EnemySpawnPoint, 'timer'>[];
 }
 

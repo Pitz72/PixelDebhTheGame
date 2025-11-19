@@ -14,11 +14,14 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 -   **Double Jump:** Press jump again in mid-air to reach higher platforms!
 -   **Stun Enemies:** Jump and hit a platform from below to stun any enemies walking on top of it, giving you a strategic advantage!
 -   **Goal:** To complete a level, you must first collect all the retro-themed items (joysticks, floppy disks, cartridges). Once all items are collected, a goal door at the far right of the level becomes active. Reach the door to advance!
--   **Boss Battle:** Face off against the mighty Cyclops Frog! In an epic showdown, the boss now floats with unpredictable movement and attacks by launching spinning CD-ROMs at you. Use your special shooting ability (`Left Shift`) to win this dynamic encounter. You can aim in 8 directions by holding the movement keys while you shoot, giving you full control to target the floating menace.
+-   **Boss Battles:**
+    -   **Cyclops Frog (Level 4):** Face off against a mighty floating frog! It moves unpredictably and launches spinning CD-ROMs. Use your special shooting ability (`Left Shift`) to win this dynamic encounter. You can aim in 8 directions by holding the movement keys.
+    -   **LeGallineNellOcchi (Level 8):** A surreal giant eye with a chicken for a pupil. It moves in a hypnotic figure-8 pattern and unleashes bursts of egg projectiles. Timing and precision are key to avoiding the spread attacks.
+    -   **CapocciaNelBuio (Level 12):** The ultimate challenge. Gravity is disabled, turning the game into a space shooter. This giant boss fades in and out of the darkness, teleporting around the arena and launching rapid-fireballs.
 
 ## Features
 
--   **New: Synthwave Aesthetics:** A brand new intro sequence featuring a neon grid horizon and a retro sun, plus enhanced sprite details like a tactical visor and scarf for the hero.
+-   **New: Custom Pixel Art Intro:** A unique, animated intro sequence featuring a custom pixel-art avatar of the protagonist surrounded by orbiting gaming gear (webcam, cat, phone), set against a synthwave grid horizon. The layout has been optimized to showcase the character art while keeping the "PRESS START" prompt clear and accessible.
 -   **New: Oracle AI:** Stuck? Pause the game and consult the "Oracle of the Bitverse" (powered by Gemini API) for cryptic, context-aware hints based on your current level, score, and lives.
 -   **Structured Game Progression:** A full adventure across 13 levels, with a carefully designed difficulty curve. Each standard level is progressively longer than the last, mixing horizontal and vertical platforming challenges.
 -   **Gradual Enemy Introduction:** New enemy types are introduced gradually, giving players time to learn their patterns:
@@ -29,9 +32,9 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
     -   **Ghosty (Phaser):** A persistent threat that slowly follows the player, passing through walls and platforms.
 -   **Arcade High Score Leaderboard:** Compete for the top score! If you make it into the top 5, the game features a fully immersive highscore entry screen where you select your initials by scrolling through the alphabet, just like on a real arcade cabinet. The leaderboard is pre-filled with default scores.
 -   **Arcade-Style Attract Mode:** The title screen simulates a classic arcade cabinet, automatically and seamlessly alternating between the "Character Parade" intro and the high score leaderboard. The player can press Enter on either screen to start the game. The chiptune theme plays continuously throughout, creating a fluid attract mode experience.
--   **Dynamic Background Music:** Three distinct musical themes (Adventure, Industrial, Ethereal) that change as you progress through the world, plus a tense boss theme.
+-   **Dynamic Background Music:** Three distinct musical themes (Adventure, Industrial, Ethereal) that change as you progress through the world, plus tense boss themes.
 -   **Dynamic Arcade-Style Intro:** A vibrant, animated intro sequence to welcome players.
--   **Epic Boss Battles:** Reworked boss battles with a floating, unpredictable boss that throws targeted projectiles.
+-   **Unique Boss Encounters:** Multiple bosses with distinct AI behaviors (Random Float vs Figure-8 vs Teleport/Fade) and attack patterns.
 -   Classic 2D platforming action with a consistent pixel-perfect look
 -   Vast, horizontally scrolling levels with a dynamic camera system
 -   Immersive parallax background for a sense of depth
@@ -48,7 +51,7 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 -   **Move Right:** `D` or `Right Arrow`
 -   **Jump:** `Spacebar` (Press twice for Double Jump)
 -   **Capture / Launch:** `C` or `X`
--   **Shoot (Boss Battle Only):** `Left Shift` (Hold movement keys to aim in 8 directions)
+-   **Shoot (Boss Battles Only):** `Left Shift` (Hold movement keys to aim in 8 directions)
 -   **Pause / Oracle:** `ESC`
 
 ## Developer Features
