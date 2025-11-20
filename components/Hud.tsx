@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { HeartSprite, ItemSprite } from '../services/assetService';
 import { ItemType, Boss } from '../types';
@@ -11,9 +12,17 @@ interface HudProps {
   activePowerUp: ItemType | null;
   boss?: Boss | null;
   isGodMode: boolean;
+  timeRemaining?: number | null;
 }
 
-const Hud: React.FC<HudProps> = ({ score, lives, level, levelName, collectiblesLeft, activePowerUp, boss, isGodMode }) => {
+const Hud: React.FC<HudProps> = ({ score, lives, level, levelName, collectiblesLeft, activePowerUp, boss, isGodMode, timeRemaining }) => {
+  
+  const formatTime = (seconds: number) => {
+      const m = Math.floor(seconds / 60);
+      const s = Math.floor(seconds % 60);
+      return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
   return (
     <>
       <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-start text-4xl z-10 bg-black bg-opacity-35" style={{ textShadow: '3px 3px #222' }}>
@@ -57,6 +66,16 @@ const Hud: React.FC<HudProps> = ({ score, lives, level, levelName, collectiblesL
             <p className="text-cyan-400 text-3xl">{levelName}</p>
           </div>
         </div>
+        
+        {/* Center Time Display */}
+        {timeRemaining !== null && timeRemaining !== undefined && (
+             <div className="absolute left-1/2 -translate-x-1/2 top-4 flex flex-col items-center">
+                 <p className="text-yellow-400 text-sm mb-1">TIME</p>
+                 <p className={`text-5xl ${timeRemaining < 30 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
+                     {formatTime(timeRemaining)}
+                 </p>
+             </div>
+        )}
         
         {/* Group right items */}
         <div className="flex items-center space-x-4">

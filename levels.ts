@@ -166,7 +166,6 @@ const level5: LevelData = {
         { type: 'floppy', x: 900, y: GAME_HEIGHT - 720, width: 50, height: 50 },
         { type: 'cartridge', x: 1800, y: GAME_HEIGHT - 1020, width: 50, height: 50 },
         { type: 'shield', x: 2700, y: GAME_HEIGHT - 420, width: 50, height: 50 },
-        // Added more items
         { type: 'joystick', x: 300, y: GAME_HEIGHT - 420, width: 50, height: 50 },
         { type: 'cartridge', x: 1300, y: GAME_HEIGHT - 870, width: 50, height: 50 },
         { type: 'floppy', x: 2400, y: GAME_HEIGHT - 570, width: 50, height: 50 },
@@ -207,7 +206,6 @@ const level6: LevelData = {
         { type: 'floppy', x: 950, y: GAME_HEIGHT - 720, width: 50, height: 50 },
         { type: 'cartridge', x: 3500, y: GAME_HEIGHT - 570, width: 50, height: 50 },
         { type: 'speed-boost', x: 4600, y: GAME_HEIGHT - 320, width: 50, height: 50 },
-        // Added more items
         { type: 'joystick', x: 600, y: GAME_HEIGHT - 320, width: 50, height: 50 },
         { type: 'cartridge', x: 1700, y: GAME_HEIGHT - 520, width: 50, height: 50 },
         { type: 'floppy', x: 2500, y: GAME_HEIGHT - 270, width: 50, height: 50 },
@@ -252,30 +250,21 @@ const level7: LevelData = {
     musicTheme: 'industrial',
     playerStart: { x: 50, y: GAME_HEIGHT - 120 },
     platforms: [
-        // Fragmented floor to create pits
         { x: 0, y: GAME_HEIGHT - 40, width: 1000, height: 40 },
         { x: 1200, y: GAME_HEIGHT - 40, width: 1000, height: 40 }, // Pit 1
         { x: 2400, y: GAME_HEIGHT - 40, width: 1500, height: 40 }, // Pit 2
         { x: 4100, y: GAME_HEIGHT - 40, width: 1000, height: 40 }, // Pit 3
         { x: 5300, y: GAME_HEIGHT - 40, width: 2200, height: 40 }, // Final run
-        
-        // "The Bridge of Doom" - High narrow platforms
         { x: 1000, y: GAME_HEIGHT - 250, width: 200, height: 30 },
         { x: 1400, y: GAME_HEIGHT - 450, width: 400, height: 30 },
         { x: 2000, y: GAME_HEIGHT - 600, width: 300, height: 30 },
         { x: 2500, y: GAME_HEIGHT - 400, width: 400, height: 30 },
-        
-        // "The Minefield"
         { x: 3000, y: GAME_HEIGHT - 250, width: 200, height: 30 },
         { x: 3300, y: GAME_HEIGHT - 250, width: 200, height: 30 },
         { x: 3600, y: GAME_HEIGHT - 250, width: 200, height: 30 },
-        
-        // "Sky High"
         { x: 4000, y: GAME_HEIGHT - 600, width: 800, height: 30 },
         { x: 5000, y: GAME_HEIGHT - 400, width: 200, height: 30 },
         { x: 5400, y: GAME_HEIGHT - 250, width: 200, height: 30 },
-        
-        // Stairs to finish
         { x: 6000, y: GAME_HEIGHT - 200, width: 200, height: 30 },
         { x: 6300, y: GAME_HEIGHT - 350, width: 200, height: 30 },
         { x: 6600, y: GAME_HEIGHT - 500, width: 400, height: 30 },
@@ -291,19 +280,15 @@ const level7: LevelData = {
         { type: 'shield', x: 7000, y: GAME_HEIGHT - 100, width: 50, height: 50 },
     ],
     enemies: [
-        // Initial Guard
         { type: 'jumper', x: 500, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 500, originalY: GAME_HEIGHT - 80 },
-        // Bridge guards
         { type: 'flyer', x: 1400, y: GAME_HEIGHT - 500, width: 60, height: 40, originalX: 1400, originalY: GAME_HEIGHT - 500 },
         { type: 'bomber', x: 1700, y: GAME_HEIGHT - 490, width: 50, height: 50, originalX: 1700, originalY: GAME_HEIGHT - 490 },
-        // Pit guards
         { type: 'phaser', x: 2800, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 2800, originalY: GAME_HEIGHT - 80 },
-        { type: 'bomber', x: 3400, y: GAME_HEIGHT - 290, width: 50, height: 50, originalX: 3400, originalY: GAME_HEIGHT - 290 }, // Minefield bomber
+        { type: 'bomber', x: 3400, y: GAME_HEIGHT - 290, width: 50, height: 50, originalX: 3400, originalY: GAME_HEIGHT - 290 },
         { type: 'flyer', x: 4000, y: GAME_HEIGHT - 700, width: 60, height: 40, originalX: 4000, originalY: GAME_HEIGHT - 700 },
-        // Ground swarm
         { type: 'base', x: 5500, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 5500, originalY: GAME_HEIGHT - 80 },
         { type: 'jumper', x: 5800, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 5800, originalY: GAME_HEIGHT - 80 },
-        { type: 'bomber', x: 6800, y: GAME_HEIGHT - 540, width: 50, height: 50, originalX: 6800, originalY: GAME_HEIGHT - 540 }, // High guard
+        { type: 'bomber', x: 6800, y: GAME_HEIGHT - 540, width: 50, height: 50, originalX: 6800, originalY: GAME_HEIGHT - 540 },
         { type: 'phaser', x: 7000, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 7000, originalY: GAME_HEIGHT - 80 },
     ],
     goal: { x: 7400, y: GAME_HEIGHT - 40 - GOAL_HEIGHT, width: GOAL_WIDTH, height: GOAL_HEIGHT },
@@ -315,42 +300,29 @@ const level8: LevelData = {
     musicTheme: 'ethereal',
     playerStart: { x: 50, y: GAME_HEIGHT - 120 },
     platforms: [
-        // Starting area
         { x: 0, y: GAME_HEIGHT - 40, width: 600, height: 40 },
-        // The Climb (Tightened gaps)
         { x: 650, y: GAME_HEIGHT - 200, width: 200, height: 30 },
         { x: 900, y: GAME_HEIGHT - 350, width: 200, height: 30 },
         { x: 1150, y: GAME_HEIGHT - 500, width: 200, height: 30 },
         { x: 1400, y: GAME_HEIGHT - 650, width: 300, height: 30 },
-        // High Bridge
         { x: 1800, y: GAME_HEIGHT - 650, width: 1000, height: 30 },
-        // The Drop steps
         { x: 2900, y: GAME_HEIGHT - 500, width: 200, height: 30 },
         { x: 3200, y: GAME_HEIGHT - 350, width: 200, height: 30 },
-        // Ground Zero
         { x: 3500, y: GAME_HEIGHT - 40, width: 800, height: 40 },
-        
-        // Floating Islands Section (FIXED JUMPS)
-        { x: 4400, y: GAME_HEIGHT - 200, width: 250, height: 30 }, // Lower start
-        { x: 4800, y: GAME_HEIGHT - 350, width: 250, height: 30 }, // Mid
-        { x: 5200, y: GAME_HEIGHT - 500, width: 250, height: 30 }, // High
-        
-        // Upper Path
-        { x: 5600, y: GAME_HEIGHT - 650, width: 1000, height: 30 }, // Long run
-        
-        // The Long Jump (Made safer)
+        { x: 4400, y: GAME_HEIGHT - 200, width: 250, height: 30 },
+        { x: 4800, y: GAME_HEIGHT - 350, width: 250, height: 30 },
+        { x: 5200, y: GAME_HEIGHT - 500, width: 250, height: 30 },
+        { x: 5600, y: GAME_HEIGHT - 650, width: 1000, height: 30 },
         { x: 6800, y: GAME_HEIGHT - 500, width: 400, height: 30 },
         { x: 7400, y: GAME_HEIGHT - 350, width: 400, height: 30 },
-        
-        // Final Stretch (Connected properly to goal)
         { x: 8000, y: GAME_HEIGHT - 200, width: 400, height: 30 },
-        { x: 8500, y: GAME_HEIGHT - 40, width: 1000, height: 40 }, // Final floor
+        { x: 8500, y: GAME_HEIGHT - 40, width: 1000, height: 40 },
     ],
     items: [
         { type: 'joystick', x: 1450, y: GAME_HEIGHT - 720, width: 50, height: 50 },
         { type: 'shield', x: 2000, y: GAME_HEIGHT - 720, width: 50, height: 50 },
         { type: 'floppy', x: 3800, y: GAME_HEIGHT - 100, width: 50, height: 50 },
-        { type: 'speed-boost', x: 5300, y: GAME_HEIGHT - 550, width: 50, height: 50 }, // Helper for long run
+        { type: 'speed-boost', x: 5300, y: GAME_HEIGHT - 550, width: 50, height: 50 },
         { type: 'cartridge', x: 6200, y: GAME_HEIGHT - 720, width: 50, height: 50 },
         { type: 'super-throw', x: 7500, y: GAME_HEIGHT - 400, width: 50, height: 50 },
     ],
@@ -358,18 +330,15 @@ const level8: LevelData = {
         { type: 'phaser', x: 1000, y: GAME_HEIGHT - 400, width: 50, height: 50, originalX: 1000, originalY: GAME_HEIGHT - 400 },
         { type: 'flyer', x: 2200, y: GAME_HEIGHT - 800, width: 60, height: 40, originalX: 2200, originalY: GAME_HEIGHT - 800 },
         { type: 'bomber', x: 3900, y: GAME_HEIGHT - 90, width: 50, height: 50, originalX: 3900, originalY: GAME_HEIGHT - 90 },
-        
-        // Island guards
         { type: 'jumper', x: 4800, y: GAME_HEIGHT - 390, width: 50, height: 50, originalX: 4800, originalY: GAME_HEIGHT - 390 },
         { type: 'flyer', x: 5600, y: GAME_HEIGHT - 750, width: 60, height: 40, originalX: 5600, originalY: GAME_HEIGHT - 750 },
-        
         { type: 'phaser', x: 6000, y: GAME_HEIGHT - 700, width: 50, height: 50, originalX: 6000, originalY: GAME_HEIGHT - 700 },
         { type: 'bomber', x: 8700, y: GAME_HEIGHT - 90, width: 50, height: 50, originalX: 8700, originalY: GAME_HEIGHT - 90 },
     ],
     goal: { x: 9200, y: GAME_HEIGHT - 40 - GOAL_HEIGHT, width: GOAL_WIDTH, height: GOAL_HEIGHT },
 };
 
-// --- LEVEL 9: The Drop (Previously Level 10) ---
+// --- LEVEL 9: The Drop ---
 const level9: LevelData = {
     name: "Level 9: The Drop",
     musicTheme: 'ethereal',
@@ -387,8 +356,7 @@ const level9: LevelData = {
     items: [
         { type: 'shield', x: 1400, y: 430, width: 50, height: 50 },
         { type: 'joystick', x: 2200, y: 580, width: 50, height: 50 },
-        { type: 'cartridge', x: 6000, y: 150, width: 50, height: 50 }, // Added item
-        // Added more items
+        { type: 'cartridge', x: 6000, y: 150, width: 50, height: 50 },
         { type: 'floppy', x: 500, y: 150, width: 50, height: 50 },
         { type: 'cartridge', x: 2850, y: 430, width: 50, height: 50 },
         { type: 'joystick', x: 3300, y: 280, width: 50, height: 50 },
@@ -422,72 +390,99 @@ const bossLevel3: LevelData = {
     },
 };
 
-// --- FINAL LEVEL: The Labyrinth (ZERO G MAZE) ---
-const MAZE_WIDTH = 4000;
-const MAZE_HEIGHT = 2000;
+// --- FINAL LEVEL: The Labyrinth (ZERO G MAZE - EXPANDED 5000x4000) ---
+const MAZE_WIDTH = 5000;
+const MAZE_HEIGHT = 4000;
 
 const finalLevel: LevelData = {
     name: "The Labyrinth",
     musicTheme: 'ethereal',
     isZeroG: true, // Enable Zero-G Movement
+    timeLimit: 300, // 5 Minutes
     playerStart: { x: 100, y: 100 },
     platforms: [
-        // Outer Boundary Walls
+        // --- BOUNDARIES ---
         { x: 0, y: 0, width: MAZE_WIDTH, height: 40 }, // Top
         { x: 0, y: MAZE_HEIGHT - 40, width: MAZE_WIDTH, height: 40 }, // Bottom
         { x: 0, y: 0, width: 40, height: MAZE_HEIGHT }, // Left
         { x: MAZE_WIDTH - 40, y: 0, width: 40, height: MAZE_HEIGHT }, // Right
-        
-        // Maze Walls (Vertical & Horizontal Obstacles)
-        // Vertical blockers
-        { x: 500, y: 0, width: 40, height: 600 },
-        { x: 500, y: 1200, width: 40, height: 800 },
-        
-        { x: 1200, y: 400, width: 40, height: 1200 },
-        
-        { x: 2000, y: 0, width: 40, height: 800 },
-        { x: 2000, y: 1200, width: 40, height: 800 },
-        
-        { x: 2800, y: 400, width: 40, height: 1200 },
-        
-        { x: 3500, y: 0, width: 40, height: 1000 },
-        
-        // Horizontal blockers
-        { x: 500, y: 600, width: 400, height: 40 },
-        { x: 0, y: 1200, width: 500, height: 40 },
-        
-        { x: 1200, y: 400, width: 500, height: 40 },
-        { x: 1200, y: 1600, width: 800, height: 40 },
-        
-        { x: 2000, y: 800, width: 600, height: 40 },
-        { x: 2200, y: 1200, width: 600, height: 40 },
-        
-        { x: 3200, y: 500, width: 800, height: 40 },
+
+        // --- ZONE 1: The Entrance (Top Left) 0-1000Y ---
+        // Divider 1 at Y=1000
+        { x: 0, y: 1000, width: 4500, height: 40 }, // Gap at far right
+        // Obstacles inside Zone 1
+        { x: 800, y: 0, width: 40, height: 700 },
+        { x: 1600, y: 300, width: 40, height: 700 },
+        { x: 2400, y: 0, width: 40, height: 600 },
+        { x: 3500, y: 200, width: 600, height: 40 },
+
+        // --- ZONE 2: The Middle Path (1000-2000Y) ---
+        // Divider 2 at Y=2000
+        { x: 500, y: 2000, width: 4500, height: 40 }, // Gap at far left
+        // Obstacles
+        { x: 4000, y: 1000, width: 40, height: 800 },
+        { x: 3000, y: 1200, width: 40, height: 800 },
+        { x: 1500, y: 1000, width: 40, height: 600 },
+        { x: 500, y: 1500, width: 1000, height: 40 },
+
+        // --- ZONE 3: The Depths (2000-3000Y) ---
+        // Divider 3 at Y=3000
+        { x: 0, y: 3000, width: 4500, height: 40 }, // Gap at far right
+        // Obstacles
+        { x: 1000, y: 2000, width: 40, height: 700 },
+        { x: 2000, y: 2300, width: 40, height: 700 },
+        { x: 3000, y: 2000, width: 40, height: 500 },
+        { x: 3500, y: 2500, width: 800, height: 40 },
+
+        // --- ZONE 4: The Exit Run (3000-4000Y) ---
+        // Long corridors
+        { x: 4000, y: 3000, width: 40, height: 600 },
+        { x: 3000, y: 3400, width: 40, height: 600 },
+        { x: 2000, y: 3000, width: 40, height: 600 },
+        { x: 1000, y: 3400, width: 40, height: 600 },
+        // Goal Enclosure
+        { x: 0, y: 3500, width: 400, height: 40 },
     ],
     items: [
-        { type: 'joystick', x: 250, y: 1800, width: 50, height: 50 },
-        { type: 'floppy', x: 800, y: 300, width: 50, height: 50 },
-        { type: 'cartridge', x: 1600, y: 1000, width: 50, height: 50 },
-        { type: 'shield', x: 2400, y: 600, width: 50, height: 50 },
-        { type: 'super-throw', x: 3200, y: 1800, width: 50, height: 50 },
-        { type: 'speed-boost', x: 3800, y: 200, width: 50, height: 50 },
+        // Zone 1 Items
+        { type: 'joystick', x: 400, y: 800, width: 50, height: 50 },
+        { type: 'floppy', x: 2000, y: 200, width: 50, height: 50 },
+        { type: 'shield', x: 4000, y: 500, width: 50, height: 50 },
+        
+        // Zone 2 Items
+        { type: 'cartridge', x: 4200, y: 1500, width: 50, height: 50 },
+        { type: 'super-throw', x: 2200, y: 1800, width: 50, height: 50 },
+        { type: 'joystick', x: 200, y: 1200, width: 50, height: 50 },
+
+        // Zone 3 Items
+        { type: 'speed-boost', x: 500, y: 2500, width: 50, height: 50 },
+        { type: 'floppy', x: 3200, y: 2800, width: 50, height: 50 },
+        { type: 'cartridge', x: 4800, y: 2100, width: 50, height: 50 },
+
+        // Zone 4 Items
+        { type: 'shield', x: 4500, y: 3500, width: 50, height: 50 },
+        { type: 'super-throw', x: 2500, y: 3200, width: 50, height: 50 },
+        { type: 'joystick', x: 500, y: 3800, width: 50, height: 50 },
     ],
     enemies: [
-        // Phasers (Ghosts) are perfect for mazes
-        { type: 'phaser', x: 800, y: 800, width: 50, height: 50, originalX: 800, originalY: 800 },
-        { type: 'phaser', x: 1600, y: 200, width: 50, height: 50, originalX: 1600, originalY: 200 },
-        { type: 'phaser', x: 2400, y: 1400, width: 50, height: 50, originalX: 2400, originalY: 1400 },
-        { type: 'phaser', x: 3600, y: 800, width: 50, height: 50, originalX: 3600, originalY: 800 },
+        // Populate heavily with Flyers and Phasers (best for zero G)
+        { type: 'phaser', x: 1200, y: 400, width: 50, height: 50, originalX: 1200, originalY: 400 },
+        { type: 'flyer', x: 3000, y: 300, width: 60, height: 40, originalX: 3000, originalY: 300 },
+        { type: 'bomber', x: 4000, y: 900, width: 50, height: 50, originalX: 4000, originalY: 900 },
         
-        // Flyers in open spaces
-        { type: 'flyer', x: 300, y: 300, width: 60, height: 40, originalX: 300, originalY: 300 },
-        { type: 'flyer', x: 3000, y: 200, width: 60, height: 40, originalX: 3000, originalY: 200 },
+        { type: 'phaser', x: 1000, y: 1400, width: 50, height: 50, originalX: 1000, originalY: 1400 },
+        { type: 'flyer', x: 3500, y: 1500, width: 60, height: 40, originalX: 3500, originalY: 1500 },
+        { type: 'bomber', x: 200, y: 1800, width: 50, height: 50, originalX: 200, originalY: 1800 },
         
-        // Bombers in corners
-        { type: 'bomber', x: 100, y: 1100, width: 50, height: 50, originalX: 100, originalY: 1100 },
-        { type: 'bomber', x: 3800, y: 1800, width: 50, height: 50, originalX: 3800, originalY: 1800 },
+        { type: 'phaser', x: 2500, y: 2500, width: 50, height: 50, originalX: 2500, originalY: 2500 },
+        { type: 'flyer', x: 500, y: 2200, width: 60, height: 40, originalX: 500, originalY: 2200 },
+        { type: 'bomber', x: 4500, y: 2800, width: 50, height: 50, originalX: 4500, originalY: 2800 },
+
+        { type: 'phaser', x: 1500, y: 3500, width: 50, height: 50, originalX: 1500, originalY: 3500 },
+        { type: 'phaser', x: 3500, y: 3500, width: 50, height: 50, originalX: 3500, originalY: 3500 },
+        { type: 'bomber', x: 200, y: 3200, width: 50, height: 50, originalX: 200, originalY: 3200 }, // Guarding goal area
     ],
-    goal: { x: 3800, y: 1000, width: GOAL_WIDTH, height: GOAL_HEIGHT },
+    goal: { x: 100, y: 3700, width: GOAL_WIDTH, height: GOAL_HEIGHT }, // Bottom Left
 };
 
 

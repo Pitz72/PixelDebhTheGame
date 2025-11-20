@@ -52,6 +52,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
   const [levelWidth, setLevelWidth] = useState(GAME_WIDTH);
   const [isGodMode, setIsGodMode] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState<number | null>(null); // For Timer
 
   const keysPressed = useRef<{ [key: string]: boolean }>({}).current;
   const gameLoopRef = useRef<number | null>(null);
@@ -149,6 +150,9 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     setItems(levelData.items.map((c, i) => ({ id: i, ...c })));
     setGoal(levelData.goal ? { id: 0, ...levelData.goal } : null);
     
+    // Set Timer if exists
+    setTimeRemaining(levelData.timeLimit ? levelData.timeLimit : null);
+    
     if (levelData.boss) {
         setBoss({
             ...levelData.boss,
@@ -198,12 +202,6 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     const levelData = levels[currentLevelIndex];
     if (!levelData) return;
 
-    // No music for the final labyrinth level (except maybe ambient, but prompt said silent before)
-    // The previous code had logic to stop music for final level.
-    // We can keep it or change if prompt requested differently. 
-    // Prompt didn't explicitly say add music to final level, so keeping as is or using 'ethereal' if defined in levels.ts
-    // Actually, let's respect the levelData.musicTheme if present.
-    
     if (levelData.musicTheme) {
         soundService.playMusicLoop(levelData.musicTheme);
     } else if (levelData.boss) {
@@ -388,6 +386,20 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
         return;
     }
     
+    // Update Timer
+    if (timeRemaining !== null) {
+        const newTime = timeRemaining - (deltaTime / 1000);
+        if (newTime <= 0) {
+             soundService.playSound('gameOver');
+             gameStateRef.current = 'gameover';
+             onGameOver(score);
+             setTimeRemaining(0);
+             return;
+        } else {
+            setTimeRemaining(newTime);
+        }
+    }
+    
     const targetCameraX = player.x - GAME_WIDTH / 2;
     const clampedTarget = Math.max(0, Math.min(targetCameraX, levelWidth - GAME_WIDTH));
     cameraXRef.current += (clampedTarget - cameraXRef.current) * 0.1;
@@ -443,7 +455,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
          // Allow slightly going off bottom if it's a large maze, but generally bound it
          // For the Maze level, levelWidth/Height are implicit, but lets assume platforms box it in.
          // Just general bounds:
-         if (nextPlayer.y + nextPlayer.height > (levels[currentLevelIndex].isZeroG ? 2000 : GAME_HEIGHT)) {
+         if (nextPlayer.y + nextPlayer.height > (levels[currentLevelIndex].isZeroG ? 4000 : GAME_HEIGHT)) {
              // If its the maze, height might be larger than GAME_HEIGHT
              // But we don't have explicit levelHeight in types. Let's just not clamp rigid bottom for ZeroG maze unless floor exists.
              // The maze has explicit walls, so player shouldn't escape.
@@ -847,7 +859,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
 
     setPlayer(nextPlayer);
     gameLoopRef.current = requestAnimationFrame(gameLoop);
-  }, [items, currentLevelIndex, enemies, keysPressed, platforms, player, onGameOver, onCompleted, setGameState, updateScore, levelWidth, lives, boss, projectiles, isGodMode, score, goal, isPaused]);
+  }, [items, currentLevelIndex, enemies, keysPressed, platforms, player, onGameOver, onCompleted, setGameState, updateScore, levelWidth, lives, boss, projectiles, isGodMode, score, goal, isPaused, timeRemaining]);
 
   useEffect(() => {
     gameLoopRef.current = requestAnimationFrame(gameLoop);
@@ -869,7 +881,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
           <Background cameraX={cameraX} />
       )}
       
-      <Hud score={score} lives={lives} level={currentLevelIndex + 1} levelName={levelName} collectiblesLeft={collectiblesLeft} activePowerUp={player.activePowerUp} boss={boss} isGodMode={isGodMode} />
+      <Hud score={score} lives={lives} level={currentLevelIndex + 1} levelName={levelName} collectiblesLeft={collectiblesLeft} activePowerUp={player.activePowerUp} boss={boss} isGodMode={isGodMode} timeRemaining={timeRemaining} />
 
       <div
         className="absolute top-0 left-0"

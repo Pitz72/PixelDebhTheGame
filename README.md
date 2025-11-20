@@ -21,7 +21,8 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 
 ## Features
 
--   **Zero-G Labyrinth (v0.3.3):** The final level is now a massive, gravity-free maze. Fly through obstacles, shoot enemies, and find the exit in this genre-bending finale.
+-   **Expanded Labyrinth & Timer (v0.3.4):** The final level is now a massive 5000x4000 pixel maze. Navigate carefully through zoned obstacles before the **5-minute timer** runs out!
+-   **Zero-G Mechanics:** The final level and boss fight feature gravity-free movement mechanics.
 -   **Revamped Level Design:** Advanced levels (The Gauntlet, The Ascent) have been audited and redesigned to provide a fair, populated, and challenging experience.
 -   **New: Standalone & Optimized:** The game engine has been refactored for maximum performance and is now completely standalone, with no external API dependencies.
 -   **Custom Pixel Art Intro:** A unique, animated intro sequence featuring a custom pixel-art avatar of the protagonist surrounded by orbiting gaming gear (webcam, cat, phone), set against a synthwave grid horizon.
