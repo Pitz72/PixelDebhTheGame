@@ -16,7 +16,7 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 -   **Goal:** To complete a level, you must first collect all the retro-themed items (joysticks, floppy disks, cartridges). Once all items are collected, a goal door at the far right of the level becomes active. Reach the door to advance!
 -   **Boss Battles:**
     -   **Cyclops Frog (Level 4):** Face off against a mighty floating frog! It moves unpredictably and launches spinning CD-ROMs. Use your special shooting ability (`Left Shift`) to win this dynamic encounter. You can aim in 8 directions by holding the movement keys.
-    -   **LeGallineNellOcchi (Level 8):** A surreal giant eye with a chicken for a pupil. It moves in a hypnotic figure-8 pattern and unleashes bursts of egg projectiles. Timing and precision are key to avoiding the spread attacks.
+    -   **LeGallineNellOcchi (Level 8):** A surreal giant eye with a chicken for a pupil. It moves in a hypnotic figure-8 pattern and unleashes bursts of egg projectiles. Timing and precision are key to avoiding the spread attacks. **Note:** For this endurance battle, you are granted extra lives equal to half the boss's health!
     -   **CapocciaNelBuio (Level 12):** The ultimate challenge. Gravity is disabled, turning the game into a space shooter. This giant boss fades in and out of the darkness, teleporting around the arena and launching rapid-fireballs.
 
 ## Features
@@ -56,8 +56,9 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 
 ## Developer Features
 
--   **God Mode:** Press `0` on the number pad to toggle invincibility for testing purposes. An indicator will appear on the HUD.
--   **Boss Skip:** Press `9` to jump directly to the final boss encounter for testing.
+-   **God Mode:** Press `0` on the number pad to toggle invincibility.
+-   **Boss Skip:** Press `9` to jump directly to the final boss.
+-   **Level Skip:** Press `L` to skip the current level instantly.
 
 ## Built With
 

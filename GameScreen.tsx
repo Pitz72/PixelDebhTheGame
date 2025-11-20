@@ -166,6 +166,12 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
             teleportTimer: 2000
         });
         setEnemies([]); // No initial enemies in boss room
+        
+        // Special Rule: Boss 2 (ChickenEye) sets Player Lives to half Boss HP
+        if (levelData.boss.type === 'chickenEye') {
+            const specialLives = Math.ceil(levelData.boss.maxHp / 2);
+            setLives(specialLives);
+        }
     } else {
         setEnemies(levelData.enemies.map((e, i) => ({
           id: i, ...e, 
@@ -220,10 +226,23 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
           return;
       }
       
+      const lowerKey = e.key.toLowerCase();
+
       // DEBUG CHEAT: PRESS '9' TO JUMP TO BOSS 3
       if (e.key === '9') {
         soundService.playSound('powerup');
         setCurrentLevelIndex(10); // 10 is the index for CapocciaNelBuio
+        return;
+      }
+      
+      // DEBUG CHEAT: PRESS 'L' TO SKIP LEVEL
+      if (lowerKey === 'l') {
+        soundService.playSound('powerup');
+        if (currentLevelIndex + 1 >= levels.length) {
+             onCompleted();
+        } else {
+             setCurrentLevelIndex(prev => prev + 1);
+        }
         return;
       }
 
@@ -343,7 +362,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [keysPressed, enemies, boss, isPaused]);
+  }, [keysPressed, enemies, boss, isPaused, currentLevelIndex]);
 
 
   // Main Game Loop
@@ -580,9 +599,10 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     setPlayerProjectiles(prev => prev.map(p => ({...p, x: p.x + p.vx, y: p.y + p.vy})).filter(p => p.x > -50 && p.x < levelWidth + 50 && p.y > -50 && p.y < GAME_HEIGHT + 50));
 
 
-    // 4. Update Enemies
+    // 4. Update Enemies (Immutable Update Fix)
     setEnemies(prevEnemies => {
-        let newEnemies = [...prevEnemies];
+        // CRITICAL FIX: Map to new objects to trigger React.memo updates
+        let newEnemies = prevEnemies.map(e => ({...e})); 
         const wasSuperThrow = player.activePowerUp === 'super-throw';
 
         newEnemies.forEach((enemy, index) => {
@@ -751,8 +771,9 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     // 8. Level Clear
     if (goal && !boss && gameStateRef.current === 'playing') {
         const collectiblesLeft = remainingItems.filter(item => ['joystick', 'floppy', 'cartridge'].includes(item.type)).length;
-        const totalCollectiblesInLevel = levels[currentLevelIndex].items.filter(item => ['joystick', 'floppy', 'cartridge'].includes(item.type)).length;
-        if (collectiblesLeft === 0 && totalCollectiblesInLevel > 0 && areRectsColliding(nextPlayer, goal)) {
+        
+        // Fixed: Removed totalCollectiblesInLevel check to ensure levels with 0 items can still be completed via the goal.
+        if (collectiblesLeft === 0 && areRectsColliding(nextPlayer, goal)) {
             soundService.playSound('levelClear');
             createParticles(goal.x + goal.width/2, goal.y + goal.height/2, '#FFFFFF', 30);
             gameStateRef.current = 'level-cleared';
@@ -847,6 +868,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
           <div className="absolute inset-0 bg-black bg-opacity-80 z-50 flex flex-col justify-center items-center text-white">
               <h2 className="text-6xl mb-8" style={{ fontFamily: "'Press Start 2P', cursive" }}>PAUSED</h2>
               <p className="text-gray-400 animate-blink mt-8">PRESS ESC TO RESUME</p>
+              <p className="text-sm text-gray-600 mt-12">DEBUG: PRESS 'L' TO SKIP LEVEL</p>
           </div>
       )}
 

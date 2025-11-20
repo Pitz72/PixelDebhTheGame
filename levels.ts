@@ -285,36 +285,56 @@ const level7: LevelData = {
     goal: { x: 7400, y: GAME_HEIGHT - 40 - GOAL_HEIGHT, width: GOAL_WIDTH, height: GOAL_HEIGHT },
 };
 
-// --- LEVEL 8: The Ascent (Previously Level 9) ---
+// --- LEVEL 8: The Ascent (Previously empty) ---
 const level8: LevelData = {
     name: "Level 8: The Ascent",
     musicTheme: 'ethereal',
     playerStart: { x: 50, y: GAME_HEIGHT - 120 },
     platforms: [
-        { x: 0, y: GAME_HEIGHT - 40, width: 400, height: 40 },
-        { x: 550, y: GAME_HEIGHT - 150, width: 150, height: 30 },
-        { x: 200, y: GAME_HEIGHT - 300, width: 150, height: 30 },
-        { x: 550, y: GAME_HEIGHT - 450, width: 150, height: 30 },
-        { x: 900, y: GAME_HEIGHT - 550, width: 150, height: 30 },
-        { x: 1250, y: GAME_HEIGHT - 650, width: 150, height: 30 },
-        { x: 1600, y: GAME_HEIGHT - 750, width: 320, height: 30 },
-        { x: 1200, y: GAME_HEIGHT - 900, width: 200, height: 30 },
-        { x: 700, y: GAME_HEIGHT - 1000, width: 200, height: 30 },
-        { x: 2000, y: GAME_HEIGHT - 40, width: 7000, height: 40 }, // Very long floor
+        // Starting area
+        { x: 0, y: GAME_HEIGHT - 40, width: 600, height: 40 },
+        // The Climb
+        { x: 650, y: GAME_HEIGHT - 200, width: 200, height: 30 },
+        { x: 900, y: GAME_HEIGHT - 350, width: 200, height: 30 },
+        { x: 1150, y: GAME_HEIGHT - 500, width: 200, height: 30 },
+        { x: 1400, y: GAME_HEIGHT - 650, width: 300, height: 30 },
+        // High Bridge
+        { x: 1800, y: GAME_HEIGHT - 650, width: 1000, height: 30 },
+        // The Drop steps
+        { x: 2900, y: GAME_HEIGHT - 500, width: 200, height: 30 },
+        { x: 3200, y: GAME_HEIGHT - 350, width: 200, height: 30 },
+        // Ground Zero
+        { x: 3500, y: GAME_HEIGHT - 40, width: 800, height: 40 },
+        // Floating Islands Section
+        { x: 4400, y: GAME_HEIGHT - 250, width: 300, height: 30 },
+        { x: 4900, y: GAME_HEIGHT - 450, width: 300, height: 30 },
+        { x: 5400, y: GAME_HEIGHT - 650, width: 300, height: 30 },
+        // Upper Path
+        { x: 5800, y: GAME_HEIGHT - 650, width: 800, height: 30 },
+        // The Long Jump
+        { x: 6800, y: GAME_HEIGHT - 450, width: 400, height: 30 },
+        { x: 7400, y: GAME_HEIGHT - 300, width: 400, height: 30 },
+        // Final Stretch
+        { x: 8000, y: GAME_HEIGHT - 40, width: 1500, height: 40 }, 
     ],
     items: [
-        { type: 'joystick', x: 600, y: GAME_HEIGHT - 220, width: 50, height: 50 },
-        { type: 'shield', x: 1700, y: GAME_HEIGHT - 820, width: 50, height: 50 },
-        { type: 'cartridge', x: 750, y: GAME_HEIGHT - 1070, width: 50, height: 50 },
+        { type: 'joystick', x: 1450, y: GAME_HEIGHT - 720, width: 50, height: 50 },
+        { type: 'shield', x: 2000, y: GAME_HEIGHT - 720, width: 50, height: 50 },
+        { type: 'floppy', x: 3800, y: GAME_HEIGHT - 100, width: 50, height: 50 },
+        { type: 'speed-boost', x: 5000, y: GAME_HEIGHT - 520, width: 50, height: 50 },
+        { type: 'cartridge', x: 6200, y: GAME_HEIGHT - 720, width: 50, height: 50 },
+        { type: 'super-throw', x: 8500, y: GAME_HEIGHT - 100, width: 50, height: 50 },
     ],
     enemies: [
-        { type: 'phaser', x: 400, y: 100, width: 50, height: 50, originalX: 400, originalY: 100 },
-        { type: 'bomber', x: 1750, y: GAME_HEIGHT - 790, width: 50, height: 50, originalX: 1750, originalY: GAME_HEIGHT - 790 },
-        { type: 'jumper', x: 3000, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 3000, originalY: GAME_HEIGHT - 80 },
-        { type: 'base', x: 4200, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 4200, originalY: GAME_HEIGHT - 80 },
-        { type: 'phaser', x: 6000, y: 300, width: 50, height: 50, originalX: 6000, originalY: 300 },
+        { type: 'phaser', x: 1000, y: GAME_HEIGHT - 400, width: 50, height: 50, originalX: 1000, originalY: GAME_HEIGHT - 400 },
+        { type: 'flyer', x: 2200, y: GAME_HEIGHT - 800, width: 60, height: 40, originalX: 2200, originalY: GAME_HEIGHT - 800 },
+        { type: 'bomber', x: 3900, y: GAME_HEIGHT - 90, width: 50, height: 50, originalX: 3900, originalY: GAME_HEIGHT - 90 },
+        { type: 'jumper', x: 5500, y: GAME_HEIGHT - 700, width: 50, height: 50, originalX: 5500, originalY: GAME_HEIGHT - 700 },
+        { type: 'phaser', x: 6500, y: GAME_HEIGHT - 700, width: 50, height: 50, originalX: 6500, originalY: GAME_HEIGHT - 700 },
+        { type: 'base', x: 8200, y: GAME_HEIGHT - 90, width: 50, height: 50, originalX: 8200, originalY: GAME_HEIGHT - 90 },
+        { type: 'bomber', x: 8800, y: GAME_HEIGHT - 90, width: 50, height: 50, originalX: 8800, originalY: GAME_HEIGHT - 90 },
     ],
-    goal: { x: 8900, y: GAME_HEIGHT - 40 - GOAL_HEIGHT, width: GOAL_WIDTH, height: GOAL_HEIGHT },
+    goal: { x: 9200, y: GAME_HEIGHT - 40 - GOAL_HEIGHT, width: GOAL_WIDTH, height: GOAL_HEIGHT },
 };
 
 // --- LEVEL 9: The Drop (Previously Level 10) ---
