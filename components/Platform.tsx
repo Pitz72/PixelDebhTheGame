@@ -2,7 +2,7 @@
 import React from 'react';
 import { Platform as PlatformType } from '../types';
 
-const Platform: React.FC<{ platform: PlatformType }> = ({ platform }) => (
+const Platform: React.FC<{ platform: PlatformType }> = React.memo(({ platform }) => (
   <div
     style={{
       position: 'absolute',
@@ -25,6 +25,6 @@ const Platform: React.FC<{ platform: PlatformType }> = ({ platform }) => (
       boxShadow: '0 0 5px rgba(0, 234, 255, 0.3)',
     }}
   />
-);
+));
 
 export default Platform;

@@ -7,7 +7,7 @@ interface EnemyProps {
   enemy: EnemyType;
 }
 
-const Enemy: React.FC<EnemyProps> = ({ enemy }) => {
+const Enemy: React.FC<EnemyProps> = React.memo(({ enemy }) => {
   if (enemy.state === 'defeated') return null;
 
   const isStunned = enemy.state === 'stunned';
@@ -32,6 +32,6 @@ const Enemy: React.FC<EnemyProps> = ({ enemy }) => {
       <EnemySprite type={enemy.type} state={enemy.state} />
     </div>
   );
-};
+});
 
 export default Enemy;

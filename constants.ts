@@ -56,7 +56,8 @@ export const EGG_PROJECTILE_WIDTH = 30;
 export const EGG_PROJECTILE_HEIGHT = 40;
 
 // Boss 3 Specifics (CapocciaNelBuio)
-export const BOSS_3_HP = 60;
+// Balanced to be 20% more than Boss 2 (45 * 1.2 = 54)
+export const BOSS_3_HP = 54;
 export const FIREBALL_WIDTH = 40;
 export const FIREBALL_HEIGHT = 40;
 export const FIREBALL_SPEED = 12;
@@ -70,6 +71,7 @@ export const EXTRA_LIFE_SCORE_MULTIPLIER = 2;
 
 // Game settings
 export const INITIAL_LIVES = 3;
+export const MAX_PARTICLES = 50; // Hard limit for React performance
 
 // Highscore settings
 export const HIGHSCORE_KEY = 'pixelDebhHighscores';

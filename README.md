@@ -21,8 +21,8 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 
 ## Features
 
--   **New: Custom Pixel Art Intro:** A unique, animated intro sequence featuring a custom pixel-art avatar of the protagonist surrounded by orbiting gaming gear (webcam, cat, phone), set against a synthwave grid horizon. The layout has been optimized to showcase the character art while keeping the "PRESS START" prompt clear and accessible.
--   **New: Oracle AI:** Stuck? Pause the game and consult the "Oracle of the Bitverse" (powered by Gemini API) for cryptic, context-aware hints based on your current level, score, and lives.
+-   **New: Standalone & Optimized:** The game engine has been refactored for maximum performance and is now completely standalone, with no external API dependencies.
+-   **Custom Pixel Art Intro:** A unique, animated intro sequence featuring a custom pixel-art avatar of the protagonist surrounded by orbiting gaming gear (webcam, cat, phone), set against a synthwave grid horizon.
 -   **Structured Game Progression:** A full adventure across 13 levels, with a carefully designed difficulty curve. Each standard level is progressively longer than the last, mixing horizontal and vertical platforming challenges.
 -   **Gradual Enemy Introduction:** New enemy types are introduced gradually, giving players time to learn their patterns:
     -   **Globby (Base):** The standard ground enemy.
@@ -52,18 +52,18 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 -   **Jump:** `Spacebar` (Press twice for Double Jump)
 -   **Capture / Launch:** `C` or `X`
 -   **Shoot (Boss Battles Only):** `Left Shift` (Hold movement keys to aim in 8 directions)
--   **Pause / Oracle:** `ESC`
+-   **Pause:** `ESC`
 
 ## Developer Features
 
 -   **God Mode:** Press `0` on the number pad to toggle invincibility for testing purposes. An indicator will appear on the HUD.
+-   **Boss Skip:** Press `9` to jump directly to the final boss encounter for testing.
 
 ## Built With
 
 -   **React:** For the component-based UI and game structure.
 -   **TypeScript:** For strong typing and code quality.
 -   **TailwindCSS:** For styling the UI components.
--   **Gemini API:** To assist in development, asset creation, and the in-game Oracle feature.
 
 ---
 *This project is a demonstration of building a simple game using web technologies.*

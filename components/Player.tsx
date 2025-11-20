@@ -7,7 +7,7 @@ interface PlayerProps {
   player: PlayerType;
 }
 
-const Player: React.FC<PlayerProps> = ({ player }) => {
+const Player: React.FC<PlayerProps> = React.memo(({ player }) => {
   const speedBoostActive = player.activePowerUp === 'speed-boost';
   const isMoving = Math.abs(player.vx) > 0.1;
   const isJumping = !player.isOnGround;
@@ -66,6 +66,6 @@ const Player: React.FC<PlayerProps> = ({ player }) => {
       )}
     </div>
   );
-};
+});
 
 export default Player;
