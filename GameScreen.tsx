@@ -48,8 +48,13 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
   const [particles, setParticles] = useState<Particle[]>([]);
   const [damageFlash, setDamageFlash] = useState(false);
   const [nextExtraLifeScore, setNextExtraLifeScore] = useState(EXTRA_LIFE_SCORE_START);
+  
+  // Camera States
   const [cameraX, setCameraX] = useState(0);
+  const [cameraY, setCameraY] = useState(0);
   const [levelWidth, setLevelWidth] = useState(GAME_WIDTH);
+  const [levelHeight, setLevelHeight] = useState(GAME_HEIGHT);
+
   const [isGodMode, setIsGodMode] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null); // For Timer
@@ -59,6 +64,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
   const lastTimeRef = useRef<number>(0);
   const gameStateRef = useRef<GameState>('playing');
   const cameraXRef = useRef(0);
+  const cameraYRef = useRef(0);
   
   // Particle Helper
   const createParticles = (x: number, y: number, color: string, count: number) => {
@@ -118,9 +124,26 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
       const bossX = levelData.boss ? levelData.boss.x + levelData.boss.width : 0;
       return Math.max(GAME_WIDTH, ...allX, goalX, bossX);
     };
+
+    const calculateLevelHeight = (levelData: LevelData) => {
+      if (!levelData.platforms || levelData.platforms.length === 0) return GAME_HEIGHT;
+      const allY = [
+        ...levelData.platforms.map(p => p.y + p.height),
+        ...levelData.items.map(i => i.y + i.height),
+        ...levelData.enemies.map(e => e.y + e.height),
+      ];
+       const goalY = levelData.goal ? levelData.goal.y + levelData.goal.height : 0;
+       const bossY = levelData.boss ? levelData.boss.y + levelData.boss.height : 0;
+      return Math.max(GAME_HEIGHT, ...allY, goalY, bossY);
+    };
+
     setLevelWidth(calculateLevelWidth(levelData));
+    setLevelHeight(calculateLevelHeight(levelData));
+    
     setCameraX(0);
+    setCameraY(0);
     cameraXRef.current = 0;
+    cameraYRef.current = 0;
 
     setPlayer({
       ...levelData.playerStart,
@@ -400,10 +423,18 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
         }
     }
     
+    // --- CAMERA LOGIC X ---
     const targetCameraX = player.x - GAME_WIDTH / 2;
-    const clampedTarget = Math.max(0, Math.min(targetCameraX, levelWidth - GAME_WIDTH));
-    cameraXRef.current += (clampedTarget - cameraXRef.current) * 0.1;
+    const clampedTargetX = Math.max(0, Math.min(targetCameraX, levelWidth - GAME_WIDTH));
+    cameraXRef.current += (clampedTargetX - cameraXRef.current) * 0.1;
     setCameraX(cameraXRef.current);
+
+    // --- CAMERA LOGIC Y ---
+    const targetCameraY = player.y - GAME_HEIGHT / 2;
+    // IMPORTANT: levelHeight can be equal to GAME_HEIGHT. If so, clampTargetY is 0.
+    const clampedTargetY = Math.max(0, Math.min(targetCameraY, levelHeight - GAME_HEIGHT));
+    cameraYRef.current += (clampedTargetY - cameraYRef.current) * 0.1;
+    setCameraY(cameraYRef.current);
 
     let nextPlayer = { ...player };
     const isZeroG = (boss && boss.type === 'shadowHead') || levels[currentLevelIndex]?.isZeroG;
@@ -452,16 +483,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     if (nextPlayer.x + nextPlayer.width > levelWidth) nextPlayer.x = levelWidth - nextPlayer.width;
     if (isZeroG) {
          if (nextPlayer.y < 0) nextPlayer.y = 0;
-         // Allow slightly going off bottom if it's a large maze, but generally bound it
-         // For the Maze level, levelWidth/Height are implicit, but lets assume platforms box it in.
-         // Just general bounds:
-         if (nextPlayer.y + nextPlayer.height > (levels[currentLevelIndex].isZeroG ? 4000 : GAME_HEIGHT)) {
-             // If its the maze, height might be larger than GAME_HEIGHT
-             // But we don't have explicit levelHeight in types. Let's just not clamp rigid bottom for ZeroG maze unless floor exists.
-             // The maze has explicit walls, so player shouldn't escape.
-         } else if (nextPlayer.y + nextPlayer.height > GAME_HEIGHT && !levels[currentLevelIndex].isZeroG) {
-             // Standard level pit death logic below
-         }
+         // Ensure player doesn't fall out of level bounds in ZeroG
+         if (nextPlayer.y + nextPlayer.height > levelHeight) nextPlayer.y = levelHeight - nextPlayer.height;
     }
 
     // 3. Player-Platform Collision
@@ -859,7 +882,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
 
     setPlayer(nextPlayer);
     gameLoopRef.current = requestAnimationFrame(gameLoop);
-  }, [items, currentLevelIndex, enemies, keysPressed, platforms, player, onGameOver, onCompleted, setGameState, updateScore, levelWidth, lives, boss, projectiles, isGodMode, score, goal, isPaused, timeRemaining]);
+  }, [items, currentLevelIndex, enemies, keysPressed, platforms, player, onGameOver, onCompleted, setGameState, updateScore, levelWidth, levelHeight, lives, boss, projectiles, isGodMode, score, goal, isPaused, timeRemaining]);
 
   useEffect(() => {
     gameLoopRef.current = requestAnimationFrame(gameLoop);
@@ -868,7 +891,6 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
 
   const collectiblesLeft = items.filter(item => ['joystick', 'floppy', 'cartridge'].includes(item.type)).length;
   const levelName = levels[currentLevelIndex]?.name || `Level ${currentLevelIndex + 1}`;
-  // Check for ShadowHead specific visual override, OR generic ZeroG background style if we had one (we stick to black/stars)
   const isShadowHeadBoss = boss && boss.type === 'shadowHead';
 
   return (
@@ -878,14 +900,14 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
       {isShadowHeadBoss ? (
           <div className="absolute inset-0 bg-black z-0"></div>
       ) : (
-          <Background cameraX={cameraX} />
+          <Background cameraX={cameraX} cameraY={cameraY} />
       )}
       
       <Hud score={score} lives={lives} level={currentLevelIndex + 1} levelName={levelName} collectiblesLeft={collectiblesLeft} activePowerUp={player.activePowerUp} boss={boss} isGodMode={isGodMode} timeRemaining={timeRemaining} />
 
       <div
         className="absolute top-0 left-0"
-        style={{ willChange: 'transform', transform: `translateX(-${cameraX}px) translateY(${levels[currentLevelIndex]?.isZeroG ? 0 : 0}px)`}}
+        style={{ willChange: 'transform', transform: `translate3d(-${cameraX}px, -${cameraY}px, 0)`}}
       >
         {platforms.map((p, i) => <Platform key={i} platform={p} />)}
         {goal && (

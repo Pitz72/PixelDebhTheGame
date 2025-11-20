@@ -21,6 +21,7 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 
 ## Features
 
+-   **Vertical Scrolling (v0.3.5):** The camera system now fully supports vertical scrolling, essential for the massive new Zero-G Labyrinth level.
 -   **Expanded Labyrinth & Timer (v0.3.4):** The final level is now a massive 5000x4000 pixel maze. Navigate carefully through zoned obstacles before the **5-minute timer** runs out!
 -   **Zero-G Mechanics:** The final level and boss fight feature gravity-free movement mechanics.
 -   **Revamped Level Design:** Advanced levels (The Gauntlet, The Ascent) have been audited and redesigned to provide a fair, populated, and challenging experience.

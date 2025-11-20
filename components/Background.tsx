@@ -3,9 +3,10 @@ import React from 'react';
 
 interface BackgroundProps {
   cameraX: number;
+  cameraY?: number;
 }
 
-const Background: React.FC<BackgroundProps> = React.memo(({ cameraX }) => {
+const Background: React.FC<BackgroundProps> = React.memo(({ cameraX, cameraY = 0 }) => {
   return (
     <>
       {/* Layer 1: Sfondo statico (cielo) */}
@@ -20,7 +21,7 @@ const Background: React.FC<BackgroundProps> = React.memo(({ cameraX }) => {
           backgroundImage: 'radial-gradient(circle, white 0.5px, transparent 1px)',
           backgroundSize: '50px 50px',
           opacity: 0.5,
-          transform: `translateX(-${cameraX * 0.05}px)`,
+          transform: `translate3d(-${cameraX * 0.05}px, -${cameraY * 0.05}px, 0)`,
           willChange: 'transform',
         }}
       />
@@ -29,7 +30,7 @@ const Background: React.FC<BackgroundProps> = React.memo(({ cameraX }) => {
       <div 
         className="absolute bottom-0 left-0 h-64 w-[200%]"
         style={{
-            transform: `translateX(-${cameraX * 0.15}px)`,
+            transform: `translate3d(-${cameraX * 0.15}px, ${cameraY * 0.1}px, 0)`,
             willChange: 'transform',
             background: 'linear-gradient(to top, #1a0b2e 0%, transparent 100%)',
         }}
@@ -51,7 +52,7 @@ const Background: React.FC<BackgroundProps> = React.memo(({ cameraX }) => {
           backgroundImage: 'radial-gradient(circle, white 0.5px, transparent 1px)',
           backgroundSize: '25px 25px',
           opacity: 0.8,
-          transform: `translateX(-${cameraX * 0.3}px)`,
+          transform: `translate3d(-${cameraX * 0.3}px, -${cameraY * 0.3}px, 0)`,
           willChange: 'transform',
         }}
       />
