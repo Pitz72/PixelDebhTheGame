@@ -104,6 +104,7 @@ export type MusicTheme = 'adventure' | 'industrial' | 'ethereal' | 'boss';
 export interface LevelData {
   name: string;
   musicTheme: MusicTheme; // New property for music variety
+  isZeroG?: boolean; // New property for Zero-G levels (like the labyrinth)
   platforms: Omit<Platform, 'id'>[];
   items: Omit<Item, 'id'>[];
   enemies: Omit<Enemy, 'id' | 'state' | 'vx' | 'vy' | 'direction' | 'jumpCooldown' | 'stunTimer' | 'attackCooldown'>[];

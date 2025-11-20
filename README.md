@@ -3,7 +3,7 @@
 
 ![Gameplay Screenshot](gameplay.png) <!-- I can't add an image, but this is a good placeholder -->
 
-A 2D retro platformer adventure where you control PixelDebh to capture and launch enemies, collect retro items, and clear challenging levels. This game is built with React, TypeScript, and TailwindCSS, running in a browser environment with a sharp, pixel-perfect aesthetic.
+A 2D retro platformer adventure where you control PixelDebh to capture and launch enemies, collect retro items, and clear challenging levels. Built with React and TypeScript.
 
 ## Gameplay
 
@@ -17,10 +17,12 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 -   **Boss Battles:**
     -   **Cyclops Frog (Level 4):** Face off against a mighty floating frog! It moves unpredictably and launches spinning CD-ROMs. Use your special shooting ability (`Left Shift`) to win this dynamic encounter. You can aim in 8 directions by holding the movement keys.
     -   **LeGallineNellOcchi (Level 8):** A surreal giant eye with a chicken for a pupil. It moves in a hypnotic figure-8 pattern and unleashes bursts of egg projectiles. Timing and precision are key to avoiding the spread attacks. **Note:** For this endurance battle, you are granted extra lives equal to half the boss's health!
-    -   **CapocciaNelBuio (Level 12):** The ultimate challenge. Gravity is disabled, turning the game into a space shooter. This giant boss fades in and out of the darkness, teleporting around the arena and launching rapid-fireballs.
+    -   **CapocciaNelBuio (Level 12):** The ultimate challenge. Gravity is disabled, turning the game into a space shooter. This giant boss fades in and out of the darkness, teleporting around the arena and launching rapid-fireballs. Activate **Rapid Fire** mode during this battle!
 
 ## Features
 
+-   **Zero-G Labyrinth (v0.3.3):** The final level is now a massive, gravity-free maze. Fly through obstacles, shoot enemies, and find the exit in this genre-bending finale.
+-   **Revamped Level Design:** Advanced levels (The Gauntlet, The Ascent) have been audited and redesigned to provide a fair, populated, and challenging experience.
 -   **New: Standalone & Optimized:** The game engine has been refactored for maximum performance and is now completely standalone, with no external API dependencies.
 -   **Custom Pixel Art Intro:** A unique, animated intro sequence featuring a custom pixel-art avatar of the protagonist surrounded by orbiting gaming gear (webcam, cat, phone), set against a synthwave grid horizon.
 -   **Structured Game Progression:** A full adventure across 13 levels, with a carefully designed difficulty curve. Each standard level is progressively longer than the last, mixing horizontal and vertical platforming challenges.
@@ -51,7 +53,7 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 -   **Move Right:** `D` or `Right Arrow`
 -   **Jump:** `Spacebar` (Press twice for Double Jump)
 -   **Capture / Launch:** `C` or `X`
--   **Shoot (Boss Battles Only):** `Left Shift` (Hold movement keys to aim in 8 directions)
+-   **Shoot (Boss Battles / Zero-G):** `Left Shift` (Hold movement keys to aim in 8 directions)
 -   **Pause:** `ESC`
 
 ## Developer Features

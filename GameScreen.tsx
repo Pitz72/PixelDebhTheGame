@@ -15,7 +15,7 @@ import { levels } from './levels';
 import {
   GAME_WIDTH, GAME_HEIGHT, GRAVITY, PLAYER_SPEED, PLAYER_FAST_SPEED, JUMP_FORCE, PLAYER_INVINCIBILITY_DURATION,
   ENEMY_SPEED, FLYER_SPEED, FLYER_VERTICAL_SPEED, FLYER_PATROL_RANGE, ENEMY_JUMP_FORCE, ENEMY_JUMP_COOLDOWN, LAUNCH_FORCE, POWER_UP_DURATION, SUPER_THROW_EXPLOSION_RADIUS,
-  COLLECTIBLE_POINTS, ENEMY_DEFEAT_POINTS, INITIAL_LIVES, EXTRA_LIFE_SCORE_START, EXTRA_LIFE_SCORE_MULTIPLIER, PLAYER_WIDTH, PLAYER_HEIGHT, BOSS_INITIAL_VX, BOSS_INITIAL_VY, PLAYER_PROJECTILE_SPEED, PLAYER_PROJECTILE_WIDTH, PLAYER_PROJECTILE_HEIGHT, PLAYER_SHOOT_COOLDOWN, BOSS_PROJECTILE_SPEED, BOSS_PROJECTILE_WIDTH, BOSS_PROJECTILE_HEIGHT, PHASER_SPEED, BOMBER_ATTACK_COOLDOWN, BOMB_WIDTH, BOMB_HEIGHT, BOMB_INITIAL_VY, BOMB_HORIZONTAL_SPEED_MULTIPLIER, MAX_JUMPS, EGG_PROJECTILE_WIDTH, EGG_PROJECTILE_HEIGHT, FIREBALL_SPEED, FIREBALL_WIDTH, FIREBALL_HEIGHT, MAX_PARTICLES
+  COLLECTIBLE_POINTS, ENEMY_DEFEAT_POINTS, INITIAL_LIVES, EXTRA_LIFE_SCORE_START, EXTRA_LIFE_SCORE_MULTIPLIER, PLAYER_WIDTH, PLAYER_HEIGHT, BOSS_INITIAL_VX, BOSS_INITIAL_VY, PLAYER_PROJECTILE_SPEED, PLAYER_PROJECTILE_WIDTH, PLAYER_PROJECTILE_HEIGHT, PLAYER_SHOOT_COOLDOWN, PLAYER_RAPID_SHOOT_COOLDOWN, BOSS_PROJECTILE_SPEED, BOSS_PROJECTILE_WIDTH, BOSS_PROJECTILE_HEIGHT, PHASER_SPEED, BOMBER_ATTACK_COOLDOWN, BOMB_WIDTH, BOMB_HEIGHT, BOMB_INITIAL_VY, BOMB_HORIZONTAL_SPEED_MULTIPLIER, MAX_JUMPS, EGG_PROJECTILE_WIDTH, EGG_PROJECTILE_HEIGHT, FIREBALL_SPEED, FIREBALL_WIDTH, FIREBALL_HEIGHT, MAX_PARTICLES
 } from './constants';
 
 const areRectsColliding = (rect1: {x: number, y: number, width: number, height: number}, rect2: {x: number, y: number, width: number, height: number}) => {
@@ -198,12 +198,12 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     const levelData = levels[currentLevelIndex];
     if (!levelData) return;
 
-    // No music for the final labyrinth level
-    if (currentLevelIndex === levels.length - 1) {
-      return;
-    }
+    // No music for the final labyrinth level (except maybe ambient, but prompt said silent before)
+    // The previous code had logic to stop music for final level.
+    // We can keep it or change if prompt requested differently. 
+    // Prompt didn't explicitly say add music to final level, so keeping as is or using 'ethereal' if defined in levels.ts
+    // Actually, let's respect the levelData.musicTheme if present.
     
-    // Play theme based on Level Data
     if (levelData.musicTheme) {
         soundService.playMusicLoop(levelData.musicTheme);
     } else if (levelData.boss) {
@@ -257,8 +257,9 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
       }
       
       // Jumping Logic (Including Double Jump)
-      // DISABLE JUMP IF SHADOW HEAD BOSS (Zero G)
-      const isZeroG = boss && boss.type === 'shadowHead';
+      // DISABLE JUMP IF SHADOW HEAD BOSS (Zero G) or LEVEL IS ZERO G
+      const isZeroG = (boss && boss.type === 'shadowHead') || levels[currentLevelIndex]?.isZeroG;
+      
       if (e.key === ' ' && gameStateRef.current === 'playing' && !isZeroG) {
           setPlayer(p => {
               if (p.isOnGround || p.jumpCount < MAX_JUMPS) {
@@ -275,7 +276,10 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
           });
       }
       
-      if(e.code === 'ShiftLeft' && gameStateRef.current === 'playing' && boss) {
+      // SHOOTING LOGIC (Boss or Zero-G Level)
+      const canShoot = boss || levels[currentLevelIndex]?.isZeroG;
+      
+      if(e.code === 'ShiftLeft' && gameStateRef.current === 'playing' && canShoot) {
           setPlayer(p => {
               if (p.shootCooldown <= 0) {
                   soundService.playSound('playerShoot');
@@ -306,6 +310,10 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
                   if ((up || down) && !left && !right) {
                     vx = 0;
                   }
+                  
+                  // RAPID FIRE CHECK
+                  const isRapidFire = boss && boss.type === 'shadowHead';
+                  const effectiveCooldown = isRapidFire ? PLAYER_RAPID_SHOOT_COOLDOWN : PLAYER_SHOOT_COOLDOWN;
 
                   setPlayerProjectiles(prev => [
                       ...prev,
@@ -319,7 +327,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
                           vy: vy,
                       }
                   ]);
-                  return {...p, shootCooldown: PLAYER_SHOOT_COOLDOWN};
+                  return {...p, shootCooldown: effectiveCooldown};
               }
               return p;
           });
@@ -386,7 +394,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     setCameraX(cameraXRef.current);
 
     let nextPlayer = { ...player };
-    const isZeroG = boss && boss.type === 'shadowHead';
+    const isZeroG = (boss && boss.type === 'shadowHead') || levels[currentLevelIndex]?.isZeroG;
+    const canShoot = boss || levels[currentLevelIndex]?.isZeroG;
 
     // 1. Update Particles (Limit Life)
     setParticles(prev => prev.map(p => ({
@@ -431,41 +440,67 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     if (nextPlayer.x + nextPlayer.width > levelWidth) nextPlayer.x = levelWidth - nextPlayer.width;
     if (isZeroG) {
          if (nextPlayer.y < 0) nextPlayer.y = 0;
-         if (nextPlayer.y + nextPlayer.height > GAME_HEIGHT) nextPlayer.y = GAME_HEIGHT - nextPlayer.height;
+         // Allow slightly going off bottom if it's a large maze, but generally bound it
+         // For the Maze level, levelWidth/Height are implicit, but lets assume platforms box it in.
+         // Just general bounds:
+         if (nextPlayer.y + nextPlayer.height > (levels[currentLevelIndex].isZeroG ? 2000 : GAME_HEIGHT)) {
+             // If its the maze, height might be larger than GAME_HEIGHT
+             // But we don't have explicit levelHeight in types. Let's just not clamp rigid bottom for ZeroG maze unless floor exists.
+             // The maze has explicit walls, so player shouldn't escape.
+         } else if (nextPlayer.y + nextPlayer.height > GAME_HEIGHT && !levels[currentLevelIndex].isZeroG) {
+             // Standard level pit death logic below
+         }
     }
 
     // 3. Player-Platform Collision
-    if (!isZeroG) {
+    // In Zero-G maze, we DO want collisions with walls (platforms)
+    // In Boss 3 (Zero-G), there are no platforms, so this loop is skipped.
+    if (platforms.length > 0) {
         platforms.forEach(platform => {
           const isHorizontallyAligned = nextPlayer.x + nextPlayer.width > platform.x && nextPlayer.x < platform.x + platform.width;
+          const isVerticallyAligned = nextPlayer.y + nextPlayer.height > platform.y && nextPlayer.y < platform.y + platform.height;
           
-          // Collision from top (landing)
-          if (player.y + player.height <= platform.y && nextPlayer.y + nextPlayer.height >= platform.y && isHorizontallyAligned) {
-            nextPlayer.y = platform.y - nextPlayer.height;
-            nextPlayer.vy = 0;
-            nextPlayer.isOnGround = true;
-            nextPlayer.jumpCount = 0; // Reset double jump
-          }
-          
-          // Collision from bottom (hitting head)
-          if (player.y >= platform.y + platform.height && nextPlayer.y < platform.y + platform.height && isHorizontallyAligned) {
-            nextPlayer.vy = 0;
-            nextPlayer.y = platform.y + platform.height;
-            soundService.playSound('hit');
-            createParticles(nextPlayer.x + nextPlayer.width/2, nextPlayer.y, '#A8ADBD', 3);
-            
-            // Stun Logic
-            setEnemies(prevEnemies => prevEnemies.map(enemy => {
-                if (
-                    enemy.state === 'active' &&
-                    Math.abs((enemy.y + enemy.height) - platform.y) < 5 &&
-                    enemy.x + enemy.width > platform.x && enemy.x < platform.x + platform.width &&
-                    enemy.x + enemy.width > nextPlayer.x && enemy.x < nextPlayer.x + nextPlayer.width
-                ) {
-                    return { ...enemy, state: 'stunned', stunTimer: 3000, vx: 0 };
-                }
-                return enemy;
-            }));
+          // For Zero-G, we need full box collision (sides, top, bottom)
+          if (isZeroG) {
+               if (areRectsColliding(nextPlayer, platform)) {
+                   // Simple resolve: push back based on velocity
+                   nextPlayer.x -= nextPlayer.vx;
+                   nextPlayer.y -= nextPlayer.vy;
+                   nextPlayer.vx = 0;
+                   nextPlayer.vy = 0;
+               }
+          } else {
+              // Standard Platformer Collision (One-way platforms or Solid blocks?)
+              // Currently implemented as solid blocks for top/bottom
+              
+              // Collision from top (landing)
+              if (player.y + player.height <= platform.y && nextPlayer.y + nextPlayer.height >= platform.y && isHorizontallyAligned) {
+                nextPlayer.y = platform.y - nextPlayer.height;
+                nextPlayer.vy = 0;
+                nextPlayer.isOnGround = true;
+                nextPlayer.jumpCount = 0; 
+              }
+              
+              // Collision from bottom (hitting head)
+              if (player.y >= platform.y + platform.height && nextPlayer.y < platform.y + platform.height && isHorizontallyAligned) {
+                nextPlayer.vy = 0;
+                nextPlayer.y = platform.y + platform.height;
+                soundService.playSound('hit');
+                createParticles(nextPlayer.x + nextPlayer.width/2, nextPlayer.y, '#A8ADBD', 3);
+                
+                // Stun Logic
+                setEnemies(prevEnemies => prevEnemies.map(enemy => {
+                    if (
+                        enemy.state === 'active' &&
+                        Math.abs((enemy.y + enemy.height) - platform.y) < 5 &&
+                        enemy.x + enemy.width > platform.x && enemy.x < platform.x + platform.width &&
+                        enemy.x + enemy.width > nextPlayer.x && enemy.x < nextPlayer.x + nextPlayer.width
+                    ) {
+                        return { ...enemy, state: 'stunned', stunTimer: 3000, vx: 0 };
+                    }
+                    return enemy;
+                }));
+              }
           }
         });
     }
@@ -642,11 +677,11 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
                     if (enemy.x < enemy.originalX - 200 || enemy.x > enemy.originalX + 200) { enemy.vx *= -1; enemy.direction = enemy.direction === 'left' ? 'right' : 'left'; }
                     if (enemy.y < enemy.originalY - FLYER_PATROL_RANGE || enemy.y > enemy.originalY + FLYER_PATROL_RANGE) { enemy.vy *= -1; }
                 } else {
-                    enemy.vy += GRAVITY;
+                    if (!isZeroG) enemy.vy += GRAVITY;
                     const lookAheadX = enemy.direction === 'right' ? enemy.x + enemy.width : enemy.x - 1;
                     let groundAhead = false;
                     for (const platform of platforms) { if (lookAheadX >= platform.x && lookAheadX <= platform.x + platform.width && enemy.y + enemy.height + 1 >= platform.y && enemy.y + enemy.height <= platform.y + 10) { groundAhead = true; break; } }
-                    if (!groundAhead) { enemy.vx *= -1; enemy.direction = enemy.direction === 'left' ? 'right' : 'left'; }
+                    if (!groundAhead && !isZeroG) { enemy.vx *= -1; enemy.direction = enemy.direction === 'left' ? 'right' : 'left'; }
                     if (enemy.type === 'jumper') {
                         enemy.jumpCooldown! -= deltaTime;
                         let onGround = false;
@@ -654,12 +689,13 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
                         if (enemy.jumpCooldown! <= 0 && onGround) { enemy.vy = ENEMY_JUMP_FORCE; enemy.jumpCooldown = ENEMY_JUMP_COOLDOWN + Math.random() * 1000; }
                     }
                 }
-            } else { enemy.vy += GRAVITY; }
+            } else if (!isZeroG) { enemy.vy += GRAVITY; }
             
             enemy.x += enemy.vx;
             enemy.y += enemy.vy;
             
-            if (enemy.type !== 'flyer' && enemy.type !== 'phaser' || enemy.state !== 'active') {
+            // Platform collision for enemies
+            if ((enemy.type !== 'flyer' && enemy.type !== 'phaser' || enemy.state !== 'active') && !isZeroG) {
                 platforms.forEach(platform => { if (enemy.y + enemy.height > platform.y && enemy.y + enemy.height < platform.y + 30 && enemy.x + enemy.width > platform.x && enemy.x < platform.x + platform.width && enemy.vy >= 0) { enemy.y = platform.y - enemy.height; enemy.vy = 0; } });
             }
             
@@ -681,13 +717,13 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
                         }
                     }
                 });
-                if (enemy.y > GAME_HEIGHT) enemy.state = 'defeated';
+                if (enemy.y > GAME_HEIGHT && !isZeroG) enemy.state = 'defeated';
             }
         });
         return newEnemies;
     });
 
-    // 5. Player Collisions
+    // 5. Player Collisions (Enemy & Projectile)
     if (!nextPlayer.isInvincible) {
         let tookDamage = false;
         projectiles.forEach(proj => { if (areRectsColliding(nextPlayer, proj)) { tookDamage = true; setProjectiles(prev => prev.filter(p => p.id !== proj.id)); }});
@@ -724,31 +760,52 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
         }
     }
     
-    // 6. Player Projectiles -> Boss
-    if (boss && boss.hp > 0) {
+    // 6. Player Projectiles -> Boss OR Enemies in Zero-G
+    if (canShoot) {
         setPlayerProjectiles(prev => prev.filter(p => {
-            if (boss.type === 'shadowHead' && (boss.opacity || 0) < 0.5) return true;
-            if(areRectsColliding(p, boss)) {
-                soundService.playSound('bossHit');
-                createParticles(p.x, p.y, '#00FF00', 5);
-                updateScore(ENEMY_DEFEAT_POINTS / 2);
-                setBoss(prevBoss => {
-                    if (!prevBoss) return null;
-                     const newHp = prevBoss.hp - 1;
-                     if (newHp <= 0) {
-                        soundService.playSound('bossDefeat');
-                        createParticles(boss.x + boss.width/2, boss.y + boss.height/2, '#00FF00', 50);
-                        updateScore(ENEMY_DEFEAT_POINTS * 20);
-                        gameStateRef.current = 'level-cleared';
-                        setGameState('level-cleared');
-                        setTimeout(() => { if (currentLevelIndex + 1 >= levels.length) onCompleted(); else setCurrentLevelIndex(i => i + 1); }, 3000);
-                        return {...prevBoss, hp: 0, isHit: true, hitTimer: 3000};
-                    }
-                    return {...prevBoss, hp: newHp, isHit: true, hitTimer: 200};
-                });
-                return false;
+            let hit = false;
+            // Hit Boss
+            if (boss && boss.hp > 0) {
+                if (boss.type === 'shadowHead' && (boss.opacity || 0) < 0.5) return true; // Miss ghost
+                if(areRectsColliding(p, boss)) {
+                    soundService.playSound('bossHit');
+                    createParticles(p.x, p.y, '#00FF00', 5);
+                    updateScore(ENEMY_DEFEAT_POINTS / 2);
+                    setBoss(prevBoss => {
+                        if (!prevBoss) return null;
+                         const newHp = prevBoss.hp - 1;
+                         if (newHp <= 0) {
+                            soundService.playSound('bossDefeat');
+                            createParticles(boss.x + boss.width/2, boss.y + boss.height/2, '#00FF00', 50);
+                            updateScore(ENEMY_DEFEAT_POINTS * 20);
+                            gameStateRef.current = 'level-cleared';
+                            setGameState('level-cleared');
+                            setTimeout(() => { if (currentLevelIndex + 1 >= levels.length) onCompleted(); else setCurrentLevelIndex(i => i + 1); }, 3000);
+                            return {...prevBoss, hp: 0, isHit: true, hitTimer: 3000};
+                        }
+                        return {...prevBoss, hp: newHp, isHit: true, hitTimer: 200};
+                    });
+                    hit = true;
+                }
             }
-            return true;
+            
+            // Hit Enemies (Relevant for Final Maze)
+            if (!boss) {
+                 setEnemies(prevEnemies => {
+                    return prevEnemies.map(e => {
+                        if (e.state === 'active' && areRectsColliding(p, e)) {
+                            hit = true;
+                            soundService.playSound('hit');
+                            createParticles(e.x + e.width/2, e.y + e.height/2, '#FF0000', 10);
+                            updateScore(ENEMY_DEFEAT_POINTS);
+                            return { ...e, state: 'defeated' };
+                        }
+                        return e;
+                    });
+                 });
+            }
+
+            return !hit;
         }));
     }
     
@@ -772,18 +829,19 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     if (goal && !boss && gameStateRef.current === 'playing') {
         const collectiblesLeft = remainingItems.filter(item => ['joystick', 'floppy', 'cartridge'].includes(item.type)).length;
         
-        // Fixed: Removed totalCollectiblesInLevel check to ensure levels with 0 items can still be completed via the goal.
         if (collectiblesLeft === 0 && areRectsColliding(nextPlayer, goal)) {
             soundService.playSound('levelClear');
             createParticles(goal.x + goal.width/2, goal.y + goal.height/2, '#FFFFFF', 30);
-            gameStateRef.current = 'level-cleared';
-            setGameState('level-cleared');
-            setTimeout(() => { if (currentLevelIndex + 1 >= levels.length) onCompleted(); else setCurrentLevelIndex(i => i + 1); }, 2000);
-        } else if (currentLevelIndex === levels.length - 1 && areRectsColliding(nextPlayer, goal)) {
-             // Logic for final level labyrinth exit
-             soundService.playSound('levelClear');
-             gameStateRef.current = 'completed';
-             onCompleted();
+            
+            if (currentLevelIndex === levels.length - 1) {
+                // Game Complete Logic
+                gameStateRef.current = 'completed';
+                onCompleted();
+            } else {
+                 gameStateRef.current = 'level-cleared';
+                 setGameState('level-cleared');
+                 setTimeout(() => { if (currentLevelIndex + 1 >= levels.length) onCompleted(); else setCurrentLevelIndex(i => i + 1); }, 2000);
+            }
         }
     }
 
@@ -798,6 +856,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
 
   const collectiblesLeft = items.filter(item => ['joystick', 'floppy', 'cartridge'].includes(item.type)).length;
   const levelName = levels[currentLevelIndex]?.name || `Level ${currentLevelIndex + 1}`;
+  // Check for ShadowHead specific visual override, OR generic ZeroG background style if we had one (we stick to black/stars)
   const isShadowHeadBoss = boss && boss.type === 'shadowHead';
 
   return (
@@ -814,7 +873,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
 
       <div
         className="absolute top-0 left-0"
-        style={{ willChange: 'transform', transform: `translateX(-${cameraX}px)`}}
+        style={{ willChange: 'transform', transform: `translateX(-${cameraX}px) translateY(${levels[currentLevelIndex]?.isZeroG ? 0 : 0}px)`}}
       >
         {platforms.map((p, i) => <Platform key={i} platform={p} />)}
         {goal && (

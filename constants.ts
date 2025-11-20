@@ -13,6 +13,7 @@ export const GRAVITY = 1;
 export const MAX_JUMPS = 2; // Double jump enabled
 export const PLAYER_INVINCIBILITY_DURATION = 3000; // in ms
 export const PLAYER_SHOOT_COOLDOWN = 500; // in ms
+export const PLAYER_RAPID_SHOOT_COOLDOWN = 80; // in ms for Boss 3
 
 // Player Projectile
 export const PLAYER_PROJECTILE_WIDTH = 20;
