@@ -338,7 +338,7 @@ const level8: LevelData = {
     goal: { x: 9200, y: GAME_HEIGHT - 40 - GOAL_HEIGHT, width: GOAL_WIDTH, height: GOAL_HEIGHT },
 };
 
-// --- LEVEL 9: The Drop ---
+// --- LEVEL 9: The Drop (REDESIGNED SKYWAY) ---
 const level9: LevelData = {
     name: "Level 9: The Drop",
     musicTheme: 'ethereal',
@@ -350,21 +350,41 @@ const level9: LevelData = {
         { x: 1800, y: 650, width: 800, height: 30 },
         { x: 2800, y: 500, width: 200, height: 30 },
         { x: 3200, y: 350, width: 400, height: 30 },
-        { x: 3800, y: 200, width: 7200, height: 30 },
+        // Broken Skyway Section (Replaces single 7200px platform)
+        { x: 3800, y: 200, width: 400, height: 30 }, // 1
+        { x: 4350, y: 200, width: 300, height: 30 }, // 2 (Gap 150)
+        { x: 4800, y: 250, width: 400, height: 30 }, // 3
+        { x: 5400, y: 200, width: 200, height: 30 }, // 4 (High jump)
+        { x: 5800, y: 300, width: 500, height: 30 }, // 5
+        { x: 6500, y: 200, width: 400, height: 30 }, // 6
+        { x: 7100, y: 400, width: 300, height: 30 }, // 7 (Low)
+        { x: 7500, y: 200, width: 600, height: 30 }, // 8
+        { x: 8300, y: 250, width: 300, height: 30 }, // 9
+        { x: 8800, y: 200, width: 400, height: 30 }, // 10
+        { x: 9400, y: 300, width: 400, height: 30 }, // 11
+        { x: 10000, y: 400, width: 800, height: 30 }, // 12 Final landing
+
         { x: 0, y: GAME_HEIGHT - 40, width: 11000, height: 40 }, // Floor
     ],
     items: [
         { type: 'shield', x: 1400, y: 430, width: 50, height: 50 },
         { type: 'joystick', x: 2200, y: 580, width: 50, height: 50 },
-        { type: 'cartridge', x: 6000, y: 150, width: 50, height: 50 },
+        { type: 'cartridge', x: 4450, y: 150, width: 50, height: 50 }, // On Skyway
         { type: 'floppy', x: 500, y: 150, width: 50, height: 50 },
         { type: 'cartridge', x: 2850, y: 430, width: 50, height: 50 },
         { type: 'joystick', x: 3300, y: 280, width: 50, height: 50 },
-        { type: 'super-throw', x: 7500, y: 150, width: 50, height: 50 },
+        { type: 'super-throw', x: 6700, y: 150, width: 50, height: 50 }, // On Skyway
+        { type: 'shield', x: 8400, y: 200, width: 50, height: 50 }, // On Skyway
     ],
     enemies: [
         { type: 'flyer', x: 800, y: 200, width: 60, height: 40, originalX: 800, originalY: 200 },
         { type: 'bomber', x: 2000, y: 580, width: 50, height: 50, originalX: 2000, originalY: 580 },
+        // Skyway Enemies
+        { type: 'jumper', x: 4900, y: 170, width: 50, height: 50, originalX: 4900, originalY: 170 },
+        { type: 'flyer', x: 6000, y: 200, width: 60, height: 40, originalX: 6000, originalY: 200 },
+        { type: 'jumper', x: 7700, y: 120, width: 50, height: 50, originalX: 7700, originalY: 120 },
+        { type: 'phaser', x: 9000, y: 150, width: 50, height: 50, originalX: 9000, originalY: 150 },
+
         { type: 'phaser', x: 5000, y: 100, width: 50, height: 50, originalX: 5000, originalY: 100 },
         { type: 'jumper', x: 7000, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 7000, originalY: GAME_HEIGHT - 80 },
         { type: 'phaser', x: 9000, y: GAME_HEIGHT - 80, width: 50, height: 50, originalX: 9000, originalY: GAME_HEIGHT - 80 },

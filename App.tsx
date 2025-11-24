@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { useGameScale } from './hooks/useGameScale';
 import StartScreen from './components/StartScreen';
@@ -17,6 +18,7 @@ function App() {
   const [attractScreen, setAttractScreen] = useState<'start' | 'highscore'>('start');
   const [gameId, setGameId] = useState(1);
   const [finalScore, setFinalScore] = useState(0);
+  const [loopCount, setLoopCount] = useState(1);
   const { dimensions, margins } = useGameScale();
 
   const handleIntroComplete = useCallback(() => setGameState('start'), []);
@@ -24,11 +26,21 @@ function App() {
   const handleStart = useCallback(() => {
     setGameState('playing');
     setGameId(id => id + 1);
+    setLoopCount(1); // Reset loop on fresh start
   }, []);
   
   const handleRestart = useCallback(() => {
     setGameState('playing');
     setGameId(id => id + 1);
+    // Note: If restart comes from Game Over, we reset loop. 
+    // If it comes from CompletedScreen (Loop continue), we handle it in handleLoopContinue.
+    setLoopCount(1); 
+  }, []);
+
+  const handleLoopContinue = useCallback(() => {
+      setLoopCount(prev => prev + 1);
+      setGameState('playing');
+      setGameId(id => id + 1);
   }, []);
 
   const handleGameOver = useCallback((score: number) => {
@@ -94,9 +106,9 @@ function App() {
         return <StartScreen onStart={handleStart} />;
       case 'playing':
       case 'level-cleared':
-        return <GameScreen key={gameId} onGameOver={handleGameOver} onCompleted={handleGameCompleted} setGameState={setGameState} />;
+        return <GameScreen key={gameId} onGameOver={handleGameOver} onCompleted={handleGameCompleted} setGameState={setGameState} loopCount={loopCount} />;
       case 'completed':
-        return <CompletedScreen onRestart={handleRestart} />;
+        return <CompletedScreen onRestart={handleLoopContinue} loopCount={loopCount} />;
       case 'gameover':
         return <GameoverScreen onRestart={handleRestart} />;
       case 'highscore':

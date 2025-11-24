@@ -13,9 +13,10 @@ interface HudProps {
   boss?: Boss | null;
   isGodMode: boolean;
   timeRemaining?: number | null;
+  loopCount: number;
 }
 
-const Hud: React.FC<HudProps> = ({ score, lives, level, levelName, collectiblesLeft, activePowerUp, boss, isGodMode, timeRemaining }) => {
+const Hud: React.FC<HudProps> = ({ score, lives, level, levelName, collectiblesLeft, activePowerUp, boss, isGodMode, timeRemaining, loopCount }) => {
   
   const formatTime = (seconds: number) => {
       const m = Math.floor(seconds / 60);
@@ -51,6 +52,12 @@ const Hud: React.FC<HudProps> = ({ score, lives, level, levelName, collectiblesL
              <div className="flex items-baseline space-x-4">
               <p className="text-yellow-400">LEVEL</p>
               <p className="text-white text-5xl">{level}</p>
+            </div>
+
+            {/* Loop Indicator */}
+            <div className="flex items-baseline space-x-2">
+              <p className="text-red-500 text-xl">LOOP</p>
+              <p className="text-white text-3xl">{loopCount}</p>
             </div>
 
             {/* Items (only if not a boss level) */}

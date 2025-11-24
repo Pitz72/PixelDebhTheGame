@@ -21,10 +21,11 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 
 ## Features
 
+-   **Infinite Loop (New Game+):** Beat the game to enter the next Loop! Each loop increases enemy and projectile speed by 20%, offering an endless challenge for skilled players.
 -   **Vertical Scrolling (v0.3.5):** The camera system now fully supports vertical scrolling, essential for the massive new Zero-G Labyrinth level.
 -   **Expanded Labyrinth & Timer (v0.3.4):** The final level is now a massive 5000x4000 pixel maze. Navigate carefully through zoned obstacles before the **5-minute timer** runs out!
 -   **Zero-G Mechanics:** The final level and boss fight feature gravity-free movement mechanics.
--   **Revamped Level Design:** Advanced levels (The Gauntlet, The Ascent) have been audited and redesigned to provide a fair, populated, and challenging experience.
+-   **Revamped Level Design:** Advanced levels (The Gauntlet, The Ascent, The Drop) have been audited and redesigned to provide a fair, populated, and challenging experience.
 -   **New: Standalone & Optimized:** The game engine has been refactored for maximum performance and is now completely standalone, with no external API dependencies.
 -   **Custom Pixel Art Intro:** A unique, animated intro sequence featuring a custom pixel-art avatar of the protagonist surrounded by orbiting gaming gear (webcam, cat, phone), set against a synthwave grid horizon.
 -   **Structured Game Progression:** A full adventure across 13 levels, with a carefully designed difficulty curve. Each standard level is progressively longer than the last, mixing horizontal and vertical platforming challenges.

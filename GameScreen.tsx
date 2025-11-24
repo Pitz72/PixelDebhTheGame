@@ -31,9 +31,10 @@ interface GameScreenProps {
   onGameOver: (score: number) => void;
   onCompleted: () => void;
   setGameState: React.Dispatch<React.SetStateAction<GameState>>;
+  loopCount: number;
 }
 
-const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGameState }) => {
+const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGameState, loopCount }) => {
   const [currentLevelIndex, setCurrentLevelIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(INITIAL_LIVES);
@@ -66,6 +67,10 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
   const cameraXRef = useRef(0);
   const cameraYRef = useRef(0);
   
+  // Calculate Difficulty Multiplier based on Loop Count
+  // Loop 1 = 1x, Loop 2 = 1.2x, Loop 3 = 1.4x, etc.
+  const difficultyMultiplier = 1 + ((loopCount - 1) * 0.2);
+
   // Particle Helper
   const createParticles = (x: number, y: number, color: string, count: number) => {
     setParticles(prev => {
@@ -180,8 +185,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
         setBoss({
             ...levelData.boss,
             hp: levelData.boss.maxHp,
-            vx: BOSS_INITIAL_VX,
-            vy: BOSS_INITIAL_VY,
+            vx: BOSS_INITIAL_VX * difficultyMultiplier,
+            vy: BOSS_INITIAL_VY * difficultyMultiplier,
             attackCooldown: 3000,
             isHit: false,
             hitTimer: 0,
@@ -202,8 +207,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
     } else {
         setEnemies(levelData.enemies.map((e, i) => ({
           id: i, ...e, 
-          vx: e.type === 'flyer' ? FLYER_SPEED : (e.type === 'bomber' || e.type === 'phaser' ? 0 : ENEMY_SPEED), 
-          vy: e.type === 'flyer' ? FLYER_VERTICAL_SPEED : 0,
+          vx: (e.type === 'flyer' ? FLYER_SPEED : (e.type === 'bomber' || e.type === 'phaser' ? 0 : ENEMY_SPEED)) * difficultyMultiplier, 
+          vy: (e.type === 'flyer' ? FLYER_VERTICAL_SPEED : 0) * difficultyMultiplier,
           direction: 'right', state: 'active', 
           jumpCooldown: e.type === 'jumper' ? ENEMY_JUMP_COOLDOWN : undefined, 
           attackCooldown: e.type === 'bomber' ? BOMBER_ATTACK_COOLDOWN : undefined,
@@ -213,7 +218,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
 
     gameStateRef.current = 'playing';
     setGameState('playing');
-  }, [onCompleted, setGameState]);
+  }, [onCompleted, setGameState, difficultyMultiplier]);
 
   useEffect(() => {
     loadLevel(currentLevelIndex);
@@ -580,7 +585,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
                     const dx = player.x - (nextBoss.x + nextBoss.width / 2);
                     const dy = player.y - (nextBoss.y + nextBoss.height / 2);
                     const dist = Math.sqrt(dx*dx + dy*dy) || 1;
-                    setProjectiles(prev => [...prev, { id: Date.now(), x: nextBoss.x + nextBoss.width / 2, y: nextBoss.y + nextBoss.height / 2, width: BOSS_PROJECTILE_WIDTH, height: BOSS_PROJECTILE_HEIGHT, vx: (dx / dist) * BOSS_PROJECTILE_SPEED, vy: (dy / dist) * BOSS_PROJECTILE_SPEED, isBomb: false }]);
+                    setProjectiles(prev => [...prev, { id: Date.now(), x: nextBoss.x + nextBoss.width / 2, y: nextBoss.y + nextBoss.height / 2, width: BOSS_PROJECTILE_WIDTH, height: BOSS_PROJECTILE_HEIGHT, vx: (dx / dist) * BOSS_PROJECTILE_SPEED * difficultyMultiplier, vy: (dy / dist) * BOSS_PROJECTILE_SPEED * difficultyMultiplier, isBomb: false }]);
                 }
 
             } else if (nextBoss.type === 'chickenEye') {
@@ -601,7 +606,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
                     const newProjectiles = [];
                     for (let i = -1.5; i <= 1.5; i+=1) {
                         const angle = baseAngle + (i * 0.2);
-                        newProjectiles.push({ id: Date.now() + i, x: nextBoss.x + nextBoss.width / 2, y: nextBoss.y + nextBoss.height / 2, width: EGG_PROJECTILE_WIDTH, height: EGG_PROJECTILE_HEIGHT, vx: Math.cos(angle) * BOSS_PROJECTILE_SPEED * 1.2, vy: Math.sin(angle) * BOSS_PROJECTILE_SPEED * 1.2, isBomb: false, isEgg: true });
+                        newProjectiles.push({ id: Date.now() + i, x: nextBoss.x + nextBoss.width / 2, y: nextBoss.y + nextBoss.height / 2, width: EGG_PROJECTILE_WIDTH, height: EGG_PROJECTILE_HEIGHT, vx: Math.cos(angle) * BOSS_PROJECTILE_SPEED * 1.2 * difficultyMultiplier, vy: Math.sin(angle) * BOSS_PROJECTILE_SPEED * 1.2 * difficultyMultiplier, isBomb: false, isEgg: true });
                     }
                     setProjectiles(prev => [...prev, ...newProjectiles]);
                  }
@@ -639,7 +644,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
                         const dx = player.x - (nextBoss.x + nextBoss.width / 2);
                         const dy = player.y - (nextBoss.y + nextBoss.height / 2);
                         const dist = Math.sqrt(dx*dx + dy*dy) || 1;
-                        setProjectiles(prev => [...prev, { id: Date.now(), x: nextBoss.x + nextBoss.width / 2, y: nextBoss.y + nextBoss.height / 2, width: FIREBALL_WIDTH, height: FIREBALL_HEIGHT, vx: (dx / dist) * FIREBALL_SPEED, vy: (dy / dist) * FIREBALL_SPEED, isFireball: true }]);
+                        setProjectiles(prev => [...prev, { id: Date.now(), x: nextBoss.x + nextBoss.width / 2, y: nextBoss.y + nextBoss.height / 2, width: FIREBALL_WIDTH, height: FIREBALL_HEIGHT, vx: (dx / dist) * FIREBALL_SPEED * difficultyMultiplier, vy: (dy / dist) * FIREBALL_SPEED * difficultyMultiplier, isFireball: true }]);
                     }
                 } else if (nextBoss.visibilityState === 'fadingOut') {
                     nextBoss.opacity -= fadeSpeed;
@@ -688,7 +693,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
                 enemy.stunTimer! -= deltaTime;
                 if(enemy.stunTimer! <= 0) {
                     enemy.state = 'active';
-                    enemy.vx = enemy.direction === 'right' ? ENEMY_SPEED : -ENEMY_SPEED;
+                    enemy.vx = (enemy.direction === 'right' ? ENEMY_SPEED : -ENEMY_SPEED) * difficultyMultiplier;
                 }
                 return;
             }
@@ -698,15 +703,15 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
                     const dx = nextPlayer.x - enemy.x;
                     const dy = nextPlayer.y - enemy.y;
                     const dist = Math.sqrt(dx*dx + dy*dy) || 1;
-                    enemy.vx = (dx / dist) * PHASER_SPEED;
-                    enemy.vy = (dy / dist) * PHASER_SPEED;
+                    enemy.vx = (dx / dist) * PHASER_SPEED * difficultyMultiplier;
+                    enemy.vy = (dy / dist) * PHASER_SPEED * difficultyMultiplier;
                 } else if (enemy.type === 'bomber') {
                     enemy.attackCooldown! -= deltaTime;
                     if (enemy.attackCooldown! <= 0) {
                         enemy.attackCooldown = BOMBER_ATTACK_COOLDOWN + Math.random() * 1000;
                         soundService.playSound('bomberShoot');
                         const dx = (player.x + player.width / 2) - (enemy.x + enemy.width / 2);
-                        setProjectiles(prev => [...prev, { id: Date.now(), x: enemy.x + enemy.width / 2, y: enemy.y, width: BOMB_WIDTH, height: BOMB_HEIGHT, vx: dx * BOMB_HORIZONTAL_SPEED_MULTIPLIER, vy: BOMB_INITIAL_VY, isBomb: true }]);
+                        setProjectiles(prev => [...prev, { id: Date.now(), x: enemy.x + enemy.width / 2, y: enemy.y, width: BOMB_WIDTH, height: BOMB_HEIGHT, vx: dx * BOMB_HORIZONTAL_SPEED_MULTIPLIER * difficultyMultiplier, vy: BOMB_INITIAL_VY * difficultyMultiplier, isBomb: true }]);
                     }
                 } else if (enemy.type === 'flyer') {
                     if (enemy.x < enemy.originalX - 200 || enemy.x > enemy.originalX + 200) { enemy.vx *= -1; enemy.direction = enemy.direction === 'left' ? 'right' : 'left'; }
@@ -882,7 +887,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
 
     setPlayer(nextPlayer);
     gameLoopRef.current = requestAnimationFrame(gameLoop);
-  }, [items, currentLevelIndex, enemies, keysPressed, platforms, player, onGameOver, onCompleted, setGameState, updateScore, levelWidth, levelHeight, lives, boss, projectiles, isGodMode, score, goal, isPaused, timeRemaining]);
+  }, [items, currentLevelIndex, enemies, keysPressed, platforms, player, onGameOver, onCompleted, setGameState, updateScore, levelWidth, levelHeight, lives, boss, projectiles, isGodMode, score, goal, isPaused, timeRemaining, difficultyMultiplier, loopCount]);
 
   useEffect(() => {
     gameLoopRef.current = requestAnimationFrame(gameLoop);
@@ -903,7 +908,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ onGameOver, onCompleted, setGam
           <Background cameraX={cameraX} cameraY={cameraY} />
       )}
       
-      <Hud score={score} lives={lives} level={currentLevelIndex + 1} levelName={levelName} collectiblesLeft={collectiblesLeft} activePowerUp={player.activePowerUp} boss={boss} isGodMode={isGodMode} timeRemaining={timeRemaining} />
+      <Hud score={score} lives={lives} level={currentLevelIndex + 1} levelName={levelName} collectiblesLeft={collectiblesLeft} activePowerUp={player.activePowerUp} boss={boss} isGodMode={isGodMode} timeRemaining={timeRemaining} loopCount={loopCount} />
 
       <div
         className="absolute top-0 left-0"
