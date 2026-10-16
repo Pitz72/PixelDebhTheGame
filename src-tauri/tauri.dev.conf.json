@@ -1,0 +1,19 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "PixelDebh: Retro-Rescue! (dev)",
+        "width": 1280,
+        "height": 720,
+        "minWidth": 960,
+        "minHeight": 540,
+        "center": true,
+        "resizable": true,
+        "fullscreen": false,
+        "backgroundColor": "#04010c"
+      }
+    ]
+  }
+}

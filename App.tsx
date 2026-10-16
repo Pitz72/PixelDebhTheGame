@@ -11,7 +11,6 @@ import { GameState } from './types';
 import { GAME_WIDTH, GAME_HEIGHT } from './constants';
 import * as highscoreService from './services/highscoreService';
 import * as soundService from './services/soundService';
-import * as storage from './services/storage';
 import { isTauri, setFullscreen, toggleFullscreen } from './services/platform';
 
 interface Carry {
@@ -29,15 +28,15 @@ function App() {
   const [carry, setCarry] = useState<Carry>({ score: 0 });
   const { dimensions, margins } = useGameScale();
 
-  // In a browser tab the game asks for fullscreen on the first interaction (browsers need a
-  // user gesture). The desktop app starts windowed and remembers the player's choice instead.
+  // The desktop app always starts fullscreen (window config), so nothing to request there.
+  // In a browser tab the game asks for fullscreen on the first interaction (browsers need a user gesture).
   const requestAppFullscreen = useCallback(() => {
     if (!isTauri()) void setFullscreen(true);
   }, []);
 
-  const toggleAppFullscreen = useCallback(async () => {
-    const on = await toggleFullscreen();
-    if (isTauri()) storage.setItem('pixelDebhFullscreen', on ? '1' : '0');
+  // F / F11 / Alt+Enter can still drop to a window for the current session (not remembered).
+  const toggleAppFullscreen = useCallback(() => {
+    void toggleFullscreen();
   }, []);
 
   // Global keys: F / F11 / Alt+Enter toggle fullscreen, M toggles mute

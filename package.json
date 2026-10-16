@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "tauri": "tauri",
-    "desktop": "tauri dev",
+    "desktop": "tauri dev --config src-tauri/tauri.dev.conf.json",
     "desktop:build": "tauri build"
   },
   "dependencies": {

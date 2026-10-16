@@ -89,10 +89,10 @@ npx tauri build --bundles nsis        # Windows installer  -> src-tauri/target/r
 npx tauri build --bundles deb,appimage  # Linux packages (build this on Linux)
 ```
 
-- High scores and settings (mute, fullscreen) are saved in `save.json` in the app data folder (`%APPDATA%\com.pixeldebh.retrorescue` on Windows, `~/.local/share/com.pixeldebh.retrorescue` on Linux). In a browser they fall back to `localStorage`.
+- High scores and settings (mute) are saved in `save.json` in the app data folder (`%APPDATA%\com.pixeldebh.retrorescue` on Windows, `~/.local/share/com.pixeldebh.retrorescue` on Linux). In a browser they fall back to `localStorage`.
 - Linux packages: `.deb`, `.rpm` and an `.AppImage`. The AppImage bundles GStreamer, which WebKitGTK needs for Web Audio; the `.deb` depends on the GStreamer base and good plugins.
 - Linux status: build, tests, launch, keyboard input, fullscreen and save file were checked on Ubuntu 24.04 (WSL2 with WSLg). It has not been tried yet on a native desktop with a real GPU, and audio has not been listened to. If the window comes up blank (seen with some NVIDIA/Wayland setups on WebKitGTK), the usual workaround is to start it with `WEBKIT_DISABLE_DMABUF_RENDERER=1`; that was not needed in the checks above.
-- The app starts windowed (16:9, resizable). `F`, `F11` or `Alt+Enter` toggle fullscreen and the choice is remembered.
+- The app always starts **fullscreen**, as a console-style desktop game should. `F`, `F11` or `Alt+Enter` drop to a 16:9 window (and back) for the current session only; it is not remembered. `npm run desktop` (dev mode) starts windowed so it does not take over your screen while you work.
 - The `Desktop build` GitHub workflow (`.github/workflows/desktop.yml`, run by hand or on a `v*` tag) builds the Windows installer and the Linux packages and uploads them as artifacts.
 
 The game simulation lives in `engine/` as plain TypeScript with a fixed 60 Hz timestep and no DOM or audio access: it emits events (sounds, music, game over) that `GameScreen.tsx` forwards to the UI and to `services/soundService.ts`. That is what the automated tests exercise.
