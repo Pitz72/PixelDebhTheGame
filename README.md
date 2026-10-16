@@ -16,19 +16,19 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 -   **Goal:** To complete a level, you must first collect all the retro-themed items (joysticks, floppy disks, cartridges). Once all items are collected, a goal door at the far right of the level becomes active. Reach the door to advance!
 -   **Boss Battles:**
     -   **Cyclops Frog (Level 4):** Face off against a mighty floating frog! It moves unpredictably and launches spinning CD-ROMs. Use your special shooting ability (`Left Shift`) to win this dynamic encounter. You can aim in 8 directions by holding the movement keys.
-    -   **LeGallineNellOcchi (Level 8):** A surreal giant eye with a chicken for a pupil. It moves in a hypnotic figure-8 pattern and unleashes bursts of egg projectiles. Timing and precision are key to avoiding the spread attacks. **Note:** For this endurance battle, you are granted extra lives equal to half the boss's health!
-    -   **CapocciaNelBuio (Level 12):** The ultimate challenge. Gravity is disabled, turning the game into a space shooter. This giant boss fades in and out of the darkness, teleporting around the arena and launching rapid-fireballs. Activate **Rapid Fire** mode during this battle!
+    -   **LeGallineNellOcchi (Level 7):** A surreal giant eye with a chicken for a pupil. It moves in a hypnotic figure-8 pattern and unleashes bursts of egg projectiles. Timing and precision are key to avoiding the spread attacks. **Note:** For this endurance battle, you borrow extra lives equal to half the boss's health; they are handed back when the boss falls.
+    -   **CapocciaNelBuio (Level 11):** The ultimate boss. Gravity is disabled, turning the game into a space shooter. This giant boss fades in and out of the darkness, teleporting around the arena and launching rapid-fireballs. Activate **Rapid Fire** mode during this battle!
 
 ## Features
 
--   **Infinite Loop (New Game+):** Beat the game to enter the next Loop! Each loop increases enemy and projectile speed by 20%, offering an endless challenge for skilled players.
+-   **Infinite Loop (New Game+):** Beat the game to enter the next Loop! Each loop increases enemy and projectile speed by 20%. Your score and lives carry over; on the victory screen press `Enter` for the next loop or `Esc` to bank your score on the leaderboard.
 -   **Vertical Scrolling (v0.3.5):** The camera system now fully supports vertical scrolling, essential for the massive new Zero-G Labyrinth level.
--   **Expanded Labyrinth & Timer (v0.3.4):** The final level is now a massive 5000x4000 pixel maze. Navigate carefully through zoned obstacles before the **5-minute timer** runs out!
+-   **Expanded Labyrinth & Timer:** The final level is a 14000x8400 pixel maze. Navigate carefully through zoned obstacles before the **10-minute timer** runs out!
 -   **Zero-G Mechanics:** The final level and boss fight feature gravity-free movement mechanics.
 -   **Revamped Level Design:** Advanced levels (The Gauntlet, The Ascent, The Drop) have been audited and redesigned to provide a fair, populated, and challenging experience.
 -   **New: Standalone & Optimized:** The game engine has been refactored for maximum performance and is now completely standalone, with no external API dependencies.
 -   **Custom Pixel Art Intro:** A unique, animated intro sequence featuring a custom pixel-art avatar of the protagonist surrounded by orbiting gaming gear (webcam, cat, phone), set against a synthwave grid horizon.
--   **Structured Game Progression:** A full adventure across 13 levels, with a carefully designed difficulty curve. Each standard level is progressively longer than the last, mixing horizontal and vertical platforming challenges.
+-   **Structured Game Progression:** A full adventure across 12 levels (three of them boss fights), with a carefully designed difficulty curve. Each standard level is progressively longer than the last, mixing horizontal and vertical platforming challenges.
 -   **Gradual Enemy Introduction:** New enemy types are introduced gradually, giving players time to learn their patterns:
     -   **Globby (Base):** The standard ground enemy.
     -   **Hoppy (Jumper):** An unpredictable jumping foe.
@@ -57,19 +57,36 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 -   **Jump:** `Spacebar` (Press twice for Double Jump)
 -   **Capture / Launch:** `C` or `X`
 -   **Shoot (Boss Battles / Zero-G):** `Left Shift` (Hold movement keys to aim in 8 directions)
--   **Pause:** `ESC`
+-   **Pause:** `ESC` (the game also pauses by itself when the window loses focus)
+-   **Mute:** `M`
+-   **Fullscreen:** `F`
 
 ## Developer Features
 
--   **God Mode:** Press `0` on the number pad to toggle invincibility.
--   **Boss Skip:** Press `9` to jump directly to the final boss.
+Available only when running `npm run dev` (they are compiled out of release builds):
+
+-   **God Mode:** Press `0` to toggle invincibility.
+-   **Boss Skip:** Press `9` to jump directly to the last boss (Level 11).
 -   **Level Skip:** Press `L` to skip the current level instantly.
+
+## Development
+
+```bash
+npm install
+npm run dev        # Vite dev server
+npm test           # engine, input and level-data tests (Vitest)
+npm run typecheck  # tsc --noEmit
+npm run build      # production bundle (everything is bundled locally, no CDN, works offline)
+```
+
+The game simulation lives in `engine/` as plain TypeScript with a fixed 60 Hz timestep and no DOM or audio access: it emits events (sounds, music, game over) that `GameScreen.tsx` forwards to the UI and to `services/soundService.ts`. That is what the automated tests exercise.
 
 ## Built With
 
 -   **React:** For the component-based UI and game structure.
 -   **TypeScript:** For strong typing and code quality.
--   **TailwindCSS:** For styling the UI components.
+-   **TailwindCSS (v3, compiled locally):** For styling the UI components.
+-   **Vitest:** For the engine tests.
 
 ---
 *This project is a demonstration of building a simple game using web technologies.*

@@ -39,12 +39,16 @@ export const ENEMY_JUMP_COOLDOWN = 2000; // in ms
 export const LAUNCH_FORCE = 38;
 export const PHASER_SPEED = 1.8;
 export const BOMBER_ATTACK_COOLDOWN = 2800; // in ms
+export const GROUND_PATROL_RANGE = 320; // ground enemies turn back after this distance from their spawn point
+export const LAUNCH_MAX_DISTANCE = 1000; // a launched enemy pops after travelling this far (px)
 
 // Bomb Projectile
 export const BOMB_WIDTH = 26;
 export const BOMB_HEIGHT = 26;
 export const BOMB_INITIAL_VY = -15;
-export const BOMB_HORIZONTAL_SPEED_MULTIPLIER = 0.09;
+export const BOMB_HORIZONTAL_SPEED_MULTIPLIER = 0.09; // legacy, no longer used (bombs are now aimed ballistically)
+export const BOMB_MAX_HORIZONTAL_SPEED = 16;
+export const BOMB_AIM_SPREAD = 0.12; // +/- 6% random error on the horizontal speed
 
 // Boss settings
 export const BOSS_INITIAL_HP = 30;

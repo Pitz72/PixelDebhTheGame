@@ -2,7 +2,7 @@
 <html lang="it">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" href="/pixeldebh-logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#050014" />
     <meta
@@ -10,91 +10,6 @@
       content="PixelDebh: Retro-Rescue! — HD Vector Edition. Il gioco ufficiale del canale YouTube di PixelDebh."
     />
     <title>PixelDebh: Retro-Rescue! — Vector HD Edition</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Press+Start+2P&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
-    <style>
-      /* High-Definition Vector Graphics Rendering */
-      * {
-        box-sizing: border-box;
-        user-select: none;
-      }
-      svg {
-        shape-rendering: geometricPrecision;
-        text-rendering: geometricPrecision;
-      }
-      body {
-        background-color: #04010c;
-        overflow: hidden;
-        margin: 0;
-        padding: 0;
-        font-family: 'Orbitron', 'Press Start 2P', sans-serif;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-      }
-
-      /* Blinking animation for arcade prompts */
-      @keyframes blink {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.15; }
-      }
-      .animate-blink {
-        animation: blink 1.2s ease-in-out infinite;
-      }
-
-      /* Smooth floating animation for collectibles & UI */
-      @keyframes vectorFloat {
-        0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-6px); }
-      }
-      .animate-vector-float {
-        animation: vectorFloat 2.2s ease-in-out infinite;
-      }
-
-      /* Enemy Stun Shake Animation */
-      @keyframes shake {
-        10%, 90% { transform: translate3d(-2px, 0, 0) scaleX(var(--direction-scale, 1)); }
-        20%, 80% { transform: translate3d(3px, 0, 0) scaleX(var(--direction-scale, 1)); }
-        30%, 50%, 70% { transform: translate3d(-4px, 0, 0) scaleX(var(--direction-scale, 1)); }
-        40%, 60% { transform: translate3d(4px, 0, 0) scaleX(var(--direction-scale, 1)); }
-      }
-      .animate-shake {
-        animation: shake 0.35s cubic-bezier(.36,.07,.19,.97) both infinite;
-      }
-
-      /* Boss Recoil Animation */
-      .frog-boss-sprite.throwing .frog-body-group {
-        animation: frog-vector-recoil 0.45s cubic-bezier(0.22, 1, 0.36, 1);
-      }
-      @keyframes frog-vector-recoil {
-        0% { transform: rotate(0deg) scale(1); }
-        30% { transform: rotate(-5deg) scale(0.94); }
-        65% { transform: rotate(4deg) scale(1.05); }
-        100% { transform: rotate(0deg) scale(1); }
-      }
-
-      /* Projectile spin animation */
-      @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-      }
-      .animate-spin {
-        animation: spin 0.9s linear infinite;
-      }
-
-      /* Start Screen Parade Animation */
-      @keyframes parade-walk-in {
-        from {
-          transform: translateX(180px) scale(0.8);
-          opacity: 0;
-        }
-        to {
-          transform: translateX(0) scale(1);
-          opacity: 1;
-        }
-      }
-    </style>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

@@ -299,13 +299,15 @@ export const PlayerSprite = ({
 export const EnemySprite = ({ type, state }: { type: string; state: string }) => {
   const captured = state === 'captured';
   const stunned = state === 'stunned';
+  // Gradient ids differ per variant: SVG ids are document-global, so a shared id made every enemy pick up the first one's colours.
+  const v = captured ? 'c' : 'n';
 
   switch (type) {
     case 'phaser': // Ghosty — Spectral Wraith (fills 50x50 cleanly)
       return (
         <svg viewBox="0 0 50 50" className="w-full h-full">
           <defs>
-            <linearGradient id="ghost-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <linearGradient id={`ghost-grad-${v}`} x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor={captured ? '#e040fb' : '#e0f7fa'} stopOpacity="0.95" />
               <stop offset="65%" stopColor={captured ? '#7c4dff' : '#4dd0e1'} stopOpacity="0.85" />
               <stop offset="100%" stopColor="#311b92" stopOpacity="0.35" />
@@ -318,7 +320,7 @@ export const EnemySprite = ({ type, state }: { type: string; state: string }) =>
           </defs>
           <path
             d="M 5 24 C 5 6, 45 6, 45 24 L 47 46 C 42 41, 38 48, 33 44 C 29 40, 25 49, 20 44 C 15 40, 10 48, 3 46 Z"
-            fill="url(#ghost-grad)"
+            fill={`url(#ghost-grad-${v})`}
             stroke="#2A1810"
             strokeWidth="2.2"
           />
@@ -339,7 +341,7 @@ export const EnemySprite = ({ type, state }: { type: string; state: string }) =>
       return (
         <svg viewBox="0 0 50 50" className="w-full h-full">
           <defs>
-            <linearGradient id="tank-dome" x1="0%" y1="0%" x2="100%" y2="100%">
+            <linearGradient id={`tank-dome-${v}`} x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor={captured ? '#b388ff' : '#90a4ae'} />
               <stop offset="55%" stopColor={captured ? '#7c4dff' : '#455a64'} />
               <stop offset="100%" stopColor="#1c262b" />
@@ -351,7 +353,7 @@ export const EnemySprite = ({ type, state }: { type: string; state: string }) =>
           {/* Armored Dome */}
           <path
             d="M 4 38 C 4 14, 46 14, 46 38 Z"
-            fill="url(#tank-dome)"
+            fill={`url(#tank-dome-${v})`}
             stroke="#2A1810"
             strokeWidth="2.2"
           />
@@ -370,7 +372,7 @@ export const EnemySprite = ({ type, state }: { type: string; state: string }) =>
       return (
         <svg viewBox="0 0 60 44" className="w-full h-full">
           <defs>
-            <linearGradient id="bat-wing" x1="0%" y1="0%" x2="100%" y2="100%">
+            <linearGradient id={`bat-wing-${v}`} x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor={captured ? '#ba68c8' : '#00e5ff'} />
               <stop offset="100%" stopColor={captured ? '#4a148c' : '#1a237e'} />
             </linearGradient>
@@ -378,13 +380,13 @@ export const EnemySprite = ({ type, state }: { type: string; state: string }) =>
           {/* Left & Right Wings spanning x=2..58 */}
           <path
             d="M 20 18 L 2 5 L 5 22 L 12 19 L 10 30 L 20 26 Z"
-            fill="url(#bat-wing)"
+            fill={`url(#bat-wing-${v})`}
             stroke="#2A1810"
             strokeWidth="2"
           />
           <path
             d="M 40 18 L 58 5 L 55 22 L 48 19 L 50 30 L 40 26 Z"
-            fill="url(#bat-wing)"
+            fill={`url(#bat-wing-${v})`}
             stroke="#2A1810"
             strokeWidth="2"
           />
@@ -405,7 +407,7 @@ export const EnemySprite = ({ type, state }: { type: string; state: string }) =>
       return (
         <svg viewBox="0 0 50 50" className="w-full h-full">
           <defs>
-            <linearGradient id="hoppy-head" x1="0%" y1="0%" x2="100%" y2="100%">
+            <linearGradient id={`hoppy-head-${v}`} x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor={captured ? '#ce93d8' : '#ff5252'} />
               <stop offset="55%" stopColor={captured ? '#8e24aa' : '#d50000'} />
               <stop offset="100%" stopColor="#7f0000" />
@@ -427,7 +429,7 @@ export const EnemySprite = ({ type, state }: { type: string; state: string }) =>
             width="42"
             height="32"
             rx="10"
-            fill="url(#hoppy-head)"
+            fill={`url(#hoppy-head-${v})`}
             stroke="#2A1810"
             strokeWidth="2.2"
           />
@@ -452,7 +454,7 @@ export const EnemySprite = ({ type, state }: { type: string; state: string }) =>
       return (
         <svg viewBox="0 0 50 50" className="w-full h-full">
           <defs>
-            <radialGradient id="slime-body" cx="35%" cy="30%" r="70%">
+            <radialGradient id={`slime-body-${v}`} cx="35%" cy="30%" r="70%">
               <stop offset="0%" stopColor={captured ? '#ea80fc' : '#b9f6ca'} />
               <stop offset="45%" stopColor={captured ? '#9c27b0' : '#00e676'} />
               <stop offset="100%" stopColor={captured ? '#4a148c' : '#00695c'} />
@@ -460,7 +462,7 @@ export const EnemySprite = ({ type, state }: { type: string; state: string }) =>
           </defs>
           <path
             d="M 4 44 C 2 24, 9 4, 25 4 C 41 4, 48 24, 46 44 C 44 48, 6 48, 4 44 Z"
-            fill="url(#slime-body)"
+            fill={`url(#slime-body-${v})`}
             stroke="#2A1810"
             strokeWidth="2.2"
           />

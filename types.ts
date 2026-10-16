@@ -39,6 +39,10 @@ export interface Enemy extends DynamicObject {
   stunTimer?: number;
   attackCooldown?: number;
   isSuperLaunched?: boolean;
+  /** True when the last physics step left the enemy standing on a platform. */
+  onGround?: boolean;
+  /** Distance covered since being launched (px). */
+  launchTravel?: number;
 }
 
 export type ItemType = 'joystick' | 'floppy' | 'cartridge' | 'speed-boost' | 'shield' | 'super-throw';
@@ -78,6 +82,8 @@ export interface Boss extends DynamicObject {
 
 export interface Projectile extends DynamicObject {
   id: number;
+  /** Simulation steps since spawn. */
+  age?: number;
   isBomb?: boolean;
   isEgg?: boolean;
   isFireball?: boolean;
@@ -116,7 +122,7 @@ export interface LevelData {
   levelHeight?: number;
   platforms: Omit<Platform, 'id'>[];
   items: Omit<Item, 'id'>[];
-  enemies: Omit<Enemy, 'id' | 'state' | 'vx' | 'vy' | 'direction' | 'jumpCooldown' | 'stunTimer' | 'attackCooldown' | 'isSuperLaunched'>[];
+  enemies: Omit<Enemy, 'id' | 'state' | 'vx' | 'vy' | 'direction' | 'jumpCooldown' | 'stunTimer' | 'attackCooldown' | 'isSuperLaunched' | 'onGround' | 'launchTravel'>[];
   checkpoints?: Omit<Checkpoint, 'id' | 'activated'>[];
   playerStart: { x: number; y: number };
   goal?: Omit<Goal, 'id'>;

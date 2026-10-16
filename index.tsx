@@ -1,6 +1,8 @@
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import '@fontsource-variable/orbitron';
+import '@fontsource/press-start-2p';
+import './index.css';
 import App from './App';
 
 const rootElement = document.getElementById('root');

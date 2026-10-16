@@ -41,18 +41,21 @@ const EnterHighscoreScreen: React.FC<EnterHighscoreScreenProps> = ({ score, onHi
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      e.preventDefault();
+      // Only swallow the keys this screen uses (F11, F12, Alt+F4... keep working).
       switch (e.key.toLowerCase()) {
         case 'w':
         case 'arrowup':
+          e.preventDefault();
           changeLetter(1);
           break;
         case 's':
         case 'arrowdown':
+          e.preventDefault();
           changeLetter(-1);
           break;
         case 'enter':
-          confirmLetter();
+          e.preventDefault();
+          if (!e.repeat) confirmLetter();
           break;
       }
     },

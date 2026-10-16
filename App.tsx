@@ -12,12 +12,19 @@ import { GAME_WIDTH, GAME_HEIGHT } from './constants';
 import * as highscoreService from './services/highscoreService';
 import * as soundService from './services/soundService';
 
+interface Carry {
+  score: number;
+  lives?: number;
+}
+
 function App() {
   const [gameState, setGameState] = useState<GameState>('intro');
   const [attractScreen, setAttractScreen] = useState<'start' | 'highscore'>('start');
   const [gameId, setGameId] = useState(1);
   const [finalScore, setFinalScore] = useState(0);
   const [loopCount, setLoopCount] = useState(1);
+  // Score and lives travel with the player from one loop (New Game+) to the next.
+  const [carry, setCarry] = useState<Carry>({ score: 0 });
   const { dimensions, margins } = useGameScale();
 
   const requestAppFullscreen = useCallback(() => {
@@ -26,15 +33,20 @@ function App() {
     }
   }, []);
 
-  // Toggle fullscreen with 'F' key (outside highscore initials entry) or enter fullscreen on first interaction
+  // Global keys: F toggles fullscreen, M toggles mute (neither while typing initials);
+  // any key during the intro also enters fullscreen.
   useEffect(() => {
     const handleGlobalKey = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === 'f' && gameState !== 'enter-highscore') {
+      if (gameState === 'enter-highscore' || e.repeat) return;
+      const key = e.key.toLowerCase();
+      if (key === 'f') {
         if (!document.fullscreenElement) {
           document.documentElement.requestFullscreen().catch(() => {});
         } else {
           document.exitFullscreen().catch(() => {});
         }
+      } else if (key === 'm') {
+        soundService.toggleMuted();
       } else if (gameState === 'intro') {
         requestAppFullscreen();
       }
@@ -48,18 +60,17 @@ function App() {
     setGameState('start');
   }, [requestAppFullscreen]);
 
-  const handleStart = useCallback(() => {
-    requestAppFullscreen();
-    setGameState('playing');
-    setGameId(id => id + 1);
-    setLoopCount(1);
-  }, [requestAppFullscreen]);
-
-  const handleRestart = useCallback(() => {
+  const startFresh = useCallback(() => {
+    setCarry({ score: 0 });
     setGameState('playing');
     setGameId(id => id + 1);
     setLoopCount(1);
   }, []);
+
+  const handleStart = useCallback(() => {
+    requestAppFullscreen();
+    startFresh();
+  }, [requestAppFullscreen, startFresh]);
 
   const handleLoopContinue = useCallback(() => {
     setLoopCount(prev => prev + 1);
@@ -67,20 +78,33 @@ function App() {
     setGameId(id => id + 1);
   }, []);
 
-  const handleGameOver = useCallback((score: number) => {
+  /** Ends a run: the score goes to the leaderboard if it qualifies. */
+  const finishRun = useCallback((score: number, fallback: GameState) => {
     soundService.stopMusic();
     if (highscoreService.isHighscore(score)) {
       setFinalScore(score);
       setGameState('enter-highscore');
     } else {
-      setGameState('gameover');
+      setGameState(fallback);
     }
   }, []);
 
-  const handleGameCompleted = useCallback(() => {
+  const handleGameOver = useCallback(
+    (score: number) => finishRun(score, 'gameover'),
+    [finishRun]
+  );
+
+  const handleGameCompleted = useCallback((score: number, lives: number) => {
     soundService.stopMusic();
+    setCarry({ score, lives });
     setGameState('completed');
   }, []);
+
+  // "Save and quit" from the victory screen: bank the score instead of starting another loop.
+  const handleBankScore = useCallback(() => {
+    finishRun(carry.score, 'start');
+    setAttractScreen('highscore');
+  }, [carry.score, finishRun]);
 
   const handleHighscoreEntered = useCallback(() => {
     setAttractScreen('highscore');
@@ -128,14 +152,22 @@ function App() {
             key={gameId}
             onGameOver={handleGameOver}
             onCompleted={handleGameCompleted}
-            setGameState={setGameState}
             loopCount={loopCount}
+            initialScore={carry.score}
+            initialLives={carry.lives}
           />
         );
       case 'completed':
-        return <CompletedScreen onRestart={handleLoopContinue} loopCount={loopCount} />;
+        return (
+          <CompletedScreen
+            score={carry.score}
+            loopCount={loopCount}
+            onNextLoop={handleLoopContinue}
+            onBank={handleBankScore}
+          />
+        );
       case 'gameover':
-        return <GameoverScreen onRestart={handleRestart} />;
+        return <GameoverScreen onRestart={startFresh} />;
       case 'highscore':
         return <HighscoreScreen onStart={handleStart} />;
       case 'enter-highscore':

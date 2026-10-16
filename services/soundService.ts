@@ -1,8 +1,15 @@
 let audioContext: AudioContext | null = null;
+let masterGain: GainNode | null = null;
 let soundsLoaded = false;
+let muted = false;
 
 // --- Music variables ---
 let musicContext: { timer: number | null; activeOscillator?: OscillatorNode | null } | null = null;
+let currentMusicName: string | null = null;
+let pausedMusicName: string | null = null;
+
+/** Every voice goes through the master gain so volume / mute apply to all of them. */
+const output = (): AudioNode => masterGain ?? (audioContext as AudioContext).destination;
 
 interface SoundEffect {
   type: OscillatorType;
@@ -123,6 +130,9 @@ export function initAudio() {
   try {
     if (!audioContext) {
       audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      masterGain = audioContext.createGain();
+      masterGain.gain.value = muted ? 0 : 1;
+      masterGain.connect(audioContext.destination);
     }
     if (audioContext.state === 'suspended') {
       audioContext.resume();
@@ -151,7 +161,7 @@ export function playSound(name: string) {
     const gainNode = audioContext.createGain();
 
     oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+    gainNode.connect(output());
 
     oscillator.type = effect.type;
     gainNode.gain.setValueAtTime(0, now);
@@ -181,7 +191,7 @@ export function playJingle(name: 'levelStart' | 'respawn' | 'extraLife') {
     const gainNode = audioContext!.createGain();
 
     oscillator.connect(gainNode);
-    gainNode.connect(audioContext!.destination);
+    gainNode.connect(output());
 
     oscillator.type = note.type;
     oscillator.frequency.setValueAtTime(Math.max(1, note.freq), startTime);
@@ -207,6 +217,8 @@ export function playMusicLoop(name: string) {
   const trackName = themeAliasMap[name] || name;
   const track = music[trackName];
   if (!track || track.length === 0) return;
+  currentMusicName = name;
+  pausedMusicName = null;
 
   let noteIndex = 0;
   musicContext = { timer: null, activeOscillator: null };
@@ -220,7 +232,7 @@ export function playMusicLoop(name: string) {
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
         oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
+        gainNode.connect(output());
 
         const now = audioContext.currentTime;
         oscillator.type = note.type;
@@ -246,7 +258,40 @@ export function playMusicLoop(name: string) {
   playNote();
 }
 
+/** Pause = stop the loop but remember it, so resumeMusic() restarts the same track. */
+export function pauseMusic() {
+  if (!musicContext || !currentMusicName) return;
+  const name = currentMusicName;
+  stopMusic();
+  pausedMusicName = name;
+}
+
+export function resumeMusic() {
+  if (!pausedMusicName) return;
+  const name = pausedMusicName;
+  pausedMusicName = null;
+  playMusicLoop(name);
+}
+
+export function isMuted(): boolean {
+  return muted;
+}
+
+export function setMuted(value: boolean) {
+  muted = value;
+  if (masterGain && audioContext) {
+    masterGain.gain.setTargetAtTime(muted ? 0 : 1, audioContext.currentTime, 0.015);
+  }
+}
+
+export function toggleMuted(): boolean {
+  setMuted(!muted);
+  return muted;
+}
+
 export function stopMusic() {
+  currentMusicName = null;
+  pausedMusicName = null;
   if (!musicContext) return;
   if (musicContext.timer) {
     clearTimeout(musicContext.timer);

@@ -505,7 +505,7 @@ const rawLevel6: LevelData = {
     { type: 'joystick', x: 5300, y: GAME_HEIGHT - 620, width: 50, height: 50 },
   ],
   enemies: [
-    { type: 'flyer', x: 900, y: 450, width: 60, height: 44, originalX: 900, originalY: 450 },
+    { type: 'flyer', x: 900, y: 560, width: 60, height: 44, originalX: 900, originalY: 560 },
     { type: 'jumper', x: 400, y: GAME_HEIGHT - 90, width: 50, height: 50, originalX: 400, originalY: GAME_HEIGHT - 90 },
     { type: 'base', x: 1500, y: GAME_HEIGHT - 90, width: 50, height: 50, originalX: 1500, originalY: GAME_HEIGHT - 90 },
     { type: 'flyer', x: 2600, y: 300, width: 60, height: 44, originalX: 2600, originalY: 300 },
