@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Player as PlayerType } from '../types';
 import { PlayerSprite, ShieldSprite } from '../services/assetService';
@@ -9,59 +8,69 @@ interface PlayerProps {
 
 const Player: React.FC<PlayerProps> = React.memo(({ player }) => {
   const speedBoostActive = player.activePowerUp === 'speed-boost';
-  const isMoving = Math.abs(player.vx) > 0.1;
+  const isMoving = Math.abs(player.vx) > 0.2;
   const isJumping = !player.isOnGround;
 
   const powerUpGlowColor = {
-    'speed-boost': 'rgba(255, 238, 0, 0.6)',
-    'super-throw': 'rgba(255, 136, 0, 0.6)',
+    'speed-boost': 'rgba(255, 238, 0, 0.55)',
+    'super-throw': 'rgba(255, 110, 0, 0.65)',
   }[player.activePowerUp || ''] || 'transparent';
-  
+
   const hasGlow = player.activePowerUp === 'speed-boost' || player.activePowerUp === 'super-throw';
-  
+  const trailOffset = player.direction === 'right' ? '-14px' : '14px';
+
   return (
     <div
-      className={hasGlow ? 'animate-pulse' : ''}
       style={{
         position: 'absolute',
         left: player.x,
         top: player.y,
         width: player.width,
         height: player.height,
-        boxShadow: `0 0 25px 8px ${powerUpGlowColor}`,
-        borderRadius: '50%', // Keeps the hit-box glow round-ish
-        transition: 'box-shadow 0.3s ease-in-out',
+        boxShadow: hasGlow ? `0 0 28px 10px ${powerUpGlowColor}` : 'none',
+        borderRadius: '50%',
+        zIndex: 10,
       }}
     >
-      {/* Speed Boost Trail */}
-      {speedBoostActive && (
-        <div className="absolute -left-4 top-0 w-full h-full opacity-40" style={{ filter: 'blur(2px)'}}>
-            <PlayerSprite direction={player.direction} isInvincible={false} isMoving={isMoving} isJumping={isJumping} />
+      {/* Speed Boost Holographic Afterimage */}
+      {speedBoostActive && isMoving && (
+        <div
+          className="absolute top-0 w-full h-full opacity-40 pointer-events-none"
+          style={{
+            left: trailOffset,
+            filter: 'hue-rotate(160deg) brightness(1.4) blur(1px)',
+          }}
+        >
+          <PlayerSprite
+            direction={player.direction}
+            isInvincible={false}
+            isMoving={isMoving}
+            isJumping={isJumping}
+          />
         </div>
       )}
 
-      {/* Main Player Sprite */}
+      {/* Main HD Vector Player Sprite */}
       <div
         className="absolute inset-0"
         style={{
-            transition: 'opacity 0.1s linear',
-            opacity: player.isInvincible && Math.floor(Date.now() / 100) % 2 === 0 ? 0.5 : 1,
-            filter: speedBoostActive ? 'saturate(2) brightness(1.2)' : 'none',
+          opacity: player.isInvincible && Math.floor(Date.now() / 90) % 2 === 0 ? 0.45 : 1,
+          filter: speedBoostActive ? 'saturate(1.4) brightness(1.15)' : 'none',
         }}
       >
-        <PlayerSprite 
-            direction={player.direction} 
-            isInvincible={player.isInvincible} 
-            showGlove={player.activePowerUp === 'super-throw'}
-            isMoving={isMoving}
-            isJumping={isJumping}
+        <PlayerSprite
+          direction={player.direction}
+          isInvincible={player.isInvincible}
+          showGlove={player.activePowerUp === 'super-throw' || player.capturedEnemyId !== null}
+          isMoving={isMoving}
+          isJumping={isJumping}
         />
       </div>
 
-      {/* Shield Effect */}
+      {/* Hexagonal Force-Field Shield */}
       {player.hasShield && (
-        <div className="absolute -inset-4 animate-pulse z-20">
-            <ShieldSprite />
+        <div className="absolute -inset-3 animate-pulse z-20 pointer-events-none">
+          <ShieldSprite />
         </div>
       )}
     </div>

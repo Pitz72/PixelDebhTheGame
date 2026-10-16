@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import * as soundService from '../services/soundService';
 
@@ -13,8 +12,7 @@ const PixelArcadeIntro: React.FC<PixelArcadeIntroProps> = ({ onIntroComplete }) 
   useEffect(() => {
     const timer = setTimeout(() => {
       setAnimationComplete(true);
-    }, 2000);
-
+    }, 1200);
     return () => clearTimeout(timer);
   }, []);
 
@@ -25,7 +23,7 @@ const PixelArcadeIntro: React.FC<PixelArcadeIntroProps> = ({ onIntroComplete }) 
     setIsFadingOut(true);
     setTimeout(() => {
       onIntroComplete();
-    }, 800);
+    }, 650);
   }, [onIntroComplete, isFadingOut]);
 
   useEffect(() => {
@@ -35,219 +33,170 @@ const PixelArcadeIntro: React.FC<PixelArcadeIntroProps> = ({ onIntroComplete }) 
   }, [handleContinue]);
 
   return (
-    <div 
-        className={`relative w-full h-full bg-gray-900 overflow-hidden flex flex-col justify-center items-center cursor-pointer transition-opacity duration-1000 ${isFadingOut ? 'opacity-0' : 'opacity-100'}`}
-        onClick={handleContinue}
+    <div
+      className={`relative w-full h-full bg-[#050114] overflow-hidden flex flex-col justify-center items-center cursor-pointer transition-opacity duration-700 ${
+        isFadingOut ? 'opacity-0' : 'opacity-100'
+      }`}
+      onClick={handleContinue}
     >
       <style>{`
-        .synth-grid {
-            position: absolute;
-            bottom: -30%;
-            left: -50%;
-            width: 200%;
-            height: 100%;
-            background: 
-                linear-gradient(transparent 0%, rgba(200, 0, 255, 0.4) 2%, transparent 3%),
-                linear-gradient(90deg, transparent 0%, rgba(200, 0, 255, 0.4) 2%, transparent 3%);
-            background-size: 40px 40px;
-            transform: perspective(300px) rotateX(60deg);
-            animation: gridScroll 2s linear infinite;
-            box-shadow: 0 -50px 100px rgba(200, 0, 255, 0.3) inset;
-            z-index: 0;
+        .synth-grid-hd {
+          position: absolute;
+          bottom: -30%;
+          left: -50%;
+          width: 200%;
+          height: 95%;
+          background:
+            linear-gradient(transparent 0%, rgba(0, 229, 255, 0.45) 2%, transparent 3%),
+            linear-gradient(90deg, transparent 0%, rgba(255, 0, 128, 0.45) 2%, transparent 3%);
+          background-size: 48px 48px;
+          transform: perspective(340px) rotateX(62deg);
+          animation: gridScrollHD 1.8s linear infinite;
+          box-shadow: 0 -60px 120px rgba(124, 77, 255, 0.35) inset;
+          z-index: 0;
         }
-
-        @keyframes gridScroll {
-            0% { background-position: 0 0; }
-            100% { background-position: 0 40px; }
+        @keyframes gridScrollHD {
+          0% { background-position: 0 0; }
+          100% { background-position: 0 48px; }
         }
-
-        .mountain-silhouette {
-            position: absolute;
-            bottom: 35%;
-            left: 0;
-            width: 100%;
-            height: 150px;
-            background-color: #1a0b2e;
-            clip-path: polygon(
-                0% 100%, 0% 80%, 10% 40%, 20% 90%, 30% 50%, 40% 80%, 
-                50% 20%, 60% 70%, 70% 40%, 80% 90%, 90% 60%, 100% 80%, 100% 100%
-            );
-            z-index: 1;
+        .official-logo-float {
+          position: relative;
+          z-index: 10;
+          animation: floatLogoHD 3.2s ease-in-out infinite;
         }
-
-        .title-glitch {
-            font-family: 'Press Start 2P', cursive;
-            font-size: 4.5rem;
-            color: #fff;
-            text-shadow: 4px 4px #00eaff, -4px -4px #ff0055;
-            position: relative;
-            z-index: 10;
-            animation: glitch 3s infinite;
-            margin-bottom: 1rem;
+        @keyframes floatLogoHD {
+          0%, 100% { transform: translateY(0px) scale(1); }
+          50% { transform: translateY(-14px) scale(1.025); }
         }
-
-        @keyframes glitch {
-            0% { transform: skew(0deg); text-shadow: 4px 4px #00eaff, -4px -4px #ff0055; }
-            20% { transform: skew(-2deg); text-shadow: -4px 4px #ff0055, 4px -4px #00eaff; }
-            21% { transform: skew(10deg); }
-            22% { transform: skew(0deg); }
-            100% { transform: skew(0deg); }
+        .ring-spin-cw {
+          animation: ringSpinCW 14s linear infinite;
+          transform-origin: center;
         }
-
-        .subtitle {
-            font-family: 'Press Start 2P', cursive;
-            color: #00eaff;
-            margin-top: 10px;
-            text-transform: uppercase;
-            letter-spacing: 4px;
-            z-index: 50;
+        .ring-spin-ccw {
+          animation: ringSpinCCW 18s linear infinite;
+          transform-origin: center;
         }
-
-        /* Avatar Animation */
-        .pixel-avatar-container {
-            position: relative;
-            z-index: 10;
-            margin-top: 4rem;
-            margin-bottom: 2rem;
-            animation: floatAvatar 3s ease-in-out infinite;
+        @keyframes ringSpinCW {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
-
-        @keyframes floatAvatar {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-15px); }
+        @keyframes ringSpinCCW {
+          0% { transform: rotate(360deg); }
+          100% { transform: rotate(0deg); }
         }
-
-        .orbiting-item {
-            transform-box: fill-box;
-            transform-origin: center;
-            animation: orbitItem 4s linear infinite;
-        }
-        
-        .orbiting-item-reverse {
-            transform-box: fill-box;
-            transform-origin: center;
-            animation: orbitItemReverse 5s linear infinite;
-        }
-
-        @keyframes orbitItem {
-            0% { transform: rotate(0deg) translateX(100px) rotate(0deg); }
-            100% { transform: rotate(360deg) translateX(100px) rotate(-360deg); }
-        }
-        
-        @keyframes orbitItemReverse {
-            0% { transform: rotate(360deg) translateX(80px) rotate(-360deg); }
-            100% { transform: rotate(0deg) translateX(80px) rotate(0deg); }
-        }
-
       `}</style>
 
-      <div className="mountain-silhouette"></div>
-      <div className="synth-grid"></div>
+      {/* Vector Horizon & Nebula Backdrop */}
+      <svg className="absolute inset-0 w-full h-full pointer-events-none z-0" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+        <defs>
+          <radialGradient id="intro-nebula" cx="50%" cy="46%" r="55%">
+            <stop offset="0%" stopColor="#ff6d00" stopOpacity="0.32" />
+            <stop offset="45%" stopColor="#ff0055" stopOpacity="0.22" />
+            <stop offset="75%" stopColor="#651fff" stopOpacity="0.16" />
+            <stop offset="100%" stopColor="#050114" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        <rect width="1920" height="1080" fill="url(#intro-nebula)" />
+        <polygon
+          points="0,720 0,610 180,470 360,620 580,420 810,600 960,440 1160,610 1390,430 1620,590 1790,480 1920,600 1920,720"
+          fill="#120529"
+          stroke="#00e5ff"
+          strokeWidth="2.5"
+          strokeOpacity="0.5"
+        />
+      </svg>
 
-      {/* Title Group - Spaced out */}
-      <div className="z-10 text-center flex flex-col items-center w-full mt-10">
-          <h1 className="title-glitch">PixelDebh</h1>
-          <h2 className="text-3xl text-yellow-300" style={{ textShadow: '2px 2px #ff0055', fontFamily: "'Press Start 2P', cursive" }}>
-            RETRO-RESCUE!
-          </h2>
+      <div className="synth-grid-hd" />
+
+      {/* Top Banner */}
+      <div className="z-10 text-center flex flex-col items-center w-full mt-2">
+        <span className="px-5 py-1.5 rounded-full bg-orange-500/20 border border-orange-400/60 text-orange-300 text-xs font-extrabold tracking-[0.3em] uppercase mb-2 shadow-[0_0_20px_rgba(255,109,0,0.35)]">
+          IL VIDEOGIOCO UFFICIALE DEL CANALE YOUTUBE
+        </span>
+        <h1
+          className="text-7xl font-black tracking-wider text-white mb-1"
+          style={{
+            fontFamily: "'Orbitron', sans-serif",
+            textShadow: '0 0 25px #00e5ff, 4px 4px 0px #ff3d00',
+          }}
+        >
+          PIXELDEBH
+        </h1>
+        <h2
+          className="text-2xl font-extrabold tracking-[0.28em] text-yellow-300 uppercase"
+          style={{ textShadow: '0 0 14px #ff0055' }}
+        >
+          RETRO-RESCUE! • VECTOR HD EDITION
+        </h2>
       </div>
 
-      {/* PIXEL ART AVATAR SVG - Slightly smaller to fit screen better */}
-      <div className="pixel-avatar-container">
-        <svg width="350" height="350" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" shapeRendering="crispEdges" className="max-h-[40vh]">
-            {/* Central Group: The Girl */}
-            <g transform="translate(60, 50)">
-                {/* Back Hair (Brown) */}
-                <rect x="20" y="20" width="40" height="50" fill="#5d4037" />
-                
-                {/* Neck */}
-                <rect x="35" y="55" width="10" height="10" fill="#fdd0b1" />
-
-                {/* Body / Tank Top (Orange) */}
-                <rect x="25" y="65" width="30" height="35" fill="#ff7043" />
-                <rect x="25" y="65" width="4" height="15" fill="#d84315" /> {/* Strap Shadow */}
-                <rect x="51" y="65" width="4" height="15" fill="#d84315" /> 
-
-                {/* Arms (Skin) */}
-                <rect x="15" y="65" width="10" height="25" fill="#fdd0b1" /> {/* Left Arm */}
-                <rect x="55" y="65" width="10" height="25" fill="#fdd0b1" /> {/* Right Arm */}
-
-                {/* Head (Skin) */}
-                <rect x="25" y="25" width="30" height="30" fill="#fdd0b1" />
-                
-                {/* Face details */}
-                <rect x="30" y="35" width="4" height="4" fill="#3e2723" /> {/* Eye L */}
-                <rect x="46" y="35" width="4" height="4" fill="#3e2723" /> {/* Eye R */}
-                <rect x="38" y="45" width="4" height="2" fill="#d84315" /> {/* Mouth */}
-                <rect x="25" y="40" width="2" height="2" fill="#f8bbd0" opacity="0.6" /> {/* Blush */}
-                <rect x="53" y="40" width="2" height="2" fill="#f8bbd0" opacity="0.6" />
-
-                {/* Front Hair */}
-                <rect x="25" y="20" width="30" height="8" fill="#5d4037" />
-                <rect x="22" y="25" width="4" height="15" fill="#5d4037" />
-                <rect x="54" y="25" width="4" height="15" fill="#5d4037" />
-
-                {/* Headphones (Red/Orange) */}
-                <rect x="18" y="25" width="6" height="20" fill="#d84315" /> {/* Left Cup */}
-                <rect x="56" y="25" width="6" height="20" fill="#d84315" /> {/* Right Cup */}
-                <rect x="22" y="18" width="36" height="4" fill="#d84315" /> {/* Band */}
-                <rect x="18" y="22" width="4" height="4" fill="#d84315" />
-                <rect x="58" y="22" width="4" height="4" fill="#d84315" />
-
-                {/* Controller (Held in hands) */}
-                <rect x="20" y="75" width="40" height="20" fill="#424242" />
-                <rect x="25" y="80" width="6" height="6" fill="#212121" /> {/* D-Pad */}
-                <rect x="50" y="80" width="3" height="3" fill="#ef5350" /> {/* Button A */}
-                <rect x="46" y="84" width="3" height="3" fill="#42a5f5" /> {/* Button B */}
-            </g>
-
-            {/* Orbiting Objects Group - Centered on 100, 100 to rotate around girl */}
-            <g transform="translate(100, 100)">
-                
-                {/* Webcam Item */}
-                <g className="orbiting-item">
-                    <rect x="-10" y="-10" width="20" height="12" fill="#212121" />
-                    <rect x="-5" y="-5" width="10" height="10" fill="#424242" rx="5" />
-                    <rect x="-2" y="-2" width="4" height="4" fill="#00e5ff" /> {/* Lens */}
-                    <rect x="-3" y="2" width="6" height="8" fill="#212121" /> {/* Stand */}
-                    <rect x="-8" y="10" width="16" height="4" fill="#212121" /> {/* Base */}
-                </g>
-
-                {/* Cat Head Item */}
-                <g className="orbiting-item" style={{ animationDelay: '-1.3s' }}>
-                    <rect x="-10" y="-8" width="20" height="16" fill="#fff" />
-                    <rect x="-10" y="-12" width="6" height="6" fill="#fff" /> {/* Ear L */}
-                    <rect x="4" y="-12" width="6" height="6" fill="#fff" /> {/* Ear R */}
-                    <rect x="-6" y="-4" width="2" height="2" fill="#000" /> {/* Eye */}
-                    <rect x="4" y="-4" width="2" height="2" fill="#000" /> {/* Eye */}
-                    <rect x="-2" y="0" width="4" height="3" fill="#f48fb1" /> {/* Nose */}
-                </g>
-
-                 {/* Phone Item */}
-                 <g className="orbiting-item-reverse" style={{ animationDelay: '-0.5s' }}>
-                    <rect x="-6" y="-10" width="12" height="20" fill="#37474f" />
-                    <rect x="-4" y="-8" width="8" height="14" fill="#0277bd" /> {/* Screen */}
-                    <rect x="-2" y="6" width="4" height="2" fill="#78909c" /> {/* Button */}
-                </g>
-                 
-                 {/* Floppy Disk */}
-                <g className="orbiting-item-reverse" style={{ animationDelay: '-2.5s' }}>
-                    <rect x="-8" y="-8" width="16" height="16" fill="#1e88e5"/>
-                    <rect x="-4" y="-8" width="8" height="6" fill="white"/>
-                    <rect x="-4" y="2" width="8" height="6" fill="#bdbdbd"/>
-                </g>
-
-            </g>
+      {/* Official PixelDebh Logo Centerpiece with Holographic Vector Rings */}
+      <div className="official-logo-float my-3 flex items-center justify-center relative w-[430px] h-[430px]">
+        {/* Animated Outer Energy Rings */}
+        <svg
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          viewBox="0 0 440 440"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <radialGradient id="logo-aura-glow" cx="50%" cy="50%" r="50%">
+              <stop offset="55%" stopColor="#ff9100" stopOpacity="0.25" />
+              <stop offset="82%" stopColor="#00e5ff" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="#00e5ff" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <circle cx="220" cy="220" r="208" fill="url(#logo-aura-glow)" />
+          <circle
+            className="ring-spin-cw"
+            cx="220"
+            cy="220"
+            r="196"
+            fill="none"
+            stroke="#00e5ff"
+            strokeWidth="3"
+            strokeDasharray="22 12 6 12"
+            opacity="0.85"
+          />
+          <circle
+            className="ring-spin-ccw"
+            cx="220"
+            cy="220"
+            r="184"
+            fill="none"
+            stroke="#ff9100"
+            strokeWidth="2.5"
+            strokeDasharray="14 18"
+            opacity="0.8"
+          />
+          {/* Corner Arcade Sparkles */}
+          <circle cx="48" cy="85" r="5" fill="#ffea00" className="animate-ping" />
+          <circle cx="392" cy="95" r="4" fill="#00e5ff" className="animate-pulse" />
+          <circle cx="62" cy="355" r="4" fill="#ff4081" className="animate-pulse" />
+          <circle cx="382" cy="348" r="5" fill="#00e676" className="animate-ping" />
         </svg>
+
+        {/* Official Uploaded Circular Logo */}
+        <img
+          src="/pixeldebh-logo.png"
+          alt="PixelDebh Official Logo"
+          className="w-[348px] h-[348px] object-contain relative z-10 select-none"
+          style={{
+            filter:
+              'drop-shadow(0 0 28px rgba(255, 145, 0, 0.55)) drop-shadow(0 12px 24px rgba(0, 0, 0, 0.7))',
+          }}
+          draggable={false}
+        />
       </div>
-      
-      {/* Press Start Text - Ensured visibility with Z-Index and Relative Positioning */}
-      <div className={`mt-8 pb-8 relative z-50 transition-opacity duration-500 ${animationComplete ? 'opacity-100' : 'opacity-0'}`}>
-             <p className="subtitle animate-pulse text-2xl bg-black bg-opacity-60 p-3 rounded border-2 border-cyan-500">PRESS START</p>
+
+      {/* Prompt */}
+      <div className={`mt-1 z-50 transition-opacity duration-500 ${animationComplete ? 'opacity-100' : 'opacity-0'}`}>
+        <p className="text-2xl font-black tracking-widest text-cyan-300 bg-[#0d0628]/90 px-9 py-3.5 rounded-2xl border-2 border-cyan-400 shadow-[0_0_28px_rgba(0,229,255,0.5)] animate-pulse">
+          PREMI UN TASTO O CLICCA PER INIZIARE
+        </p>
       </div>
-      
-      <div className="absolute bottom-4 text-white text-xs opacity-50 font-sans z-20">
-         V.0.2.7 - PIXEL ART EDITION
+
+      <div className="absolute bottom-3 text-cyan-300/60 text-xs tracking-widest font-bold z-20">
+        V.1.1.0 — OFFICIAL LOGO EDITION • ULTRA HD VECTOR ENGINE &amp; VISUAL FX
       </div>
     </div>
   );

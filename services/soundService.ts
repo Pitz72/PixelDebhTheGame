@@ -1,10 +1,8 @@
-
 let audioContext: AudioContext | null = null;
 let soundsLoaded = false;
 
 // --- Music variables ---
-let musicContext: { oscillator: OscillatorNode, gainNode: GainNode, timer: number | null } | null = null;
-
+let musicContext: { timer: number | null; activeOscillator?: OscillatorNode | null } | null = null;
 
 interface SoundEffect {
   type: OscillatorType;
@@ -22,106 +20,113 @@ interface Note {
   volume: number;
 }
 
-// Programmatic sound definitions for a retro chiptune feel
 const soundEffects: { [key: string]: SoundEffect } = {
-  jump: { type: 'square', startFreq: 300, endFreq: 500, attack: 0.01, decay: 0.15, volume: 0.1 },
-  collect: { type: 'sine', startFreq: 880, endFreq: 1000, attack: 0.01, decay: 0.2, volume: 0.2 },
-  powerup: { type: 'sawtooth', startFreq: 440, endFreq: 880, attack: 0.05, decay: 0.3, volume: 0.25 },
-  capture: { type: 'square', startFreq: 200, endFreq: 150, attack: 0.01, decay: 0.1, volume: 0.2 },
-  launch: { type: 'square', startFreq: 150, endFreq: 600, attack: 0.01, decay: 0.2, volume: 0.2 },
-  start: { type: 'sawtooth', startFreq: 220, endFreq: 660, attack: 0.1, decay: 0.4, volume: 0.2 },
-  damage: { type: 'sawtooth', startFreq: 150, endFreq: 50, attack: 0.01, decay: 0.25, volume: 0.3 },
-  gameOver: { type: 'sawtooth', startFreq: 440, endFreq: 110, attack: 0.1, decay: 0.8, volume: 0.3 },
-  hit: { type: 'square', startFreq: 100, endFreq: 100, attack: 0.01, decay: 0.1, volume: 0.3 },
-  levelClear: { type: 'triangle', startFreq: 523, endFreq: 1046, attack: 0.1, decay: 0.5, volume: 0.25 },
-  bossShoot: { type: 'sawtooth', startFreq: 200, endFreq: 100, attack: 0.05, decay: 0.2, volume: 0.25 },
-  bomberShoot: { type: 'sine', startFreq: 400, endFreq: 100, attack: 0.02, decay: 0.3, volume: 0.2 },
-  bossHit: { type: 'square', startFreq: 440, endFreq: 220, attack: 0.01, decay: 0.3, volume: 0.4 },
-  bossDefeat: { type: 'sawtooth', startFreq: 880, endFreq: 55, attack: 0.2, decay: 1.5, volume: 0.5 },
-  playerShoot: { type: 'square', startFreq: 800, endFreq: 1200, attack: 0.01, decay: 0.1, volume: 0.15 },
+  jump: { type: 'square', startFreq: 280, endFreq: 560, attack: 0.01, decay: 0.14, volume: 0.12 },
+  doubleJump: { type: 'triangle', startFreq: 420, endFreq: 880, attack: 0.01, decay: 0.16, volume: 0.15 },
+  collect: { type: 'sine', startFreq: 880, endFreq: 1320, attack: 0.01, decay: 0.18, volume: 0.2 },
+  checkpoint: { type: 'triangle', startFreq: 523.25, endFreq: 1046.5, attack: 0.02, decay: 0.35, volume: 0.22 },
+  powerup: { type: 'sawtooth', startFreq: 440, endFreq: 987.77, attack: 0.04, decay: 0.3, volume: 0.22 },
+  capture: { type: 'square', startFreq: 260, endFreq: 160, attack: 0.01, decay: 0.1, volume: 0.2 },
+  launch: { type: 'square', startFreq: 160, endFreq: 680, attack: 0.01, decay: 0.2, volume: 0.22 },
+  start: { type: 'sawtooth', startFreq: 220, endFreq: 660, attack: 0.08, decay: 0.35, volume: 0.2 },
+  damage: { type: 'sawtooth', startFreq: 160, endFreq: 55, attack: 0.01, decay: 0.25, volume: 0.28 },
+  gameOver: { type: 'sawtooth', startFreq: 440, endFreq: 110, attack: 0.1, decay: 0.8, volume: 0.28 },
+  hit: { type: 'square', startFreq: 120, endFreq: 80, attack: 0.01, decay: 0.1, volume: 0.25 },
+  levelClear: { type: 'triangle', startFreq: 523.25, endFreq: 1046.5, attack: 0.08, decay: 0.5, volume: 0.25 },
+  bossShoot: { type: 'sawtooth', startFreq: 220, endFreq: 95, attack: 0.03, decay: 0.18, volume: 0.2 },
+  bomberShoot: { type: 'sine', startFreq: 400, endFreq: 110, attack: 0.02, decay: 0.28, volume: 0.18 },
+  bossHit: { type: 'square', startFreq: 480, endFreq: 220, attack: 0.01, decay: 0.22, volume: 0.32 },
+  bossDefeat: { type: 'sawtooth', startFreq: 880, endFreq: 55, attack: 0.18, decay: 1.4, volume: 0.42 },
+  playerShoot: { type: 'square', startFreq: 780, endFreq: 1240, attack: 0.01, decay: 0.09, volume: 0.14 },
 };
 
 const jingles: { [key: string]: Note[] } = {
   levelStart: [
-    { freq: 523.25, duration: 0.1, type: 'square', volume: 0.1 }, // C5
-    { freq: 659.25, duration: 0.1, type: 'square', volume: 0.1 }, // E5
-    { freq: 783.99, duration: 0.2, type: 'square', volume: 0.1 }, // G5
+    { freq: 523.25, duration: 0.1, type: 'square', volume: 0.1 },
+    { freq: 659.25, duration: 0.1, type: 'square', volume: 0.1 },
+    { freq: 783.99, duration: 0.18, type: 'square', volume: 0.12 },
   ],
   respawn: [
-    { freq: 392.00, duration: 0.1, type: 'triangle', volume: 0.15 }, // G4
-    { freq: 523.25, duration: 0.2, type: 'triangle', volume: 0.15 }, // C5
+    { freq: 392.00, duration: 0.1, type: 'triangle', volume: 0.14 },
+    { freq: 523.25, duration: 0.2, type: 'triangle', volume: 0.14 },
   ],
   extraLife: [
-    { freq: 523.25, duration: 0.1, type: 'square', volume: 0.15 }, // C5
-    { freq: 659.25, duration: 0.1, type: 'square', volume: 0.15 }, // E5
-    { freq: 783.99, duration: 0.1, type: 'square', volume: 0.15 }, // G5
-    { freq: 1046.50, duration: 0.2, type: 'square', volume: 0.15 }, // C6
+    { freq: 523.25, duration: 0.09, type: 'square', volume: 0.15 },
+    { freq: 659.25, duration: 0.09, type: 'square', volume: 0.15 },
+    { freq: 783.99, duration: 0.09, type: 'square', volume: 0.15 },
+    { freq: 1046.50, duration: 0.22, type: 'square', volume: 0.16 },
   ],
-  standardTheme: [], // Fallback
+  standardTheme: [],
 };
 
 const music: { [key: string]: Note[] } = {
   startScreenTheme: [
-    { freq: 220.00, duration: 0.15, type: 'square', volume: 0.1 },
-    { freq: 220.00, duration: 0.15, type: 'square', volume: 0.1 },
-    { freq: 440.00, duration: 0.15, type: 'square', volume: 0.1 },
-    { freq: 329.63, duration: 0.15, type: 'square', volume: 0.1 },
-    { freq: 261.63, duration: 0.15, type: 'square', volume: 0.1 },
-    { freq: 392.00, duration: 0.15, type: 'square', volume: 0.1 },
+    { freq: 220.00, duration: 0.15, type: 'square', volume: 0.08 },
+    { freq: 220.00, duration: 0.15, type: 'square', volume: 0.08 },
+    { freq: 440.00, duration: 0.15, type: 'square', volume: 0.08 },
+    { freq: 329.63, duration: 0.15, type: 'square', volume: 0.08 },
+    { freq: 261.63, duration: 0.15, type: 'square', volume: 0.08 },
+    { freq: 392.00, duration: 0.15, type: 'square', volume: 0.08 },
+    { freq: 329.63, duration: 0.30, type: 'triangle', volume: 0.09 },
   ],
   adventureTheme: [
-    // Upbeat C Major - Fast paced
-    { freq: 261.63, duration: 0.2, type: 'square', volume: 0.08 }, // C4
-    { freq: 329.63, duration: 0.2, type: 'square', volume: 0.08 }, // E4
-    { freq: 392.00, duration: 0.2, type: 'square', volume: 0.08 }, // G4
-    { freq: 523.25, duration: 0.2, type: 'square', volume: 0.08 }, // C5
-    { freq: 392.00, duration: 0.2, type: 'square', volume: 0.08 }, // G4
-    { freq: 329.63, duration: 0.2, type: 'square', volume: 0.08 }, // E4
-    { freq: 440.00, duration: 0.4, type: 'square', volume: 0.08 }, // A4
-    { freq: 349.23, duration: 0.4, type: 'square', volume: 0.08 }, // F4
-    { freq: 293.66, duration: 0.2, type: 'square', volume: 0.08 }, // D4
-    { freq: 392.00, duration: 0.2, type: 'square', volume: 0.08 }, // G4
+    { freq: 261.63, duration: 0.18, type: 'square', volume: 0.07 },
+    { freq: 329.63, duration: 0.18, type: 'square', volume: 0.07 },
+    { freq: 392.00, duration: 0.18, type: 'square', volume: 0.07 },
+    { freq: 523.25, duration: 0.18, type: 'square', volume: 0.07 },
+    { freq: 392.00, duration: 0.18, type: 'square', volume: 0.07 },
+    { freq: 329.63, duration: 0.18, type: 'square', volume: 0.07 },
+    { freq: 440.00, duration: 0.36, type: 'triangle', volume: 0.08 },
+    { freq: 349.23, duration: 0.36, type: 'triangle', volume: 0.08 },
+    { freq: 293.66, duration: 0.18, type: 'square', volume: 0.07 },
+    { freq: 392.00, duration: 0.18, type: 'square', volume: 0.07 },
   ],
   industrialTheme: [
-    // Mechanical / Bass heavy - Minor key
-    { freq: 110.00, duration: 0.15, type: 'sawtooth', volume: 0.1 }, // A2
-    { freq: 110.00, duration: 0.15, type: 'sawtooth', volume: 0.1 }, // A2
-    { freq: 0,      duration: 0.1,  type: 'sawtooth', volume: 0 },   // Rest
-    { freq: 146.83, duration: 0.2, type: 'square', volume: 0.08 },   // D3
-    { freq: 110.00, duration: 0.2, type: 'sawtooth', volume: 0.1 }, // A2
-    { freq: 82.41, duration: 0.4, type: 'sawtooth', volume: 0.12 }, // E2
-    { freq: 123.47, duration: 0.2, type: 'square', volume: 0.08 },   // B2
-    { freq: 130.81, duration: 0.2, type: 'square', volume: 0.08 },   // C3
+    { freq: 110.00, duration: 0.15, type: 'sawtooth', volume: 0.08 },
+    { freq: 110.00, duration: 0.15, type: 'sawtooth', volume: 0.08 },
+    { freq: 0,      duration: 0.10, type: 'sawtooth', volume: 0 },
+    { freq: 146.83, duration: 0.20, type: 'square', volume: 0.07 },
+    { freq: 110.00, duration: 0.20, type: 'sawtooth', volume: 0.08 },
+    { freq: 82.41,  duration: 0.35, type: 'sawtooth', volume: 0.09 },
+    { freq: 123.47, duration: 0.20, type: 'square', volume: 0.07 },
+    { freq: 130.81, duration: 0.20, type: 'square', volume: 0.07 },
   ],
   etherealTheme: [
-    // Space / High pitch - Slow
-    { freq: 659.25, duration: 0.6, type: 'sine', volume: 0.08 }, // E5
-    { freq: 587.33, duration: 0.6, type: 'sine', volume: 0.08 }, // D5
-    { freq: 523.25, duration: 0.6, type: 'sine', volume: 0.08 }, // C5
-    { freq: 783.99, duration: 0.6, type: 'sine', volume: 0.08 }, // G5
-    { freq: 1046.50, duration: 0.6, type: 'sine', volume: 0.08 }, // C6
-    { freq: 0, duration: 0.2, type: 'sine', volume: 0 },
-    { freq: 1318.51, duration: 0.8, type: 'sine', volume: 0.06 }, // E6
+    { freq: 659.25, duration: 0.45, type: 'sine', volume: 0.07 },
+    { freq: 587.33, duration: 0.45, type: 'sine', volume: 0.07 },
+    { freq: 523.25, duration: 0.45, type: 'sine', volume: 0.07 },
+    { freq: 783.99, duration: 0.45, type: 'sine', volume: 0.07 },
+    { freq: 1046.50, duration: 0.55, type: 'triangle', volume: 0.06 },
+    { freq: 0, duration: 0.15, type: 'sine', volume: 0 },
+    { freq: 880.00, duration: 0.55, type: 'sine', volume: 0.06 },
   ],
   bossTheme: [
-      // Intense / Menacing
-      { freq: 110.00, duration: 0.2, type: 'sawtooth', volume: 0.1 }, // A2
-      { freq: 103.83, duration: 0.2, type: 'sawtooth', volume: 0.1 }, // G#2
-      { freq: 110.00, duration: 0.2, type: 'sawtooth', volume: 0.1 }, // A2
-      { freq: 123.47, duration: 0.2, type: 'sawtooth', volume: 0.1 }, // B2
-      { freq: 87.31, duration: 0.2, type: 'sawtooth', volume: 0.12 }, // F2
-      { freq: 82.41, duration: 0.2, type: 'sawtooth', volume: 0.12 }, // E2
-  ]
+    { freq: 110.00, duration: 0.16, type: 'sawtooth', volume: 0.09 },
+    { freq: 103.83, duration: 0.16, type: 'sawtooth', volume: 0.09 },
+    { freq: 110.00, duration: 0.16, type: 'sawtooth', volume: 0.09 },
+    { freq: 123.47, duration: 0.16, type: 'sawtooth', volume: 0.09 },
+    { freq: 87.31,  duration: 0.16, type: 'sawtooth', volume: 0.10 },
+    { freq: 82.41,  duration: 0.16, type: 'sawtooth', volume: 0.10 },
+  ],
 };
 
+// Map short theme names from LevelData ('adventure', 'industrial', 'ethereal', 'boss') to full track keys
+const themeAliasMap: Record<string, string> = {
+  adventure: 'adventureTheme',
+  industrial: 'industrialTheme',
+  ethereal: 'etherealTheme',
+  boss: 'bossTheme',
+  standardTheme: 'adventureTheme',
+};
 
 export function initAudio() {
-  if (soundsLoaded) return;
   try {
     if (!audioContext) {
-      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
     }
-    audioContext.resume();
+    if (audioContext.state === 'suspended') {
+      audioContext.resume();
+    }
     soundsLoaded = true;
   } catch (e) {
     console.error("Could not initialize audio context", e);
@@ -130,12 +135,16 @@ export function initAudio() {
 
 export function playSound(name: string) {
   if (!soundsLoaded || !audioContext) {
-    return;
+    initAudio();
+  }
+  if (!audioContext) return;
+  if (audioContext.state === 'suspended') {
+    audioContext.resume().catch(() => {});
   }
 
   const effect = soundEffects[name];
   if (!effect) return;
-  
+
   try {
     const now = audioContext.currentTime;
     const oscillator = audioContext.createOscillator();
@@ -146,17 +155,16 @@ export function playSound(name: string) {
 
     oscillator.type = effect.type;
     gainNode.gain.setValueAtTime(0, now);
-
     gainNode.gain.linearRampToValueAtTime(effect.volume, now + effect.attack);
     gainNode.gain.linearRampToValueAtTime(0, now + effect.attack + effect.decay);
 
-    oscillator.frequency.setValueAtTime(effect.startFreq, now);
-    oscillator.frequency.exponentialRampToValueAtTime(effect.endFreq, now + effect.attack + effect.decay);
+    oscillator.frequency.setValueAtTime(Math.max(1, effect.startFreq), now);
+    oscillator.frequency.exponentialRampToValueAtTime(Math.max(1, effect.endFreq), now + effect.attack + effect.decay);
 
     oscillator.start(now);
     oscillator.stop(now + effect.attack + effect.decay);
   } catch (e) {
-      console.error(`Could not play sound: ${name}`, e);
+    console.error(`Could not play sound: ${name}`, e);
   }
 }
 
@@ -176,8 +184,8 @@ export function playJingle(name: 'levelStart' | 'respawn' | 'extraLife') {
     gainNode.connect(audioContext!.destination);
 
     oscillator.type = note.type;
-    oscillator.frequency.setValueAtTime(note.freq, startTime);
-    
+    oscillator.frequency.setValueAtTime(Math.max(1, note.freq), startTime);
+
     gainNode.gain.setValueAtTime(0, startTime);
     gainNode.gain.linearRampToValueAtTime(note.volume, startTime + 0.01);
     gainNode.gain.linearRampToValueAtTime(0, startTime + note.duration);
@@ -185,27 +193,30 @@ export function playJingle(name: 'levelStart' | 'respawn' | 'extraLife') {
     oscillator.start(startTime);
     oscillator.stop(startTime + note.duration);
 
-    startTime += note.duration; 
+    startTime += note.duration;
   });
 }
 
-
 export function playMusicLoop(name: string) {
-    if (!soundsLoaded || !audioContext) return;
-    stopMusic(); 
+  if (!soundsLoaded || !audioContext) {
+    initAudio();
+  }
+  if (!audioContext) return;
+  stopMusic();
 
-    // Handle legacy call or fallback
-    let trackName = name;
-    if(name === 'standardTheme') trackName = 'adventureTheme';
-    
-    const track = music[trackName];
-    if (!track) return;
+  const trackName = themeAliasMap[name] || name;
+  const track = music[trackName];
+  if (!track || track.length === 0) return;
 
-    let noteIndex = 0;
-    const playNote = () => {
-        if (!audioContext || !musicContext) return;
-        const note = track[noteIndex % track.length];
-        
+  let noteIndex = 0;
+  musicContext = { timer: null, activeOscillator: null };
+
+  const playNote = () => {
+    if (!audioContext || !musicContext) return;
+    const note = track[noteIndex % track.length];
+
+    if (note.freq > 0 && note.volume > 0) {
+      try {
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
         oscillator.connect(gainNode);
@@ -215,31 +226,37 @@ export function playMusicLoop(name: string) {
         oscillator.type = note.type;
         oscillator.frequency.setValueAtTime(note.freq, now);
         gainNode.gain.setValueAtTime(0, now);
-        gainNode.gain.linearRampToValueAtTime(note.volume, now + 0.01);
-        gainNode.gain.linearRampToValueAtTime(0, now + note.duration - 0.01);
+        gainNode.gain.linearRampToValueAtTime(note.volume, now + 0.015);
+        gainNode.gain.linearRampToValueAtTime(0, now + Math.max(0.03, note.duration - 0.015));
 
         oscillator.start(now);
         oscillator.stop(now + note.duration);
+        musicContext.activeOscillator = oscillator;
+      } catch {
+        // Ignore transient WebAudio errors
+      }
+    }
 
-        noteIndex++;
-        if (musicContext) {
-            musicContext.timer = window.setTimeout(playNote, note.duration * 1000);
-        }
-    };
+    noteIndex++;
+    if (musicContext) {
+      musicContext.timer = window.setTimeout(playNote, note.duration * 1000);
+    }
+  };
 
-    musicContext = {
-        oscillator: audioContext.createOscillator(),
-        gainNode: audioContext.createGain(), 
-        timer: null,
-    };
-    playNote();
+  playNote();
 }
 
 export function stopMusic() {
-    if (!soundsLoaded || !audioContext || !musicContext) return;
-
-    if (musicContext.timer) {
-        clearTimeout(musicContext.timer);
+  if (!musicContext) return;
+  if (musicContext.timer) {
+    clearTimeout(musicContext.timer);
+  }
+  if (musicContext.activeOscillator) {
+    try {
+      musicContext.activeOscillator.stop();
+    } catch {
+      // Already stopped
     }
-    musicContext = null;
+  }
+  musicContext = null;
 }

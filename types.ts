@@ -1,4 +1,3 @@
-
 export interface GameObject {
   x: number;
   y: number;
@@ -14,7 +13,9 @@ export interface DynamicObject extends GameObject {
 export interface Player extends DynamicObject {
   direction: 'left' | 'right';
   isOnGround: boolean;
-  jumpCount: number; // Added for double jump
+  jumpCount: number;
+  coyoteTimer: number;
+  jumpBufferTimer: number;
   isInvincible: boolean;
   invincibilityTimer: number;
   capturedEnemyId: number | null;
@@ -37,6 +38,7 @@ export interface Enemy extends DynamicObject {
   jumpCooldown?: number;
   stunTimer?: number;
   attackCooldown?: number;
+  isSuperLaunched?: boolean;
 }
 
 export type ItemType = 'joystick' | 'floppy' | 'cartridge' | 'speed-boost' | 'shield' | 'super-throw';
@@ -51,6 +53,11 @@ export interface Goal extends GameObject {
   id: number;
 }
 
+export interface Checkpoint extends GameObject {
+  id: number;
+  activated: boolean;
+}
+
 export type BossType = 'frog' | 'chickenEye' | 'shadowHead';
 
 export interface Boss extends DynamicObject {
@@ -61,8 +68,8 @@ export interface Boss extends DynamicObject {
   isHit: boolean;
   hitTimer: number;
   isThrowing: boolean;
-  movementTimer: number; // Used for complex patterns (like figure-8)
-  
+  movementTimer: number;
+
   // ShadowHead Specifics
   opacity?: number;
   visibilityState?: 'fadingIn' | 'visible' | 'fadingOut' | 'hidden';
@@ -77,7 +84,7 @@ export interface Projectile extends DynamicObject {
 }
 
 export interface PlayerProjectile extends DynamicObject {
-    id: number;
+  id: number;
 }
 
 export interface EnemySpawnPoint {
@@ -87,7 +94,6 @@ export interface EnemySpawnPoint {
   timer: number;
 }
 
-// New Interface for Particles
 export interface Particle {
   id: number;
   x: number;
@@ -105,10 +111,13 @@ export interface LevelData {
   name: string;
   musicTheme: MusicTheme;
   isZeroG?: boolean;
-  timeLimit?: number; // New property: Time limit in seconds
+  timeLimit?: number;
+  levelWidth?: number;
+  levelHeight?: number;
   platforms: Omit<Platform, 'id'>[];
   items: Omit<Item, 'id'>[];
-  enemies: Omit<Enemy, 'id' | 'state' | 'vx' | 'vy' | 'direction' | 'jumpCooldown' | 'stunTimer' | 'attackCooldown'>[];
+  enemies: Omit<Enemy, 'id' | 'state' | 'vx' | 'vy' | 'direction' | 'jumpCooldown' | 'stunTimer' | 'attackCooldown' | 'isSuperLaunched'>[];
+  checkpoints?: Omit<Checkpoint, 'id' | 'activated'>[];
   playerStart: { x: number; y: number };
   goal?: Omit<Goal, 'id'>;
   boss?: Omit<Boss, 'hp' | 'attackCooldown' | 'isHit' | 'hitTimer' | 'vy' | 'isThrowing' | 'vx' | 'movementTimer'>;

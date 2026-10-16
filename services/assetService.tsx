@@ -1,346 +1,847 @@
-
 import React from 'react';
 
-// --- PLAYER SPRITE (HIGH FIDELITY PIXEL ART) ---
-// Based on the Intro Avatar: Brown hair, Headphones, Orange Tank Top.
-export const PlayerSprite = ({ direction, isInvincible, showGlove = false, isMoving = false, isJumping = false }: { direction: 'left' | 'right', isInvincible: boolean, showGlove?: boolean, isMoving?: boolean, isJumping?: boolean }) => {
-  
-  // Pixel Art Color Palette
-  const c = {
-    skin: '#ffccaa',
-    hair: '#5d4037',
-    shirt: '#ff7043',
-    shirtDark: '#d84315',
-    pants: '#3f51b5', // Blue jeans/shorts
-    shoes: '#222',
-    headphones: '#d84315',
-    headphoneBand: '#bf360c',
-    glove: '#ffeb3b'
-  };
+// ============================================================================
+// PIXELDEBH: RETRO-RESCUE! — OFFICIAL LOGO-INSPIRED HD VECTOR ASSET ENGINE
+// ============================================================================
 
-  // CSS Animation for running
-  const runAnimStyle = isMoving && !isJumping ? { animation: 'pixelRun 0.4s steps(4) infinite' } : {};
-  const jumpPose = isJumping ? 'translateY(-2px)' : '';
-
+/**
+ * PlayerSprite — Directly modeled after the official PixelDebh channel logo:
+ * - Short chin-length dark brown bob haircut (#4A2511) with side-swept bangs
+ * - Iconic burnt-orange retro headphones (#E05326 / #C43E16) with double-ring earcup
+ * - Warm peachy skin (#FCD2A8), expressive dark brown eyes, arched brows & warm smile
+ * - Burnt-orange sleeveless scoop-neck tank top (#DF5327) with bold cartoon outlines (#2A1810)
+ * - Holding her signature dark brown wireless gamepad (#3D2B22)
+ * - Exact 54x74 viewBox matching PLAYER_WIDTH (54) x PLAYER_HEIGHT (74) for 1:1 hitbox accuracy!
+ */
+export const PlayerSprite = ({
+  direction,
+  isInvincible,
+  showGlove = false,
+  isMoving = false,
+  isJumping = false,
+}: {
+  direction: 'left' | 'right';
+  isInvincible: boolean;
+  showGlove?: boolean;
+  isMoving?: boolean;
+  isJumping?: boolean;
+}) => {
   return (
     <div className="w-full h-full relative">
       <style>{`
-        @keyframes pixelRun {
-          0% { transform: translateY(0); }
-          25% { transform: translateY(-1px); }
-          50% { transform: translateY(0); }
-          75% { transform: translateY(-1px); }
+        @keyframes pdBobRun {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-2.5px); }
         }
-        .leg-l, .leg-r { transition: transform 0.1s; }
-        /* Frame 1 of Run */
-        .running .leg-l { transform: translate(2px, 0); }
-        .running .leg-r { transform: translate(-2px, 0); }
+        @keyframes pdLegL {
+          0%, 100% { transform: rotate(-24deg); }
+          50% { transform: rotate(22deg); }
+        }
+        @keyframes pdLegR {
+          0%, 100% { transform: rotate(22deg); }
+          50% { transform: rotate(-24deg); }
+        }
+        @keyframes pdHairBounce {
+          0%, 100% { transform: rotate(0deg); }
+          50% { transform: rotate(-2.5deg) translateY(-1px); }
+        }
+        .pd-run-body { animation: pdBobRun 0.28s ease-in-out infinite; transform-origin: 27px 42px; }
+        .pd-run-leg-l { animation: pdLegL 0.28s ease-in-out infinite; transform-origin: 23px 54px; }
+        .pd-run-leg-r { animation: pdLegR 0.28s ease-in-out infinite; transform-origin: 31px 54px; }
+        .pd-hair-bob { animation: pdHairBounce 0.28s ease-in-out infinite; transform-origin: 27px 18px; }
       `}</style>
 
-      <svg 
-        viewBox="0 0 24 32" 
+      <svg
+        viewBox="0 0 54 74"
         className={`w-full h-full transform ${direction === 'left' ? 'scale-x-[-1]' : ''}`}
-        style={{ imageRendering: 'pixelated' }} // Crucial for crisp edges
+        style={{
+          filter: isInvincible
+            ? 'drop-shadow(0 0 10px #00f0ff)'
+            : 'drop-shadow(0 3px 5px rgba(0,0,0,0.55))',
+        }}
       >
-        <g style={runAnimStyle}>
-            {/* --- HEADPHONES (Back of band) --- */}
-            <rect x="8" y="3" width="8" height="2" fill={c.headphoneBand} />
-            <rect x="6" y="4" width="2" height="2" fill={c.headphoneBand} />
-            <rect x="16" y="4" width="2" height="2" fill={c.headphoneBand} />
+        <defs>
+          <linearGradient id="pd-logo-hair" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#63361e" />
+            <stop offset="55%" stopColor="#4A2511" />
+            <stop offset="100%" stopColor="#2E1508" />
+          </linearGradient>
+          <linearGradient id="pd-logo-skin" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#FDE0BE" />
+            <stop offset="65%" stopColor="#FCD2A8" />
+            <stop offset="100%" stopColor="#EBAA76" />
+          </linearGradient>
+          <linearGradient id="pd-logo-tank" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#F26838" />
+            <stop offset="55%" stopColor="#DF5327" />
+            <stop offset="100%" stopColor="#B83B14" />
+          </linearGradient>
+          <linearGradient id="pd-logo-headphone" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#F46A38" />
+            <stop offset="55%" stopColor="#E05326" />
+            <stop offset="100%" stopColor="#A8320E" />
+          </linearGradient>
+          <linearGradient id="pd-logo-shorts" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#3B4D6B" />
+            <stop offset="100%" stopColor="#222D42" />
+          </linearGradient>
+          <radialGradient id="pd-pad-beam" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#FFF8E7" />
+            <stop offset="45%" stopColor="#FF9E2C" />
+            <stop offset="100%" stopColor="#E05326" stopOpacity="0" />
+          </radialGradient>
+        </defs>
 
-            {/* --- HAIR (Back) --- */}
-            <rect x="7" y="5" width="10" height="8" fill={c.hair} />
-            <rect x="6" y="8" width="12" height="5" fill={c.hair} />
-            <rect x="5" y="12" width="2" height="3" fill={c.hair} /> {/* Side burns */}
-            <rect x="17" y="12" width="2" height="3" fill={c.hair} />
+        <g className={isMoving && !isJumping ? 'pd-run-body' : ''} transform={isJumping ? 'translate(0, -2)' : ''}>
+          {/* --- BACK OF SHORT BOB HAIRCUT --- */}
+          <g className={isMoving || isJumping ? 'pd-hair-bob' : ''}>
+            <path
+              d="M 11 16 C 8 24, 9 34, 15 37 L 39 37 C 44 34, 45 24, 42 16 Z"
+              fill="url(#pd-logo-hair)"
+              stroke="#2A1810"
+              strokeWidth="2"
+              strokeLinejoin="round"
+            />
+          </g>
 
-            {/* --- HEAD --- */}
-            <rect x="8" y="6" width="8" height="7" fill={c.skin} />
-            <rect x="9" y="13" width="6" height="2" fill={c.skin} /> {/* Chin */}
+          {/* --- BACK LEG (LEFT) --- */}
+          <g
+            className={isMoving && !isJumping ? 'pd-run-leg-l' : ''}
+            transform={isJumping ? 'rotate(-18 22 54) translate(0, -2)' : ''}
+          >
+            {/* Leg Skin */}
+            <rect x="18" y="55" width="7" height="12" rx="3" fill="#EBAA76" stroke="#2A1810" strokeWidth="1.8" />
+            {/* Shorts Left */}
+            <rect x="17" y="51" width="9" height="8" rx="2.5" fill="url(#pd-logo-shorts)" stroke="#2A1810" strokeWidth="1.8" />
+            {/* Sneaker Left */}
+            <path
+              d="M 16 65 L 27 65 C 29 65, 30 68, 30 71 L 15 71 Z"
+              fill="#DF5327"
+              stroke="#2A1810"
+              strokeWidth="1.8"
+            />
+            <rect x="15" y="70" width="15" height="2.5" rx="1" fill="#FFF5DC" stroke="#2A1810" strokeWidth="1.2" />
+          </g>
 
-            {/* --- FACE --- */}
-            <rect x="13" y="9" width="2" height="2" fill="#3e2723" /> {/* Eye R */}
-            <rect x="15" y="9" width="1" height="1" fill="#fff" opacity="0.5" /> {/* Sparkle */}
-            
-            {/* Profile view adjustments if direction matters, but assuming side/3/4 view */}
-            <rect x="13" y="12" width="2" height="1" fill="#d84315" opacity="0.6" /> {/* Mouth */}
-            <rect x="9" y="10" width="2" height="1" fill="#f48fb1" opacity="0.5" /> {/* Blush */}
+          {/* --- FRONT LEG (RIGHT) --- */}
+          <g
+            className={isMoving && !isJumping ? 'pd-run-leg-r' : ''}
+            transform={isJumping ? 'rotate(16 31 54) translate(0, -3)' : ''}
+          >
+            {/* Leg Skin */}
+            <rect x="27" y="55" width="7" height="12" rx="3" fill="url(#pd-logo-skin)" stroke="#2A1810" strokeWidth="1.8" />
+            {/* Shorts Right */}
+            <rect x="26" y="51" width="10" height="8" rx="2.5" fill="url(#pd-logo-shorts)" stroke="#2A1810" strokeWidth="1.8" />
+            {/* Sneaker Right */}
+            <path
+              d="M 25 65 L 37 65 C 40 65, 41 68, 41 71 L 24 71 Z"
+              fill="#DF5327"
+              stroke="#2A1810"
+              strokeWidth="1.8"
+            />
+            <rect x="24" y="70" width="17" height="2.5" rx="1" fill="#FFF5DC" stroke="#2A1810" strokeWidth="1.2" />
+          </g>
 
-            {/* --- HAIR (Front/Bangs) --- */}
-            <rect x="8" y="5" width="8" height="2" fill={c.hair} />
-            <rect x="8" y="7" width="2" height="2" fill={c.hair} />
-            
-            {/* --- HEADPHONES (Ear cups) --- */}
-            <rect x="6" y="7" width="3" height="6" fill={c.headphones} />
-            <rect x="5" y="8" width="1" height="4" fill={c.headphoneBand} />
+          {/* --- NECK & SLEEVELESS ORANGE TANK TOP (FROM LOGO) --- */}
+          <rect x="23" y="31" width="8" height="8" rx="3" fill="url(#pd-logo-skin)" stroke="#2A1810" strokeWidth="1.8" />
+          <path
+            d="M 17 36 C 17 35, 21 35, 22 37 C 24 40, 30 40, 32 37 C 33 35, 36 35, 36 36 L 38 53 L 16 53 Z"
+            fill="url(#pd-logo-tank)"
+            stroke="#2A1810"
+            strokeWidth="2"
+            strokeLinejoin="round"
+          />
+          {/* Subtle Tank Top Fold Highlight */}
+          <path d="M 20 39 L 19 50" stroke="#FF8A5B" strokeWidth="1.6" strokeLinecap="round" opacity="0.65" />
 
-            {/* --- BODY (Torso) --- */}
-            <rect x="9" y="15" width="6" height="2" fill={c.skin} /> {/* Neck/Shoulders */}
-            <rect x="8" y="16" width="8" height="9" fill={c.shirt} />
-            <rect x="9" y="16" width="6" height="2" fill={c.shirtDark} opacity="0.3"/> {/* Collar shadow */}
-            
-            {/* Arms */}
-            <rect x="10" y="18" width="6" height="3" fill={showGlove ? c.glove : c.skin} /> {/* Holding object arms */}
-            
-            {/* Object/Controller/Hand */}
-            <rect x="15" y="18" width="3" height="3" fill={showGlove ? c.glove : c.skin} />
+          {/* --- HEAD & FACE (EXACT LOGO PROPORTIONS & EXPRESSION) --- */}
+          <g className={isMoving || isJumping ? 'pd-hair-bob' : ''}>
+            {/* Face Shape */}
+            <path
+              d="M 15 14 C 15 7, 39 7, 39 14 L 39 24 C 39 31, 33 35, 27 35 C 21 35, 15 31, 15 24 Z"
+              fill="url(#pd-logo-skin)"
+              stroke="#2A1810"
+              strokeWidth="2"
+            />
 
-            {/* --- LEGS (Animated via CSS classes based on React state) --- */}
-            <g className={isMoving ? (Math.floor(Date.now() / 100) % 2 === 0 ? 'running-a' : 'running-b') : ''}>
-                {/* Left Leg (Back) */}
-                <g transform={isJumping ? "translate(0, -2)" : (isMoving ? "translate(2, 0)" : "")}>
-                     <rect x="9" y="25" width="3" height="6" fill={c.pants} opacity="0.8"/>
-                     <rect x="9" y="30" width="3" height="2" fill={c.shoes} />
-                </g>
+            {/* Warm Cheek Blush */}
+            <ellipse cx="22" cy="26.5" rx="2.6" ry="1.3" fill="#F2785C" opacity="0.45" />
+            <ellipse cx="36" cy="26.5" rx="2.2" ry="1.2" fill="#F2785C" opacity="0.45" />
 
-                {/* Right Leg (Front) */}
-                <g transform={isJumping ? "translate(0, -4)" : (isMoving ? "translate(-2, 0)" : "")}>
-                    <rect x="12" y="25" width="3" height="6" fill={c.pants} />
-                    <rect x="12" y="30" width="3" height="2" fill={c.shoes} />
-                </g>
+            {/* Arched Dark Eyebrows */}
+            <path d="M 22 18.2 Q 25 16.5, 27.8 18" stroke="#2A1810" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+            <path d="M 32.2 18 Q 35 16.5, 37.2 18.2" stroke="#2A1810" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+
+            {/* Expressive Dark Brown Eyes with White Sclera & Catchlight */}
+            <ellipse cx="25" cy="22" rx="3" ry="3.4" fill="#FFF8E7" stroke="#2A1810" strokeWidth="1.4" />
+            <circle cx="25.6" cy="22" r="2.1" fill="#2A1810" />
+            <circle cx="24.8" cy="21" r="0.85" fill="#FFFFFF" />
+
+            <ellipse cx="34.5" cy="22" rx="2.7" ry="3.2" fill="#FFF8E7" stroke="#2A1810" strokeWidth="1.4" />
+            <circle cx="35" cy="22" r="1.9" fill="#2A1810" />
+            <circle cx="34.3" cy="21" r="0.8" fill="#FFFFFF" />
+
+            {/* Cute Cartoon Nose (From Logo) */}
+            <path d="M 30 21.5 C 31.5 23.5, 31.5 25.5, 29.5 26" stroke="#2A1810" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+
+            {/* Warm Smile with Lower Lip Tint */}
+            <path d="M 25.5 28.8 Q 29.5 31.6, 33.2 28.8" stroke="#2A1810" strokeWidth="1.7" strokeLinecap="round" fill="none" />
+            <path d="M 27.2 30.2 Q 29.5 31.8, 31.5 30.2" stroke="#D84A24" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+
+            {/* Side-Swept Bob Bangs & Right Bob Lock */}
+            <path
+              d="M 14 17 C 14 7, 40 6, 41 18 C 41 25, 41 31, 37 34 C 39 28, 39 21, 36 16 C 32 11, 30 15, 23 17 C 19 18, 16 21, 15 25 Z"
+              fill="url(#pd-logo-hair)"
+              stroke="#2A1810"
+              strokeWidth="1.9"
+              strokeLinejoin="round"
+            />
+            {/* Left Chin-Length Bob Lock framing earcup */}
+            <path
+              d="M 10 21 C 8 27, 10 34, 16 36 C 14 31, 14 25, 15 21 Z"
+              fill="url(#pd-logo-hair)"
+              stroke="#2A1810"
+              strokeWidth="1.8"
+            />
+            {/* Warm Hair Shine */}
+            <path d="M 20 11 Q 27 8.5, 34 11" stroke="#7D4628" strokeWidth="2" strokeLinecap="round" fill="none" />
+
+            {/* --- ICONIC BURNT-ORANGE HEADPHONES (FROM LOGO) --- */}
+            {/* Headband Arch */}
+            <path
+              d="M 14 20 C 14 4, 38 4, 39 17"
+              stroke="url(#pd-logo-headphone)"
+              strokeWidth="4.8"
+              strokeLinecap="round"
+              fill="none"
+            />
+            <path
+              d="M 14 20 C 14 4, 38 4, 39 17"
+              stroke="#2A1810"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              fill="none"
+            />
+            {/* Outer Earcup Cushion */}
+            <ellipse
+              cx="14.5"
+              cy="24.5"
+              rx="5.2"
+              ry="7.2"
+              fill="url(#pd-logo-headphone)"
+              stroke="#2A1810"
+              strokeWidth="2"
+            />
+            {/* Inner Earcup Cap */}
+            <ellipse
+              cx="13.8"
+              cy="24.5"
+              rx="3.2"
+              ry="4.8"
+              fill="#C43E16"
+              stroke="#2A1810"
+              strokeWidth="1.5"
+            />
+            <path d="M 12.8 21.5 A 2 3.5 0 0 1 12.8 27" stroke="#FF9E6D" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+          </g>
+
+          {/* --- ARMS & SIGNATURE DARK GAMEPAD CONTROLLER (FROM LOGO) --- */}
+          <g>
+            {/* Left/Front Arm bent holding controller */}
+            <path
+              d="M 16 38 C 12 43, 13 49, 18 49 L 29 46 L 28 42 L 19 44 L 21 38 Z"
+              fill="url(#pd-logo-skin)"
+              stroke="#2A1810"
+              strokeWidth="1.8"
+              strokeLinejoin="round"
+            />
+
+            {/* Tractor-Beam / Energy Aura when holding Enemy or Super-Throw */}
+            {showGlove && (
+              <circle cx="38" cy="43" r="11" fill="url(#pd-pad-beam)" className="animate-pulse" />
+            )}
+
+            {/* Wireless Gamepad Controller (#3D2B22) */}
+            <g transform="translate(25, 37)">
+              <rect
+                x="0"
+                y="0"
+                width="22"
+                height="12"
+                rx="5"
+                fill="#3D2B22"
+                stroke="#2A1810"
+                strokeWidth="1.8"
+              />
+              {/* D-Pad */}
+              <path d="M 6 4 L 6 8 M 4 6 L 8 6" stroke="#8C6754" strokeWidth="1.8" strokeLinecap="round" />
+              {/* Action Buttons */}
+              <circle cx="16.5" cy="4.5" r="1.3" fill="#FF9E2C" />
+              <circle cx="18.5" cy="6.2" r="1.3" fill="#DF5327" />
+              <circle cx="14.5" cy="6.2" r="1.3" fill="#FFF5DC" />
+              <circle cx="16.5" cy="7.9" r="1.3" fill="#00E5FF" />
             </g>
-            
-             {/* Scarf / Accessory (Optional dynamic element) */}
-             <rect x="7" y="16" width="2" height="4" fill="#e91e63" className={isMoving ? "animate-pulse" : ""} />
+
+            {/* Hands gripping Gamepad */}
+            <ellipse cx="29" cy="44" rx="3.2" ry="2.6" fill="url(#pd-logo-skin)" stroke="#2A1810" strokeWidth="1.6" />
+            <ellipse cx="45" cy="44" rx="2.8" ry="2.4" fill="url(#pd-logo-skin)" stroke="#2A1810" strokeWidth="1.6" />
+          </g>
         </g>
       </svg>
     </div>
   );
 };
 
-// --- ENEMY SPRITE ---
-export const EnemySprite = ({ type, state }: { type: string, state: string }) => {
+// ============================================================================
+// ENEMY SPRITES (EXACT HITBOX ALIGNMENT — NO CSS BOUNCE DISLOCATION!)
+// All ground/standard enemies use viewBox="0 0 50 50" filling x=2..48, y=2..49
+// ============================================================================
+export const EnemySprite = ({ type, state }: { type: string; state: string }) => {
   const captured = state === 'captured';
-  const purple = '#9472ff';
+  const stunned = state === 'stunned';
 
   switch (type) {
-    case 'phaser': // Ghosty
-        return (
-            <svg viewBox="0 0 16 16" className={`w-full h-full ${captured ? 'animate-bounce' : ''}`} style={{ imageRendering: 'pixelated' }}>
-               <path d="M3 14 a 5 5 0 0 1 10 0 v-8 a 5 5 0 0 0 -10 0 z" fill={captured ? purple : "#e0e0e0"} opacity="0.8"/>
-               <rect x="5" y="6" width="2" height="2" fill="black"/>
-               <rect x="9" y="6" width="2" height="2" fill="black"/>
-               <rect x="5" y="6" width="1" height="1" fill="red"/> {/* Evil Eye */}
-               <rect x="9" y="6" width="1" height="1" fill="red"/>
-               <path d="M4 14 l2 -2 l2 2 l2 -2 l2 2" fill="none" stroke={captured ? purple : "#e0e0e0"} strokeWidth="1" opacity="0.8"/>
-            </svg>
-        );
-    case 'bomber': // Bomby
-        return (
-            <svg viewBox="0 0 16 16" className={`w-full h-full ${captured ? 'animate-bounce' : ''}`} style={{ imageRendering: 'pixelated' }}>
-                <path d="M2 15 a 6 6 0 0 1 12 0 z" fill={captured ? purple : "#444"} /> {/* Base */}
-                <rect x="4" y="12" width="8" height="1" fill="#222" /> {/* Treads */}
-                <path d="M3 14 a 5 5 0 0 1 10 0 z" fill={captured ? purple : "#666"} /> {/* Dome */}
-                <rect x="7" y="8" width="2" height="4" fill="#222" /> {/* Cannon */}
-                <rect x="6" y="8" width="4" height="1" fill="#D32F2F"/>
-                <rect x="7" y="0" width="2" height="2" fill="#FFA500" className="animate-pulse"/> {/* Fuse */}
-            </svg>
-        );
-    case 'flyer': // Flappy (Bat-Bot)
+    case 'phaser': // Ghosty — Spectral Wraith (fills 50x50 cleanly)
       return (
-        <svg viewBox="0 0 16 12" className={`w-full h-full ${captured ? 'animate-bounce' : ''}`} style={{ imageRendering: 'pixelated' }}>
-           <path d="M6 2 h4 v6 h-4 z" fill={captured ? purple : "#607d8b"} /> {/* Body */}
-           <rect x="6" y="3" width="1" height="1" fill="#00ff00" className="animate-blink"/> {/* Eye L */}
-           <rect x="9" y="3" width="1" height="1" fill="#00ff00" className="animate-blink"/> {/* Eye R */}
-           {/* Left Wing */}
-           <path d="M0 2 h6 v1 h-1 v1 h-1 v1 h-1 v-1 h-2 z" fill={captured ? purple : "#455a64"} />
-           {/* Right Wing */}
-           <path d="M10 2 h6 v1 h-2 v1 h-1 v1 h-1 v-1 h-2 z" fill={captured ? purple : "#455a64"} />
-           <rect x="7" y="8" width="2" height="2" fill="#ff5722" /> {/* Thruster */}
+        <svg viewBox="0 0 50 50" className="w-full h-full">
+          <defs>
+            <linearGradient id="ghost-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor={captured ? '#e040fb' : '#e0f7fa'} stopOpacity="0.95" />
+              <stop offset="65%" stopColor={captured ? '#7c4dff' : '#4dd0e1'} stopOpacity="0.85" />
+              <stop offset="100%" stopColor="#311b92" stopOpacity="0.35" />
+            </linearGradient>
+            <radialGradient id="ghost-eye" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#ffffff" />
+              <stop offset="45%" stopColor="#ff1744" />
+              <stop offset="100%" stopColor="#880e4f" />
+            </radialGradient>
+          </defs>
+          <path
+            d="M 5 24 C 5 6, 45 6, 45 24 L 47 46 C 42 41, 38 48, 33 44 C 29 40, 25 49, 20 44 C 15 40, 10 48, 3 46 Z"
+            fill="url(#ghost-grad)"
+            stroke="#2A1810"
+            strokeWidth="2.2"
+          />
+          <ellipse cx="25" cy="23" rx="13" ry="11" fill="#120924" opacity="0.6" />
+          <circle cx="19" cy="22" r="4.2" fill="url(#ghost-eye)" />
+          <circle cx="31" cy="22" r="4.2" fill="url(#ghost-eye)" />
+          <path
+            d="M 18 32 Q 21.5 29, 25 32 Q 28.5 35, 32 32"
+            stroke="#ff5252"
+            strokeWidth="2.2"
+            fill="none"
+            strokeLinecap="round"
+          />
         </svg>
       );
-    case 'jumper': // Hoppy (Springy)
+
+    case 'bomber': // Bomby — Heavy Cyber-Artillery Tank (fills 50x50 cleanly)
       return (
-        <svg viewBox="0 0 16 16" className={`w-full h-full ${captured ? 'animate-bounce' : 'animate-bounce'}`} style={{ imageRendering: 'pixelated' }}>
-          {/* Spring */}
-          <path d="M6 12 h4 v1 h-4 z M6 14 h4 v1 h-4 z" fill="#aaa" />
-          <path d="M3 3 h10 v9 h-10 z" fill={captured ? purple : "#d32f2f"}/>
-          <rect x="4" y="4" width="8" height="2" fill="#e57373"/> {/* Highlight */}
-          <rect x="5" y="6" width="2" height="3" fill="white"/>
-          <rect x="9" y="6" width="2" height="3" fill="white"/>
-          <rect x="6" y="7" width="1" height="1" fill="black"/>
-          <rect x="10" y="7" width="1" height="1" fill="black"/>
-          <path d="M4 10 h8 v2 h-8 z" fill="#b71c1c"/> {/* Mouth */}
+        <svg viewBox="0 0 50 50" className="w-full h-full">
+          <defs>
+            <linearGradient id="tank-dome" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor={captured ? '#b388ff' : '#90a4ae'} />
+              <stop offset="55%" stopColor={captured ? '#7c4dff' : '#455a64'} />
+              <stop offset="100%" stopColor="#1c262b" />
+            </linearGradient>
+          </defs>
+          {/* Mortar Cannon */}
+          <rect x="18" y="4" width="14" height="16" rx="3" fill="#37474f" stroke="#2A1810" strokeWidth="2" />
+          <rect x="15" y="2" width="20" height="5" rx="2" fill="#DF5327" stroke="#2A1810" strokeWidth="1.8" />
+          {/* Armored Dome */}
+          <path
+            d="M 4 38 C 4 14, 46 14, 46 38 Z"
+            fill="url(#tank-dome)"
+            stroke="#2A1810"
+            strokeWidth="2.2"
+          />
+          {/* Optic Visor */}
+          <rect x="11" y="24" width="28" height="7" rx="3.5" fill="#111" stroke="#2A1810" strokeWidth="1.5" />
+          <circle cx="25" cy="27.5" r="3" fill="#ff1744" />
+          {/* Heavy Treads filling bottom of 50x50 */}
+          <rect x="2" y="36" width="46" height="12" rx="6" fill="#263238" stroke="#2A1810" strokeWidth="2.2" />
+          <circle cx="11" cy="42" r="3.5" fill="#90a4ae" stroke="#2A1810" strokeWidth="1.2" />
+          <circle cx="25" cy="42" r="3.5" fill="#90a4ae" stroke="#2A1810" strokeWidth="1.2" />
+          <circle cx="39" cy="42" r="3.5" fill="#90a4ae" stroke="#2A1810" strokeWidth="1.2" />
         </svg>
       );
-    case 'base': // Globby (Slime)
+
+    case 'flyer': // Flappy — Cyber Bat-Drone (fills 60x44 cleanly)
+      return (
+        <svg viewBox="0 0 60 44" className="w-full h-full">
+          <defs>
+            <linearGradient id="bat-wing" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor={captured ? '#ba68c8' : '#00e5ff'} />
+              <stop offset="100%" stopColor={captured ? '#4a148c' : '#1a237e'} />
+            </linearGradient>
+          </defs>
+          {/* Left & Right Wings spanning x=2..58 */}
+          <path
+            d="M 20 18 L 2 5 L 5 22 L 12 19 L 10 30 L 20 26 Z"
+            fill="url(#bat-wing)"
+            stroke="#2A1810"
+            strokeWidth="2"
+          />
+          <path
+            d="M 40 18 L 58 5 L 55 22 L 48 19 L 50 30 L 40 26 Z"
+            fill="url(#bat-wing)"
+            stroke="#2A1810"
+            strokeWidth="2"
+          />
+          {/* Thruster Flame */}
+          <path d="M 25 32 L 30 43 L 35 32 Z" fill="#FF9E2C" stroke="#2A1810" strokeWidth="1.5" />
+          {/* Central Body */}
+          <ellipse cx="30" cy="21" rx="13" ry="13" fill="#455a64" stroke="#2A1810" strokeWidth="2.2" />
+          {/* Ears */}
+          <polygon points="21,11 18,2 26,9" fill="#37474f" stroke="#2A1810" strokeWidth="1.8" />
+          <polygon points="39,11 42,2 34,9" fill="#37474f" stroke="#2A1810" strokeWidth="1.8" />
+          {/* Glowing Eyes */}
+          <polygon points="22,18 28,20 23,24" fill="#76ff03" />
+          <polygon points="38,18 32,20 37,24" fill="#76ff03" />
+        </svg>
+      );
+
+    case 'jumper': // Hoppy — Spring Droid (NO CSS animate-bounce! Physics handles jumps!)
+      return (
+        <svg viewBox="0 0 50 50" className="w-full h-full">
+          <defs>
+            <linearGradient id="hoppy-head" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor={captured ? '#ce93d8' : '#ff5252'} />
+              <stop offset="55%" stopColor={captured ? '#8e24aa' : '#d50000'} />
+              <stop offset="100%" stopColor="#7f0000" />
+            </linearGradient>
+          </defs>
+          {/* Heavy Chrome Spring Coils at bottom y=34..48 */}
+          <path
+            d="M 14 34 L 36 37 L 13 41 L 37 44 L 15 48 L 35 48"
+            stroke="#cfd8dc"
+            strokeWidth="4.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+          />
+          {/* Droid Body filling x=4..46, y=3..35 */}
+          <rect
+            x="4"
+            y="3"
+            width="42"
+            height="32"
+            rx="10"
+            fill="url(#hoppy-head)"
+            stroke="#2A1810"
+            strokeWidth="2.2"
+          />
+          <path d="M 11 8 L 39 8" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" opacity="0.45" />
+          {/* Eyes */}
+          <rect x="12" y="12" width="10" height="11" rx="4" fill="#ffffff" stroke="#2A1810" strokeWidth="1.5" />
+          <rect x="28" y="12" width="10" height="11" rx="4" fill="#ffffff" stroke="#2A1810" strokeWidth="1.5" />
+          <circle cx="17" cy="18" r="3" fill="#111" />
+          <circle cx="33" cy="18" r="3" fill="#111" />
+          <circle cx="16" cy="16.5" r="1.2" fill="#fff" />
+          <circle cx="32" cy="16.5" r="1.2" fill="#fff" />
+          {/* Grille Mouth */}
+          <rect x="13" y="26" width="24" height="5.5" rx="2" fill="#212121" stroke="#2A1810" strokeWidth="1.2" />
+          <line x1="19" y1="26" x2="19" y2="31.5" stroke="#ffeb3b" strokeWidth="1.5" />
+          <line x1="25" y1="26" x2="25" y2="31.5" stroke="#ffeb3b" strokeWidth="1.5" />
+          <line x1="31" y1="26" x2="31" y2="31.5" stroke="#ffeb3b" strokeWidth="1.5" />
+        </svg>
+      );
+
+    case 'base': // Globby — Cyber-Slime (fills 50x50 cleanly from x=3..47, y=4..48)
     default:
       return (
-        <svg viewBox="0 0 16 16" className={`w-full h-full ${captured ? 'animate-bounce' : ''}`} style={{ imageRendering: 'pixelated' }}>
-          <path d="M3 6 a 5 5 0 0 1 10 0 v9 H3 z" fill={captured ? purple : "#4caf50"} />
-          <rect x="4" y="13" width="8" height="2" fill={captured ? purple : "#2e7d32"} /> {/* Base darkened */}
-          
-          {/* Bubbles */}
-          <rect x="4" y="5" width="1" height="1" fill="#a5d6a7" />
-          <rect x="11" y="8" width="1" height="1" fill="#a5d6a7" />
-
-          <rect x="5" y="8" width="2" height="2" fill="white" />
-          <rect x="9" y="8" width="2" height="2" fill="white" />
-          <rect x="6" y="9" width="1" height="1" fill="black" />
-          <rect x="10" y="9" width="1" height="1" fill="black" />
+        <svg viewBox="0 0 50 50" className="w-full h-full">
+          <defs>
+            <radialGradient id="slime-body" cx="35%" cy="30%" r="70%">
+              <stop offset="0%" stopColor={captured ? '#ea80fc' : '#b9f6ca'} />
+              <stop offset="45%" stopColor={captured ? '#9c27b0' : '#00e676'} />
+              <stop offset="100%" stopColor={captured ? '#4a148c' : '#00695c'} />
+            </radialGradient>
+          </defs>
+          <path
+            d="M 4 44 C 2 24, 9 4, 25 4 C 41 4, 48 24, 46 44 C 44 48, 6 48, 4 44 Z"
+            fill="url(#slime-body)"
+            stroke="#2A1810"
+            strokeWidth="2.2"
+          />
+          <path d="M 12 16 C 15 10, 21 9, 26 10" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.7" />
+          <circle cx="14" cy="36" r="2.5" fill="#ffffff" opacity="0.5" />
+          <circle cx="37" cy="20" r="2.8" fill="#ffffff" opacity="0.45" />
+          {/* Eyes */}
+          <ellipse cx="18" cy="27" rx="4.5" ry="5.5" fill="#ffffff" stroke="#2A1810" strokeWidth="1.5" />
+          <ellipse cx="32" cy="27" rx="4.5" ry="5.5" fill="#ffffff" stroke="#2A1810" strokeWidth="1.5" />
+          <circle cx="19" cy="28" r="2.6" fill={stunned ? '#ff9100' : '#1b5e20'} />
+          <circle cx="33" cy="28" r="2.6" fill={stunned ? '#ff9100' : '#1b5e20'} />
+          <circle cx="18" cy="26.5" r="1.2" fill="#ffffff" />
+          <circle cx="32" cy="26.5" r="1.2" fill="#ffffff" />
         </svg>
       );
   }
 };
 
-// --- ITEM SPRITES (COLLECTIBLES + POWER-UPS) ---
+// ============================================================================
+// ITEM SPRITES (COLLECTIBLES & POWER-UPS)
+// ============================================================================
 export const ItemSprite = ({ type }: { type: string }) => {
   switch (type) {
     case 'speed-boost':
-        return (
-            <svg viewBox="0 0 16 16" className="w-full h-full animate-pulse" style={{ imageRendering: 'pixelated' }}>
-                <path d="M8 0 l-3 6 h2 l-3 5 h4 l-1 5 l6 -8 h-3 l4 -5 h-4 z" fill="#ffee00" stroke="#ff9800" strokeWidth="0.5"/>
-            </svg>
-        );
+      return (
+        <svg viewBox="0 0 64 64" className="w-full h-full animate-vector-float">
+          <defs>
+            <linearGradient id="bolt-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#ffff8d" />
+              <stop offset="50%" stopColor="#ffea00" />
+              <stop offset="100%" stopColor="#ff6d00" />
+            </linearGradient>
+          </defs>
+          <circle cx="32" cy="32" r="26" fill="rgba(255, 234, 0, 0.18)" stroke="#ffea00" strokeWidth="1.8" strokeDasharray="6 4" />
+          <path
+            d="M 36 6 L 16 34 L 30 34 L 24 58 L 48 28 L 34 28 Z"
+            fill="url(#bolt-grad)"
+            stroke="#2A1810"
+            strokeWidth="2.2"
+            strokeLinejoin="round"
+          />
+        </svg>
+      );
+
     case 'shield':
-        return (
-            <svg viewBox="0 0 16 16" className="w-full h-full animate-pulse" style={{ imageRendering: 'pixelated' }}>
-                <path d="M3 2 l5 -2 l5 2 v5 l-5 8 l-5 -8 z" fill="#00ccff"/>
-                <path d="M8 1 l4 2 v5 l-4 4 l-4 -4 v-5 z" fill="#e0f7fa" />
-                <rect x="7" y="5" width="2" height="4" fill="#006064" />
-                <rect x="5" y="6" width="6" height="2" fill="#006064" />
-            </svg>
-        );
+      return (
+        <svg viewBox="0 0 64 64" className="w-full h-full animate-vector-float">
+          <defs>
+            <linearGradient id="shield-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#84ffff" />
+              <stop offset="50%" stopColor="#00bcd4" />
+              <stop offset="100%" stopColor="#004d40" />
+            </linearGradient>
+          </defs>
+          <path
+            d="M 32 6 L 54 15 L 54 33 C 54 46, 43 54, 32 60 C 21 54, 10 46, 10 33 L 10 15 Z"
+            fill="url(#shield-grad)"
+            stroke="#2A1810"
+            strokeWidth="2.2"
+          />
+          <path
+            d="M 32 12 L 48 19 L 48 32 C 48 42, 40 48, 32 53 C 24 48, 16 42, 16 32 L 16 19 Z"
+            fill="rgba(255,255,255,0.25)"
+          />
+          <path d="M 32 20 L 32 44 M 20 32 L 44 32" stroke="#ffffff" strokeWidth="4" strokeLinecap="round" />
+        </svg>
+      );
+
     case 'super-throw':
-        return (
-            <svg viewBox="0 0 16 16" className="w-full h-full animate-pulse" style={{ imageRendering: 'pixelated' }}>
-                <circle cx="8" cy="8" r="7" fill="#ff5722" />
-                <path d="M8 2 l1 4 h4 l-3 3 l1 4 l-3 -2 l-3 2 l1 -4 l-3 -3 h4 z" fill="#ffeb3b"/>
-            </svg>
-        );
+      return (
+        <svg viewBox="0 0 64 64" className="w-full h-full animate-vector-float">
+          <defs>
+            <radialGradient id="super-orb" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#ffffff" />
+              <stop offset="35%" stopColor="#ffea00" />
+              <stop offset="75%" stopColor="#ff3d00" />
+              <stop offset="100%" stopColor="#b71c1c" />
+            </radialGradient>
+          </defs>
+          <circle cx="32" cy="32" r="24" fill="url(#super-orb)" stroke="#2A1810" strokeWidth="2.2" />
+          <polygon
+            points="32,10 37,24 52,24 40,33 44,48 32,39 20,48 24,33 12,24 27,24"
+            fill="#ffffff"
+            opacity="0.92"
+          />
+        </svg>
+      );
+
     case 'joystick':
       return (
-        <svg viewBox="0 0 16 16" className="w-full h-full animate-pulse" style={{ imageRendering: 'pixelated' }}>
-            {/* Base */}
-            <path d="M2 12 h12 v3 h-12 z" fill="#424242" />
-            <rect x="3" y="11" width="10" height="1" fill="#616161" />
-            {/* Buttons */}
-            <rect x="10" y="13" width="2" height="1" fill="#f44336"/>
-            {/* Stick */}
-            <rect x="5" y="7" width="2" height="5" fill="#212121"/>
-            {/* Ball */}
-            <circle cx="6" cy="6" r="3" fill="#f44336"/>
-            <circle cx="5" cy="5" r="1" fill="#ffcdd2"/>
+        <svg viewBox="0 0 64 64" className="w-full h-full animate-vector-float">
+          <defs>
+            <radialGradient id="joy-ball" cx="35%" cy="35%" r="65%">
+              <stop offset="0%" stopColor="#ff8a80" />
+              <stop offset="40%" stopColor="#E05326" />
+              <stop offset="100%" stopColor="#880e4f" />
+            </radialGradient>
+            <linearGradient id="joy-base" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#455a64" />
+              <stop offset="100%" stopColor="#1c262b" />
+            </linearGradient>
+          </defs>
+          <circle cx="32" cy="32" r="28" fill="rgba(255, 158, 44, 0.16)" />
+          <rect x="10" y="42" width="44" height="14" rx="5" fill="url(#joy-base)" stroke="#2A1810" strokeWidth="2.2" />
+          <ellipse cx="42" cy="46" rx="4" ry="2.2" fill="#ff1744" />
+          <ellipse cx="49" cy="49" rx="4" ry="2.2" fill="#ffea00" />
+          <rect x="24" y="23" width="5" height="20" rx="2" fill="#cfd8dc" stroke="#2A1810" strokeWidth="1.5" />
+          <ellipse cx="26.5" cy="43" rx="8" ry="3.5" fill="#263238" />
+          <circle cx="26.5" cy="18" r="10.5" fill="url(#joy-ball)" stroke="#2A1810" strokeWidth="2" />
+          <ellipse cx="23" cy="14" rx="3.2" ry="2" fill="#ffffff" opacity="0.75" transform="rotate(-25 23 14)" />
         </svg>
       );
+
     case 'floppy':
       return (
-        <svg viewBox="0 0 16 16" className="w-full h-full animate-pulse" style={{ imageRendering: 'pixelated' }}>
-            <path d="M2 1 h12 v14 h-12 z" fill="#1e88e5"/>
-            <rect x="4" y="2" width="8" height="5" fill="white"/> {/* Label */}
-            <rect x="5" y="3" width="6" height="1" fill="#1e88e5"/>
-            <rect x="5" y="9" width="6" height="6" fill="#bdbdbd"/> {/* Shutter */}
-            <rect x="6" y="10" width="2" height="3" fill="#212121"/>
+        <svg viewBox="0 0 64 64" className="w-full h-full animate-vector-float">
+          <defs>
+            <linearGradient id="floppy-body" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#2979ff" />
+              <stop offset="100%" stopColor="#0d47a1" />
+            </linearGradient>
+          </defs>
+          <path
+            d="M 10 8 L 48 8 L 54 14 L 54 56 L 10 56 Z"
+            fill="url(#floppy-body)"
+            stroke="#2A1810"
+            strokeWidth="2.2"
+            strokeLinejoin="round"
+          />
+          <rect x="17" y="10" width="28" height="20" rx="2" fill="#FFF5DC" stroke="#2A1810" strokeWidth="1.2" />
+          <line x1="21" y1="15" x2="41" y2="15" stroke="#DF5327" strokeWidth="2.5" strokeLinecap="round" />
+          <line x1="21" y1="20" x2="38" y2="20" stroke="#2979ff" strokeWidth="2" strokeLinecap="round" />
+          <rect x="20" y="36" width="24" height="20" rx="1.5" fill="#cfd8dc" stroke="#2A1810" strokeWidth="1.5" />
+          <rect x="24" y="39" width="6" height="14" rx="1" fill="#1c262b" />
         </svg>
       );
+
     case 'cartridge':
       return (
-        <svg viewBox="0 0 16 16" className="w-full h-full animate-pulse" style={{ imageRendering: 'pixelated' }}>
-            <path d="M2 1 h12 v14 h-12 z" fill="#757575"/>
-            <rect x="3" y="3" width="10" height="8" fill="#ffeb3b"/> {/* Sticker */}
-            <rect x="3" y="12" width="2" height="3" fill="#424242"/> {/* Pins */}
-            <rect x="6" y="12" width="2" height="3" fill="#424242"/>
-            <rect x="9" y="12" width="2" height="3" fill="#424242"/>
-            <rect x="12" y="12" width="1" height="3" fill="#424242"/>
-            <path d="M4 5 h8 v4 h-8 z" fill="#d32f2f"/> {/* Art */}
+        <svg viewBox="0 0 64 64" className="w-full h-full animate-vector-float">
+          <defs>
+            <linearGradient id="cart-shell" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#90a4ae" />
+              <stop offset="100%" stopColor="#37474f" />
+            </linearGradient>
+            <linearGradient id="cart-art" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#FF9E2C" />
+              <stop offset="50%" stopColor="#DF5327" />
+              <stop offset="100%" stopColor="#651fff" />
+            </linearGradient>
+          </defs>
+          <rect x="10" y="6" width="44" height="50" rx="4" fill="url(#cart-shell)" stroke="#2A1810" strokeWidth="2.2" />
+          <rect x="17" y="12" width="30" height="26" rx="2.5" fill="url(#cart-art)" stroke="#2A1810" strokeWidth="1.5" />
+          <polygon points="28,19 39,25 28,31" fill="#FFF5DC" />
+          <rect x="16" y="48" width="32" height="8" fill="#212121" />
+          <rect x="19" y="49" width="3" height="7" fill="#ffd740" />
+          <rect x="25" y="49" width="3" height="7" fill="#ffd740" />
+          <rect x="31" y="49" width="3" height="7" fill="#ffd740" />
+          <rect x="37" y="49" width="3" height="7" fill="#ffd740" />
+          <rect x="43" y="49" width="3" height="7" fill="#ffd740" />
         </svg>
       );
+
     default:
       return null;
   }
 };
 
-// --- GOAL SPRITE ---
-export const GoalSprite = () => (
-    <svg viewBox="0 0 24 40" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
-        {/* Portal Frame */}
-        <path d="M0 0 h24 v40 h-24 z" fill="#212121" />
-        <path d="M2 2 h20 v36 h-20 z" fill="#424242" />
-        {/* Energy Field */}
-        <rect x="4" y="4" width="16" height="32" fill="#00e5ff" opacity="0.5">
-           <animate attributeName="opacity" values="0.5;0.8;0.5" dur="2s" repeatCount="indefinite" />
-        </rect>
-        {/* Swirl */}
-        <circle cx="12" cy="20" r="6" fill="none" stroke="#fff" strokeWidth="1" strokeDasharray="4 2">
-            <animateTransform attributeName="transform" type="rotate" from="0 12 20" to="360 12 20" dur="3s" repeatCount="indefinite" />
-        </circle>
-    </svg>
+// ============================================================================
+// GOAL PORTAL & CHECKPOINT SPRITES (HD VECTOR)
+// ============================================================================
+export const GoalSprite = ({ unlocked = true, remaining = 0 }: { unlocked?: boolean; remaining?: number }) => (
+  <svg viewBox="0 0 90 150" className="w-full h-full">
+    <defs>
+      <linearGradient id="portal-frame" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#546e7a" />
+        <stop offset="50%" stopColor="#263238" />
+        <stop offset="100%" stopColor="#0f171e" />
+      </linearGradient>
+      <radialGradient id="portal-open" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stopColor="#ffffff" />
+        <stop offset="35%" stopColor="#00e5ff" />
+        <stop offset="75%" stopColor="#7c4dff" />
+        <stop offset="100%" stopColor="#1a0033" />
+      </radialGradient>
+      <radialGradient id="portal-locked" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stopColor="#ff9100" stopOpacity="0.6" />
+        <stop offset="60%" stopColor="#d50000" stopOpacity="0.45" />
+        <stop offset="100%" stopColor="#1a0000" stopOpacity="0.85" />
+      </radialGradient>
+    </defs>
+
+    <path
+      d="M 6 146 L 6 42 C 6 12, 84 12, 84 42 L 84 146 Z"
+      fill="url(#portal-frame)"
+      stroke={unlocked ? '#00e5ff' : '#ff5252'}
+      strokeWidth="3"
+    />
+    <path
+      d="M 15 142 L 15 44 C 15 22, 75 22, 75 44 L 75 142 Z"
+      fill={unlocked ? 'url(#portal-open)' : 'url(#portal-locked)'}
+    />
+
+    {unlocked ? (
+      <g>
+        <ellipse cx="45" cy="85" rx="22" ry="38" fill="none" stroke="#84ffff" strokeWidth="2.5" strokeDasharray="10 6">
+          <animateTransform attributeName="transform" type="rotate" from="0 45 85" to="360 45 85" dur="3s" repeatCount="indefinite" />
+        </ellipse>
+        <ellipse cx="45" cy="85" rx="12" ry="22" fill="none" stroke="#ffffff" strokeWidth="2" strokeDasharray="6 4">
+          <animateTransform attributeName="transform" type="rotate" from="360 45 85" to="0 45 85" dur="2s" repeatCount="indefinite" />
+        </ellipse>
+        <text x="45" y="18" textAnchor="middle" fill="#00e676" fontSize="9" fontWeight="bold" fontFamily="Orbitron, sans-serif">
+          EXIT OPEN
+        </text>
+      </g>
+    ) : (
+      <g>
+        <line x1="18" y1="60" x2="72" y2="60" stroke="#ff5252" strokeWidth="2" strokeDasharray="4 4" />
+        <line x1="18" y1="85" x2="72" y2="85" stroke="#ff5252" strokeWidth="2" strokeDasharray="4 4" />
+        <line x1="18" y1="110" x2="72" y2="110" stroke="#ff5252" strokeWidth="2" strokeDasharray="4 4" />
+        <rect x="35" y="76" width="20" height="16" rx="3" fill="#ff1744" stroke="#fff" strokeWidth="1.5" />
+        <path d="M 39 76 L 39 70 C 39 65, 51 65, 51 70 L 51 76" fill="none" stroke="#fff" strokeWidth="2.5" />
+        <text x="45" y="118" textAnchor="middle" fill="#ffeb3b" fontSize="11" fontWeight="bold" fontFamily="Orbitron, sans-serif">
+          -{remaining}
+        </text>
+      </g>
+    )}
+
+    <rect x="2" y="142" width="86" height="8" rx="3" fill="#00e5ff" opacity={unlocked ? 0.9 : 0.35} />
+  </svg>
 );
 
+export const CheckpointSprite = ({ activated }: { activated: boolean }) => (
+  <svg viewBox="0 0 48 96" className="w-full h-full">
+    <defs>
+      <linearGradient id="cp-pole" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#546e7a" />
+        <stop offset="50%" stopColor="#cfd8dc" />
+        <stop offset="100%" stopColor="#37474f" />
+      </linearGradient>
+    </defs>
+    <rect x="8" y="88" width="32" height="8" rx="3" fill="#263238" stroke={activated ? '#00e676' : '#00e5ff'} strokeWidth="1.5" />
+    <rect x="21" y="16" width="6" height="72" fill="url(#cp-pole)" />
+    <polygon
+      points="27,18 46,27 27,36"
+      fill={activated ? '#00e676' : '#FF9E2C'}
+      opacity={activated ? '0.95' : '0.55'}
+    />
+    <circle
+      cx="24"
+      cy="14"
+      r="7"
+      fill={activated ? '#00e676' : '#37474f'}
+      stroke="#ffffff"
+      strokeWidth="1.5"
+    />
+  </svg>
+);
 
-// --- HEART SPRITE ---
+// ============================================================================
+// HUD & PROJECTILE SPRITES (HD VECTOR)
+// ============================================================================
 export const HeartSprite = () => (
-    <svg viewBox="0 0 16 16" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
-        <path d="M8 4 C 5 2, 2 5, 8 14 C 14 5, 11 2, 8 4" fill="#ff1744" stroke="#fff" strokeWidth="0.5"/>
-    </svg>
+  <svg viewBox="0 0 32 32" className="w-full h-full">
+    <defs>
+      <radialGradient id="heart-grad" cx="35%" cy="30%" r="70%">
+        <stop offset="0%" stopColor="#ff8a80" />
+        <stop offset="45%" stopColor="#ff1744" />
+        <stop offset="100%" stopColor="#880e4f" />
+      </radialGradient>
+    </defs>
+    <path
+      d="M 16 28 C 16 28, 3 19, 3 10.5 C 3 5.5, 7 2.5, 11.5 2.5 C 14 2.5, 16 4.5, 16 6.5 C 16 4.5, 18 2.5, 20.5 2.5 C 25 2.5, 29 5.5, 29 10.5 C 29 19, 16 28, 16 28 Z"
+      fill="url(#heart-grad)"
+      stroke="#2A1810"
+      strokeWidth="1.8"
+    />
+    <ellipse cx="10" cy="8.5" rx="2.8" ry="1.6" fill="#ffffff" opacity="0.65" transform="rotate(-25 10 8.5)" />
+  </svg>
 );
 
-// --- SHIELD SPRITE (for Player) ---
 export const ShieldSprite = () => (
-    <svg viewBox="0 0 20 20" className="w-full h-full opacity-60" style={{ imageRendering: 'pixelated' }}>
-        <circle cx="10" cy="10" r="9" stroke="#00d5ff" strokeWidth="2" fill="rgba(0, 213, 255, 0.3)" />
-        <circle cx="10" cy="10" r="7" stroke="#fff" strokeWidth="1" fill="none" opacity="0.5" />
-    </svg>
+  <svg viewBox="0 0 64 64" className="w-full h-full">
+    <defs>
+      <radialGradient id="aura-shield" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stopColor="#00e5ff" stopOpacity="0.05" />
+        <stop offset="75%" stopColor="#00e5ff" stopOpacity="0.28" />
+        <stop offset="100%" stopColor="#84ffff" stopOpacity="0.7" />
+      </radialGradient>
+    </defs>
+    <circle cx="32" cy="32" r="30" fill="url(#aura-shield)" stroke="#00e5ff" strokeWidth="2" />
+    <polygon
+      points="32,4 56,18 56,46 32,60 8,46 8,18"
+      fill="none"
+      stroke="#84ffff"
+      strokeWidth="1.5"
+      strokeDasharray="6 4"
+      opacity="0.8"
+    />
+  </svg>
 );
 
-// --- PLAYER PROJECTILE SPRITE ---
 export const PlayerProjectileSprite = () => (
-    <svg viewBox="0 0 8 8" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
-        <circle cx="4" cy="4" r="3.5" fill="#ffde34" />
-        <circle cx="4" cy="4" r="2" fill="#ffffff" />
-    </svg>
+  <svg viewBox="0 0 24 24" className="w-full h-full">
+    <defs>
+      <radialGradient id="plasma-shot" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stopColor="#ffffff" />
+        <stop offset="45%" stopColor="#FF9E2C" />
+        <stop offset="100%" stopColor="#E05326" stopOpacity="0" />
+      </radialGradient>
+    </defs>
+    <circle cx="12" cy="12" r="11" fill="url(#plasma-shot)" />
+    <circle cx="12" cy="12" r="5.5" fill="#FFF5DC" stroke="#E05326" strokeWidth="1.5" />
+  </svg>
 );
 
-// --- BOMB PROJECTILE SPRITE ---
 export const BombSprite = () => (
-    <svg viewBox="0 0 16 16" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
-        <circle cx="8" cy="8" r="6" fill="#212121" />
-        <rect x="7" y="1" width="2" height="3" fill="#8d6e63" />
-        <rect x="6" y="0" width="4" height="2" fill="#ffca28" className="animate-pulse" />
-        <path d="M9 5 L11 7" stroke="#fff" strokeWidth="1" /> {/* Shine */}
-    </svg>
+  <svg viewBox="0 0 32 32" className="w-full h-full">
+    <defs>
+      <radialGradient id="bomb-sphere" cx="35%" cy="35%" r="65%">
+        <stop offset="0%" stopColor="#546e7a" />
+        <stop offset="50%" stopColor="#263238" />
+        <stop offset="100%" stopColor="#0a0e12" />
+      </radialGradient>
+    </defs>
+    <path d="M 16 6 Q 20 2, 24 5" stroke="#ff9100" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+    <circle cx="24" cy="5" r="3" fill="#ffea00" className="animate-ping" />
+    <circle cx="16" cy="18" r="11" fill="url(#bomb-sphere)" stroke="#2A1810" strokeWidth="1.8" />
+    <ellipse cx="12" cy="14" rx="3" ry="1.8" fill="#ffffff" opacity="0.5" transform="rotate(-30 12 14)" />
+  </svg>
 );
 
-// --- EGG PROJECTILE SPRITE ---
 export const EggSprite = () => (
-    <svg viewBox="0 0 16 20" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
-        {/* Egg Shape */}
-        <path d="M8 1 C 3 1, 1 8, 1 14 C 1 18, 4 19, 8 19 C 12 19, 15 18, 15 14 C 15 8, 13 1, 8 1 Z" fill="#fffde7" stroke="#fbc02d" strokeWidth="1"/>
-        {/* Spots */}
-        <circle cx="6" cy="8" r="1" fill="#fbc02d" opacity="0.5"/>
-        <circle cx="10" cy="12" r="1.5" fill="#fbc02d" opacity="0.5"/>
-        <circle cx="5" cy="15" r="1" fill="#fbc02d" opacity="0.5"/>
-    </svg>
+  <svg viewBox="0 0 32 40" className="w-full h-full">
+    <defs>
+      <radialGradient id="egg-grad" cx="35%" cy="30%" r="70%">
+        <stop offset="0%" stopColor="#ffffff" />
+        <stop offset="65%" stopColor="#fff59d" />
+        <stop offset="100%" stopColor="#fbc02d" />
+      </radialGradient>
+    </defs>
+    <path
+      d="M 16 2 C 7 2, 3 16, 3 26 C 3 34, 9 38, 16 38 C 23 38, 29 34, 29 26 C 29 16, 25 2, 16 2 Z"
+      fill="url(#egg-grad)"
+      stroke="#2A1810"
+      strokeWidth="2"
+    />
+    <circle cx="12" cy="16" r="2.2" fill="#f57f17" opacity="0.55" />
+    <circle cx="20" cy="24" r="3" fill="#f57f17" opacity="0.55" />
+    <circle cx="11" cy="29" r="2" fill="#f57f17" opacity="0.55" />
+  </svg>
 );
 
-// --- FIREBALL SPRITE ---
 export const FireballSprite = () => (
-    <svg viewBox="0 0 16 16" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
-        <circle cx="8" cy="8" r="6" fill="#d32f2f" />
-        <circle cx="8" cy="8" r="4" fill="#ff5722" />
-        <circle cx="8" cy="8" r="2" fill="#ffeb3b" className="animate-pulse" />
-        {/* Tail */}
-        <path d="M4 12 Q 8 16, 12 12" stroke="#d32f2f" strokeWidth="1" fill="none"/>
-    </svg>
+  <svg viewBox="0 0 32 32" className="w-full h-full">
+    <defs>
+      <radialGradient id="fire-orb" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stopColor="#ffffff" />
+        <stop offset="35%" stopColor="#ffea00" />
+        <stop offset="70%" stopColor="#ff3d00" />
+        <stop offset="100%" stopColor="#d50000" stopOpacity="0" />
+      </radialGradient>
+    </defs>
+    <circle cx="16" cy="16" r="15" fill="url(#fire-orb)" />
+    <circle cx="16" cy="16" r="7" fill="#fff59d" />
+  </svg>
 );
 
-
-// --- BOSS CD-ROM PROJECTILE SPRITE ---
 export const CDROMSprite = () => (
-    <svg viewBox="0 0 16 16" className="w-full h-full animate-spin" style={{ imageRendering: 'pixelated' }}>
-        <defs>
-            <linearGradient id="rainbow" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#ff0000" />
-                <stop offset="16%" stopColor="#ff7f00" />
-                <stop offset="33%" stopColor="#ffff00" />
-                <stop offset="50%" stopColor="#00ff00" />
-                <stop offset="66%" stopColor="#0000ff" />
-                <stop offset="83%" stopColor="#4b0082" />
-                <stop offset="100%" stopColor="#ee82ee" />
-            </linearGradient>
-        </defs>
-        <circle cx="8" cy="8" r="7.5" fill="#e0e0e0" stroke="#9e9e9e" strokeWidth="0.5"/>
-        <path d="M8 2 a 6 6 0 0 1 0 12 a 6 6 0 0 1 0 -12" fill="none" stroke="url(#rainbow)" strokeWidth="2" opacity="0.8"/>
-        <circle cx="8" cy="8" r="2" fill="#000" stroke="#fff" strokeWidth="0.5"/>
-    </svg>
+  <svg viewBox="0 0 32 32" className="w-full h-full animate-spin">
+    <defs>
+      <linearGradient id="cd-holo" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#00e5ff" />
+        <stop offset="25%" stopColor="#76ff03" />
+        <stop offset="50%" stopColor="#ffea00" />
+        <stop offset="75%" stopColor="#ff1744" />
+        <stop offset="100%" stopColor="#d500f9" />
+      </linearGradient>
+    </defs>
+    <circle cx="16" cy="16" r="14.5" fill="#eceff1" stroke="#2A1810" strokeWidth="1.5" />
+    <circle cx="16" cy="16" r="11" fill="none" stroke="url(#cd-holo)" strokeWidth="5" opacity="0.85" />
+    <circle cx="16" cy="16" r="4" fill="#0d0d1a" stroke="#ffffff" strokeWidth="1.2" />
+  </svg>
 );
