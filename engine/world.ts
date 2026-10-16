@@ -94,8 +94,12 @@ export interface World {
   trailTick: number;
   cameraX: number;
   cameraY: number;
+  prevCameraX: number;
+  prevCameraY: number;
   levelWidth: number;
   levelHeight: number;
+  /** Increments every time a level is (re)loaded, so renderers know when to rebuild static content. */
+  levelSerial: number;
 
   isGodMode: boolean;
   timeRemaining: number | null;
@@ -181,8 +185,11 @@ export function createWorld(opts: CreateWorldOptions = {}): World {
     trailTick: 0,
     cameraX: 0,
     cameraY: 0,
+    prevCameraX: 0,
+    prevCameraY: 0,
     levelWidth: GAME_WIDTH,
     levelHeight: GAME_HEIGHT,
+    levelSerial: 0,
     isGodMode: false,
     timeRemaining: null,
     damageFlash: 0,
@@ -333,11 +340,14 @@ export function loadLevel(w: World, levelIndex: number): void {
   const height = calcHeight();
 
   w.currentLevelIndex = levelIndex;
+  w.levelSerial += 1;
   w.levelWidth = width;
   w.levelHeight = height;
   w.respawnPoint = { ...levelData.playerStart };
   w.cameraX = Math.max(0, Math.min(levelData.playerStart.x - GAME_WIDTH / 2, width - GAME_WIDTH));
   w.cameraY = Math.max(0, Math.min(levelData.playerStart.y - GAME_HEIGHT / 2, height - GAME_HEIGHT));
+  w.prevCameraX = w.cameraX;
+  w.prevCameraY = w.cameraY;
 
   w.player = { ...emptyPlayer(), x: levelData.playerStart.x, y: levelData.playerStart.y };
 

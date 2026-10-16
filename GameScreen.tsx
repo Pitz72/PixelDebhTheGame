@@ -1,23 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import Player from './components/Player';
-import Enemy from './components/Enemy';
-import Platform from './components/Platform';
 import Hud from './components/Hud';
-import Background from './components/Background';
-import CyclopsFrogBoss from './components/FrogBoss';
-import ChickenEyeBoss from './components/ChickenEyeBoss';
-import ShadowHeadBoss from './components/ShadowHeadBoss';
-import {
-  ItemSprite,
-  PlayerProjectileSprite,
-  CDROMSprite,
-  BombSprite,
-  GoalSprite,
-  EggSprite,
-  FireballSprite,
-  CheckpointSprite,
-} from './services/assetService';
+import DomScene from './components/DomScene';
 import * as soundService from './services/soundService';
+import * as storage from './services/storage';
 import { levels } from './levels';
 import { GAME_WIDTH, GAME_HEIGHT } from './constants';
 import {
@@ -30,6 +15,8 @@ import {
   makeFrame,
   STEP_MS,
 } from './engine';
+import { GameRenderer, Quality } from './renderer/GameRenderer';
+import { ItemType } from './types';
 
 interface GameScreenProps {
   onGameOver: (score: number) => void;
@@ -41,6 +28,67 @@ interface GameScreenProps {
 }
 
 const MAX_STEPS_PER_FRAME = 5;
+const QUALITY_KEY = 'pixelDebhQuality';
+
+type RenderMode = 'loading' | 'webgl' | 'dom';
+
+/** What the HUD needs, reduced so React only re-renders when something visible changes. */
+interface HudData {
+  score: number;
+  lives: number;
+  level: number;
+  levelName: string;
+  collectiblesLeft: number;
+  activePowerUp: ItemType | null;
+  boss: { hp: number; maxHp: number } | null;
+  godMode: boolean;
+  timeRemaining: number | null;
+  loopCount: number;
+  playerX: number;
+  levelWidth: number;
+  status: Frame['status'];
+  bossDefeated: boolean;
+  damageFlash: boolean;
+}
+
+const deriveHud = (f: Frame): HudData => {
+  const bucket = Math.max(1, f.levelWidth / 200);
+  return {
+    score: f.score,
+    lives: f.lives,
+    level: f.levelIndex + 1,
+    levelName: f.levelName,
+    collectiblesLeft: f.collectiblesLeft,
+    activePowerUp: f.player.activePowerUp,
+    boss: f.boss ? { hp: f.boss.hp, maxHp: f.boss.maxHp } : null,
+    godMode: f.isGodMode,
+    timeRemaining: f.timeRemaining === null ? null : Math.ceil(f.timeRemaining),
+    loopCount: f.loopCount,
+    playerX: Math.round(f.player.x / bucket) * bucket,
+    levelWidth: f.levelWidth,
+    status: f.status,
+    bossDefeated: Boolean(f.boss && f.boss.hp <= 0),
+    damageFlash: f.damageFlash,
+  };
+};
+
+const sameHud = (a: HudData, b: HudData): boolean =>
+  a.score === b.score &&
+  a.lives === b.lives &&
+  a.level === b.level &&
+  a.levelName === b.levelName &&
+  a.collectiblesLeft === b.collectiblesLeft &&
+  a.activePowerUp === b.activePowerUp &&
+  a.boss?.hp === b.boss?.hp &&
+  a.boss?.maxHp === b.boss?.maxHp &&
+  a.godMode === b.godMode &&
+  a.timeRemaining === b.timeRemaining &&
+  a.loopCount === b.loopCount &&
+  a.playerX === b.playerX &&
+  a.levelWidth === b.levelWidth &&
+  a.status === b.status &&
+  a.bossDefeated === b.bossDefeated &&
+  a.damageFlash === b.damageFlash;
 
 const GameScreen: React.FC<GameScreenProps> = ({
   onGameOver,
@@ -56,12 +104,88 @@ const GameScreen: React.FC<GameScreenProps> = ({
   const inputRef = useRef<InputController | null>(null);
   if (inputRef.current === null) inputRef.current = new InputController();
 
-  const [frame, setFrame] = useState<Frame>(() => makeFrame(worldRef.current as World));
+  const frameRef = useRef<Frame | null>(null);
+  if (frameRef.current === null) frameRef.current = makeFrame(worldRef.current);
+
+  const mountRef = useRef<HTMLDivElement>(null);
+  const rendererRef = useRef<GameRenderer | null>(null);
+  const modeRef = useRef<RenderMode>('loading');
+  const [mode, setMode] = useState<RenderMode>('loading');
+  const [hud, setHud] = useState<HudData>(() => deriveHud(frameRef.current as Frame));
+  const [domFrame, setDomFrame] = useState<Frame>(() => frameRef.current as Frame);
   const [isPaused, setIsPaused] = useState(false);
   const pausedRef = useRef(false);
+  const [quality, setQualityState] = useState<Quality>(() =>
+    storage.getItem(QUALITY_KEY) === 'low' ? 'low' : 'high'
+  );
+  const qualityRef = useRef<Quality>(quality);
+  const debugRef = useRef(false);
 
   const callbacksRef = useRef({ onGameOver, onCompleted });
   callbacksRef.current = { onGameOver, onCompleted };
+
+  const changeMode = (m: RenderMode) => {
+    modeRef.current = m;
+    setMode(m);
+  };
+
+  const applyQuality = (q: Quality, persist = true) => {
+    qualityRef.current = q;
+    setQualityState(q);
+    rendererRef.current?.setQuality(q);
+    if (persist) storage.setItem(QUALITY_KEY, q);
+  };
+
+  // --- WebGL renderer ---------------------------------------------------------
+  useEffect(() => {
+    const mount = mountRef.current;
+    if (!mount) return;
+    let cancelled = false;
+    let renderer: GameRenderer | null = null;
+    let observer: ResizeObserver | null = null;
+
+    const fit = () => {
+      if (!renderer || !mount) return;
+      const rect = mount.getBoundingClientRect();
+      renderer.resize(rect.width / GAME_WIDTH || 1, window.devicePixelRatio || 1);
+    };
+
+    // `?dom` forces the fallback renderer (for testing it without breaking WebGL)
+    const forceDom = new URLSearchParams(window.location.search).has('dom');
+    (forceDom
+      ? Promise.reject(new Error('DOM renderer requested with ?dom'))
+      : GameRenderer.create(mount, {
+          quality: qualityRef.current,
+          autoQuality: true,
+          onQualityChange: q => applyQuality(q),
+        })
+    )
+      .then(r => {
+        if (cancelled) {
+          r.destroy();
+          return;
+        }
+        renderer = r;
+        rendererRef.current = r;
+        r.setDebug(debugRef.current);
+        fit();
+        observer = new ResizeObserver(fit);
+        observer.observe(mount);
+        changeMode('webgl');
+      })
+      .catch(error => {
+        console.error('WebGL renderer unavailable, using the DOM renderer:', error);
+        if (!cancelled) changeMode('dom');
+      });
+
+    return () => {
+      cancelled = true;
+      observer?.disconnect();
+      rendererRef.current = null;
+      renderer?.destroy();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // --- Keyboard, focus and pause handling ---------------------------------
   useEffect(() => {
@@ -83,6 +207,20 @@ const GameScreen: React.FC<GameScreenProps> = ({
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (!e.repeat) setPaused(!pausedRef.current);
+        return;
+      }
+
+      if (e.key === 'F3') {
+        e.preventDefault();
+        if (!e.repeat) {
+          debugRef.current = !debugRef.current;
+          rendererRef.current?.setDebug(debugRef.current);
+        }
+        return;
+      }
+
+      if (e.key.toLowerCase() === 'q' && !e.repeat) {
+        applyQuality(qualityRef.current === 'high' ? 'low' : 'high');
         return;
       }
 
@@ -139,22 +277,30 @@ const GameScreen: React.FC<GameScreenProps> = ({
       window.removeEventListener('blur', onBlur);
       document.removeEventListener('visibilitychange', onVisibility);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // --- Fixed-timestep game loop -------------------------------------------
+  // --- Fixed-timestep simulation + interpolated rendering ---------------------
   useEffect(() => {
     const w = worldRef.current as World;
     const input = inputRef.current as InputController;
     let raf = 0;
     let last = performance.now();
     let acc = 0;
+    let alpha = 0;
+    let hitStopUntil = 0;
+    let slowUntil = 0;
 
     const dispatchEvents = () => {
       const events = w.events.splice(0, w.events.length);
+      const now = performance.now();
       for (const e of events) {
         switch (e.type) {
           case 'sound':
             soundService.playSound(e.name);
+            // a few frames of hit-stop on damage, slow motion when a boss falls
+            if (e.name === 'damage') hitStopUntil = now + 80;
+            else if (e.name === 'bossDefeat') slowUntil = now + 1400;
             break;
           case 'jingle':
             soundService.playJingle(e.name);
@@ -177,8 +323,10 @@ const GameScreen: React.FC<GameScreenProps> = ({
       last = ts;
 
       const live = w.status === 'playing' || w.status === 'level-cleared';
-      if (live && !pausedRef.current) {
-        acc += delta;
+      if (live && !pausedRef.current && modeRef.current !== 'loading') {
+        const now = performance.now();
+        const scale = now < hitStopUntil ? 0 : now < slowUntil ? 0.3 : 1;
+        acc += delta * scale;
         let steps = 0;
         while (acc >= STEP_MS && steps < MAX_STEPS_PER_FRAME) {
           w.input = input.state();
@@ -188,267 +336,61 @@ const GameScreen: React.FC<GameScreenProps> = ({
           steps++;
         }
         if (steps === MAX_STEPS_PER_FRAME) acc = 0; // never try to catch up a long stall
+        alpha = Math.min(1, acc / STEP_MS);
         dispatchEvents();
-        if (steps > 0) setFrame(makeFrame(w));
-      } else {
+        if (steps > 0) {
+          const frame = makeFrame(w);
+          frameRef.current = frame;
+          const next = deriveHud(frame);
+          setHud(prev => (sameHud(prev, next) ? prev : next));
+          if (modeRef.current === 'dom') setDomFrame(frame);
+        }
+      } else if (modeRef.current !== 'loading') {
         dispatchEvents();
       }
+
+      rendererRef.current?.render(frameRef.current as Frame, alpha, ts);
       raf = requestAnimationFrame(tick);
     };
 
-    dispatchEvents(); // level music + start jingle queued by createWorld
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // --- Render ---------------------------------------------------------------
-  const { player, boss } = frame;
-  const isShadowHeadBoss = boss && boss.type === 'shadowHead';
-
-  // Viewport frustum culling (only mount visible DOM elements, +/- 450px margin)
-  const cullMinX = frame.cameraX - 450;
-  const cullMaxX = frame.cameraX + GAME_WIDTH + 450;
-  const cullMinY = frame.cameraY - 450;
-  const cullMaxY = frame.cameraY + GAME_HEIGHT + 450;
-
-  const isVisible = (obj: { x: number; y: number; width: number; height: number }) =>
-    obj.x + obj.width >= cullMinX &&
-    obj.x <= cullMaxX &&
-    obj.y + obj.height >= cullMinY &&
-    obj.y <= cullMaxY;
-
-  const shakeX = frame.screenShake > 0.2 ? (Math.random() - 0.5) * frame.screenShake * 1.8 : 0;
-  const shakeY = frame.screenShake > 0.2 ? (Math.random() - 0.5) * frame.screenShake * 1.8 : 0;
+  // --- Render ---------------------------------------------------------------------
+  const boss = hud.boss;
 
   return (
     <div
       className="w-full h-full relative overflow-hidden bg-[#04010c]"
       style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}
     >
-      {/* Subtle Arcade Bloom Vignette */}
-      <div
-        className="absolute inset-0 pointer-events-none z-30"
-        style={{
-          boxShadow: 'inset 0 0 90px rgba(0, 0, 0, 0.55)',
-        }}
-      />
+      {/* WebGL canvas (the DOM renderer below is only mounted when WebGL is unavailable) */}
+      <div ref={mountRef} className="absolute inset-0 z-0" />
+      {mode === 'dom' && <DomScene frame={domFrame} />}
 
-      {frame.damageFlash && <div className="absolute inset-0 bg-red-600/45 z-50 pointer-events-none" />}
-
-      {isShadowHeadBoss ? (
-        <div
-          className="absolute inset-0 z-0"
-          style={{
-            background: 'radial-gradient(circle at 50% 50%, #1a020c 0%, #040006 80%)',
-          }}
-        />
-      ) : (
-        <Background cameraX={frame.cameraX} cameraY={frame.cameraY} theme={frame.theme} />
-      )}
+      {hud.damageFlash && <div className="absolute inset-0 bg-red-600/45 z-50 pointer-events-none" />}
 
       <Hud
-        score={frame.score}
-        lives={frame.lives}
-        level={frame.levelIndex + 1}
-        levelName={frame.levelName}
-        collectiblesLeft={frame.collectiblesLeft}
-        activePowerUp={player.activePowerUp}
+        score={hud.score}
+        lives={hud.lives}
+        level={hud.level}
+        levelName={hud.levelName}
+        collectiblesLeft={hud.collectiblesLeft}
+        activePowerUp={hud.activePowerUp}
         boss={boss}
-        isGodMode={frame.isGodMode}
-        timeRemaining={frame.timeRemaining}
-        loopCount={frame.loopCount}
-        playerX={player.x}
-        levelWidth={frame.levelWidth}
+        isGodMode={hud.godMode}
+        timeRemaining={hud.timeRemaining}
+        loopCount={hud.loopCount}
+        playerX={hud.playerX}
+        levelWidth={hud.levelWidth}
       />
 
-      <div
-        className="absolute top-0 left-0"
-        style={{
-          willChange: 'transform',
-          transform: `translate3d(${-frame.cameraX + shakeX}px, ${-frame.cameraY + shakeY}px, 0)`,
-        }}
-      >
-        {/* Frustum-Culled Platforms */}
-        {frame.platforms.map((p, i) =>
-          isVisible(p) ? <Platform key={i} platform={p} theme={frame.theme} /> : null
-        )}
-
-        {/* Frustum-Culled Checkpoints */}
-        {frame.checkpoints.map(cp =>
-          isVisible(cp) ? (
-            <div
-              key={cp.id}
-              style={{
-                position: 'absolute',
-                left: cp.x,
-                top: cp.y,
-                width: cp.width,
-                height: cp.height,
-                zIndex: 2,
-              }}
-            >
-              <CheckpointSprite activated={cp.activated} />
-            </div>
-          ) : null
-        )}
-
-        {/* Goal Portal */}
-        {frame.goal && isVisible(frame.goal) && (
-          <div
-            style={{
-              position: 'absolute',
-              left: frame.goal.x,
-              top: frame.goal.y,
-              width: frame.goal.width,
-              height: frame.goal.height,
-              zIndex: 3,
-            }}
-          >
-            <GoalSprite unlocked={frame.collectiblesLeft === 0} remaining={frame.collectiblesLeft} />
-          </div>
-        )}
-
-        {/* Frustum-Culled Items */}
-        {frame.items.map(c =>
-          isVisible(c) ? (
-            <div
-              key={c.id}
-              style={{
-                position: 'absolute',
-                left: c.x,
-                top: c.y,
-                width: c.width,
-                height: c.height,
-                zIndex: 5,
-              }}
-            >
-              <ItemSprite type={c.type} />
-            </div>
-          ) : null
-        )}
-
-        {/* Player */}
-        {player.width && <Player player={player} />}
-
-        {/* Frustum-Culled Enemies */}
-        {frame.enemies.map(e => (isVisible(e) ? <Enemy key={e.id} enemy={e} /> : null))}
-
-        {/* Bosses */}
-        {boss && boss.type === 'frog' && <CyclopsFrogBoss boss={boss} />}
-        {boss && boss.type === 'chickenEye' && <ChickenEyeBoss boss={boss} />}
-        {boss && boss.type === 'shadowHead' && <ShadowHeadBoss boss={boss} />}
-
-        {/* Frustum-Culled Enemy Projectiles */}
-        {frame.projectiles.map(p =>
-          isVisible(p) ? (
-            <div
-              key={p.id}
-              style={{
-                position: 'absolute',
-                left: p.x,
-                top: p.y,
-                width: p.width,
-                height: p.height,
-                zIndex: 12,
-              }}
-            >
-              {p.isBomb ? (
-                <BombSprite />
-              ) : p.isEgg ? (
-                <EggSprite />
-              ) : p.isFireball ? (
-                <FireballSprite />
-              ) : (
-                <CDROMSprite />
-              )}
-            </div>
-          ) : null
-        )}
-
-        {/* Frustum-Culled Player Projectiles */}
-        {frame.playerProjectiles.map(p =>
-          isVisible(p) ? (
-            <div
-              key={p.id}
-              style={{
-                position: 'absolute',
-                left: p.x,
-                top: p.y,
-                width: p.width,
-                height: p.height,
-                zIndex: 12,
-              }}
-            >
-              <PlayerProjectileSprite />
-            </div>
-          ) : null
-        )}
-
-        {/* Expanding Vector Shockwave Rings */}
-        {frame.shockwaves.map(sw => (
-          <div
-            key={sw.id}
-            style={{
-              position: 'absolute',
-              left: sw.x - sw.radius,
-              top: sw.y - sw.radius,
-              width: sw.radius * 2,
-              height: sw.radius * 2,
-              borderRadius: '50%',
-              border: `${sw.strokeWidth}px solid ${sw.color}`,
-              boxShadow: `0 0 18px ${sw.color}, inset 0 0 12px ${sw.color}`,
-              opacity: sw.life,
-              pointerEvents: 'none',
-              zIndex: 14,
-            }}
-          />
-        ))}
-
-        {/* Particles */}
-        {frame.particles.map(p => (
-          <div
-            key={p.id}
-            style={{
-              position: 'absolute',
-              left: p.x,
-              top: p.y,
-              width: p.size,
-              height: p.size,
-              backgroundColor: p.color,
-              borderRadius: '50%',
-              boxShadow: `0 0 10px ${p.color}`,
-              opacity: p.life,
-              pointerEvents: 'none',
-              zIndex: 15,
-            }}
-          />
-        ))}
-
-        {/* Floating Arcade Score & Status Popups */}
-        {frame.floatingTexts.map(ft => (
-          <div
-            key={ft.id}
-            style={{
-              position: 'absolute',
-              left: ft.x,
-              top: ft.y,
-              transform: `translate(-50%, -50%) scale(${ft.scale})`,
-              color: ft.color,
-              fontFamily: "'Orbitron Variable', 'Orbitron', sans-serif",
-              fontWeight: 900,
-              fontSize: '18px',
-              letterSpacing: '0.06em',
-              whiteSpace: 'nowrap',
-              textShadow: `0 0 12px ${ft.color}, 2px 2px 0px #090318`,
-              opacity: ft.life,
-              pointerEvents: 'none',
-              zIndex: 18,
-            }}
-          >
-            {ft.text}
-          </div>
-        ))}
-      </div>
+      {mode === 'loading' && (
+        <div className="absolute inset-0 flex justify-center items-center z-40 pointer-events-none">
+          <p className="text-3xl font-black text-cyan-300 tracking-widest animate-pulse">CARICAMENTO…</p>
+        </div>
+      )}
 
       {/* Pause Overlay */}
       {isPaused && (
@@ -465,7 +407,10 @@ const GameScreen: React.FC<GameScreenProps> = ({
           <div className="mt-12 bg-white/5 border border-cyan-500/30 rounded-2xl px-8 py-4 text-sm text-gray-300 space-y-1 text-center">
             <p>
               <strong className="text-cyan-400">[M]</strong> Muto •{' '}
-              <strong className="text-cyan-400">[F]</strong> Schermo intero
+              <strong className="text-cyan-400">[F]</strong> Schermo intero / finestra •{' '}
+              <strong className="text-cyan-400">[Q]</strong> Qualità grafica:{' '}
+              <span className="text-yellow-300">{quality === 'high' ? 'ALTA' : 'BASSA'}</span> •{' '}
+              <strong className="text-cyan-400">[F3]</strong> Prestazioni
             </p>
             {import.meta.env.DEV && (
               <p>
@@ -479,13 +424,13 @@ const GameScreen: React.FC<GameScreenProps> = ({
       )}
 
       {/* Level Cleared Banner */}
-      {frame.status === 'level-cleared' && (
+      {hud.status === 'level-cleared' && (
         <div className="absolute inset-0 flex justify-center items-center bg-black/30 z-40 pointer-events-none">
           <h2
             className="text-8xl font-black text-yellow-300 tracking-wider animate-pulse"
             style={{ textShadow: '0 0 35px #00e5ff, 4px 4px 0px #e8175d' }}
           >
-            {boss && boss.hp <= 0 ? 'BOSS DEFEATED!' : 'STAGE CLEARED!'}
+            {hud.bossDefeated ? 'BOSS DEFEATED!' : 'STAGE CLEARED!'}
           </h2>
         </div>
       )}

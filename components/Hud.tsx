@@ -9,7 +9,7 @@ interface HudProps {
   levelName: string;
   collectiblesLeft: number;
   activePowerUp: ItemType | null;
-  boss?: Boss | null;
+  boss?: Pick<Boss, 'hp' | 'maxHp'> | null;
   isGodMode: boolean;
   timeRemaining?: number | null;
   loopCount: number;

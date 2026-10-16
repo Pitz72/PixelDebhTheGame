@@ -78,7 +78,7 @@ export const EXTRA_LIFE_SCORE_MULTIPLIER = 2;
 
 // Game settings
 export const INITIAL_LIVES = 3;
-export const MAX_PARTICLES = 80;
+export const MAX_PARTICLES = 360;
 
 // Highscore settings
 export const HIGHSCORE_KEY = 'pixelDebhHighscores';

@@ -98,10 +98,26 @@ const sound = (w: World, name: string) => emit(w, { type: 'sound', name });
 // Public entry point
 // ---------------------------------------------------------------------------
 
+/** Remember where everything was, so the renderer can interpolate between two fixed steps. */
+function rememberPrev(w: World): void {
+  const keep = (o: { x: number; y: number; prevX?: number; prevY?: number }) => {
+    o.prevX = o.x;
+    o.prevY = o.y;
+  };
+  keep(w.player);
+  for (const e of w.enemies) keep(e);
+  for (const p of w.projectiles) keep(p);
+  for (const p of w.playerProjectiles) keep(p);
+  if (w.boss) keep(w.boss);
+  w.prevCameraX = w.cameraX;
+  w.prevCameraY = w.cameraY;
+}
+
 export function step(w: World): void {
   w.elapsed += STEP_MS;
   if (w.damageFlash > 0) w.damageFlash = Math.max(0, w.damageFlash - STEP_MS);
 
+  rememberPrev(w);
   processActions(w);
 
   if (w.status === 'level-cleared') {
@@ -466,8 +482,8 @@ function releaseCapturedEnemy(w: World): void {
   const held = w.enemies.find(en => en.id === p.capturedEnemyId);
   if (held) {
     held.state = 'active';
-    held.x = held.originalX;
-    held.y = held.originalY;
+    held.x = held.prevX = held.originalX;
+    held.y = held.prevY = held.originalY;
     held.vx = (held.direction === 'left' ? -1 : 1) * ENEMY_SPEED * w.difficultyMultiplier;
     held.vy = 0;
     held.onGround = false;
@@ -481,6 +497,8 @@ function respawnPlayer(w: World): void {
   Object.assign(w.player, {
     x: w.respawnPoint.x,
     y: w.respawnPoint.y,
+    prevX: w.respawnPoint.x, // a teleport must not be interpolated
+    prevY: w.respawnPoint.y,
     vx: 0,
     vy: 0,
     isInvincible: true,
@@ -725,6 +743,8 @@ function updateBoss(w: World): void {
       if (b.teleportTimer <= 0) {
         b.x = 120 + w.rng() * (w.levelWidth - b.width - 240);
         b.y = 100 + w.rng() * (w.levelHeight - b.height - 220);
+        b.prevX = b.x;
+        b.prevY = b.y;
         b.visibilityState = 'fadingIn';
         sound(w, 'powerup');
         spawnShockwave(w, b.x + b.width / 2, b.y + b.height / 2, '#ff1744', 90, 3);

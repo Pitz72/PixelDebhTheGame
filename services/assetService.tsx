@@ -13,19 +13,45 @@ import React from 'react';
  * - Holding her signature dark brown wireless gamepad (#3D2B22)
  * - Exact 54x74 viewBox matching PLAYER_WIDTH (54) x PLAYER_HEIGHT (74) for 1:1 hitbox accuracy!
  */
+/** Static poses (SVG transforms) used to bake the character into textures for the WebGL renderer. */
+export interface PlayerPose {
+  body: string;
+  legL: string;
+  legR: string;
+}
+
+export const PLAYER_POSES: Record<string, PlayerPose> = {
+  idle: { body: '', legL: '', legR: '' },
+  run0: { body: '', legL: 'rotate(-24 23 54)', legR: 'rotate(22 31 54)' },
+  run1: { body: 'translate(0, -2.5)', legL: 'rotate(-4 23 54)', legR: 'rotate(4 31 54)' },
+  run2: { body: '', legL: 'rotate(22 23 54)', legR: 'rotate(-24 31 54)' },
+  run3: { body: 'translate(0, -2.5)', legL: 'rotate(4 23 54)', legR: 'rotate(-4 31 54)' },
+  jump: { body: 'translate(0, -2)', legL: 'rotate(-18 22 54) translate(0, -2)', legR: 'rotate(16 31 54) translate(0, -3)' },
+  fall: { body: 'translate(0, -1)', legL: 'rotate(12 22 54)', legR: 'rotate(-14 31 54)' },
+};
+
 export const PlayerSprite = ({
   direction,
   isInvincible,
   showGlove = false,
   isMoving = false,
   isJumping = false,
+  pose,
 }: {
   direction: 'left' | 'right';
   isInvincible: boolean;
   showGlove?: boolean;
   isMoving?: boolean;
   isJumping?: boolean;
+  /** When set the sprite is a still pose: no CSS animation (used for texture baking). */
+  pose?: PlayerPose;
 }) => {
+  const animated = !pose;
+  const runClass = (name: string) => (animated && isMoving && !isJumping ? name : '');
+  const hairClass = animated && (isMoving || isJumping) ? 'pd-hair-bob' : '';
+  const bodyTransform = pose ? pose.body : isJumping ? 'translate(0, -2)' : '';
+  const legLTransform = pose ? pose.legL : isJumping ? 'rotate(-18 22 54) translate(0, -2)' : '';
+  const legRTransform = pose ? pose.legR : isJumping ? 'rotate(16 31 54) translate(0, -3)' : '';
   return (
     <div className="w-full h-full relative">
       <style>{`
@@ -92,9 +118,9 @@ export const PlayerSprite = ({
           </radialGradient>
         </defs>
 
-        <g className={isMoving && !isJumping ? 'pd-run-body' : ''} transform={isJumping ? 'translate(0, -2)' : ''}>
+        <g className={runClass('pd-run-body')} transform={bodyTransform}>
           {/* --- BACK OF SHORT BOB HAIRCUT --- */}
-          <g className={isMoving || isJumping ? 'pd-hair-bob' : ''}>
+          <g className={hairClass}>
             <path
               d="M 11 16 C 8 24, 9 34, 15 37 L 39 37 C 44 34, 45 24, 42 16 Z"
               fill="url(#pd-logo-hair)"
@@ -106,8 +132,8 @@ export const PlayerSprite = ({
 
           {/* --- BACK LEG (LEFT) --- */}
           <g
-            className={isMoving && !isJumping ? 'pd-run-leg-l' : ''}
-            transform={isJumping ? 'rotate(-18 22 54) translate(0, -2)' : ''}
+            className={runClass('pd-run-leg-l')}
+            transform={legLTransform}
           >
             {/* Leg Skin */}
             <rect x="18" y="55" width="7" height="12" rx="3" fill="#EBAA76" stroke="#2A1810" strokeWidth="1.8" />
@@ -125,8 +151,8 @@ export const PlayerSprite = ({
 
           {/* --- FRONT LEG (RIGHT) --- */}
           <g
-            className={isMoving && !isJumping ? 'pd-run-leg-r' : ''}
-            transform={isJumping ? 'rotate(16 31 54) translate(0, -3)' : ''}
+            className={runClass('pd-run-leg-r')}
+            transform={legRTransform}
           >
             {/* Leg Skin */}
             <rect x="27" y="55" width="7" height="12" rx="3" fill="url(#pd-logo-skin)" stroke="#2A1810" strokeWidth="1.8" />
@@ -155,7 +181,7 @@ export const PlayerSprite = ({
           <path d="M 20 39 L 19 50" stroke="#FF8A5B" strokeWidth="1.6" strokeLinecap="round" opacity="0.65" />
 
           {/* --- HEAD & FACE (EXACT LOGO PROPORTIONS & EXPRESSION) --- */}
-          <g className={isMoving || isJumping ? 'pd-hair-bob' : ''}>
+          <g className={hairClass}>
             {/* Face Shape */}
             <path
               d="M 15 14 C 15 7, 39 7, 39 14 L 39 24 C 39 31, 33 35, 27 35 C 21 35, 15 31, 15 24 Z"

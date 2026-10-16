@@ -59,7 +59,9 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 -   **Shoot (Boss Battles / Zero-G):** `Left Shift` (Hold movement keys to aim in 8 directions)
 -   **Pause:** `ESC` (the game also pauses by itself when the window loses focus)
 -   **Mute:** `M`
--   **Fullscreen:** `F`
+-   **Fullscreen / window:** `F`, `F11` or `Alt+Enter`
+-   **Graphics quality:** `Q` switches between High (dynamic lights, bloom) and Low; the game drops to Low by itself if it cannot hold 40 fps
+-   **Performance overlay:** `F3` (renderer, fps, quality, particle count)
 
 ## Developer Features
 
@@ -94,6 +96,8 @@ npx tauri build --bundles deb,appimage  # Linux packages (build this on Linux)
 - Linux status: build, tests, launch, keyboard input, fullscreen and save file were checked on Ubuntu 24.04 (WSL2 with WSLg). It has not been tried yet on a native desktop with a real GPU, and audio has not been listened to. If the window comes up blank (seen with some NVIDIA/Wayland setups on WebKitGTK), the usual workaround is to start it with `WEBKIT_DISABLE_DMABUF_RENDERER=1`; that was not needed in the checks above.
 - The app always starts **fullscreen**, as a console-style desktop game should. `F`, `F11` or `Alt+Enter` drop to a 16:9 window (and back) for the current session only; it is not remembered. `npm run desktop` (dev mode) starts windowed so it does not take over your screen while you work.
 - The `Desktop build` GitHub workflow (`.github/workflows/desktop.yml`, run by hand or on a `v*` tag) builds the Windows installer and the Linux packages and uploads them as artifacts.
+
+Rendering is done by PixiJS (WebGL) in `renderer/`: parallax backdrops per world, dynamic 2D lights (an ambient light map multiplied over the scene, with soft lights on the player, items, enemies, projectiles, bosses and explosions), bloom, GPU particles, and interpolation between simulation steps so motion stays smooth on 144 Hz screens. The existing SVG art is rasterised into textures at start-up. If WebGL is not available the game falls back to the original DOM renderer (`components/DomScene.tsx`); adding `?dom` to the URL forces it for testing.
 
 The game simulation lives in `engine/` as plain TypeScript with a fixed 60 Hz timestep and no DOM or audio access: it emits events (sounds, music, game over) that `GameScreen.tsx` forwards to the UI and to `services/soundService.ts`. That is what the automated tests exercise.
 

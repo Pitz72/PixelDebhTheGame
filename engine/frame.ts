@@ -46,9 +46,14 @@ export interface Frame {
 
   cameraX: number;
   cameraY: number;
+  prevCameraX: number;
+  prevCameraY: number;
   levelWidth: number;
   levelHeight: number;
+  levelSerial: number;
   screenShake: number;
+  /** Simulation time in ms (drives animations that should not depend on the display refresh). */
+  time: number;
 }
 
 export function makeFrame(w: World): Frame {
@@ -81,8 +86,12 @@ export function makeFrame(w: World): Frame {
 
     cameraX: w.cameraX,
     cameraY: w.cameraY,
+    prevCameraX: w.prevCameraX,
+    prevCameraY: w.prevCameraY,
     levelWidth: w.levelWidth,
     levelHeight: w.levelHeight,
+    levelSerial: w.levelSerial,
     screenShake: w.screenShake,
+    time: w.elapsed,
   };
 }

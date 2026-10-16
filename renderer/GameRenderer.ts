@@ -1,0 +1,987 @@
+import { Application, Container, Graphics, Rectangle, Sprite, Text, Texture, TilingSprite } from 'pixi.js';
+import { AdvancedBloomFilter } from 'pixi-filters';
+import { Boss, Enemy, Item, ItemType, Platform, Projectile, PlayerProjectile, Player } from '../types';
+import { Frame } from '../engine/frame';
+import { GAME_HEIGHT, GAME_WIDTH } from '../constants';
+import { buildTextures, PlayerPoseName, TextureSet } from './textures';
+import { PALETTES, ThemePalette } from './palette';
+import { Background } from './background';
+import { Lighting } from './lighting';
+import { ParticleLayer, parseColor } from './particles';
+
+export type Quality = 'high' | 'low';
+
+export interface RendererOptions {
+  quality: Quality;
+  /** Drop to low quality by itself when the frame rate cannot keep up. */
+  autoQuality?: boolean;
+  onQualityChange?: (quality: Quality, automatic: boolean) => void;
+}
+
+const ITEM_COLOR: Record<ItemType, number> = {
+  joystick: 0xff7043,
+  floppy: 0x448aff,
+  cartridge: 0xffab40,
+  'speed-boost': 0xffea00,
+  shield: 0x00e5ff,
+  'super-throw': 0xff6d00,
+};
+
+const ENEMY_COLOR: Record<string, number> = {
+  base: 0x00e676,
+  jumper: 0xff5252,
+  flyer: 0x00e5ff,
+  bomber: 0xff9100,
+  phaser: 0xb388ff,
+};
+
+const BOSS_COLOR: Record<string, number> = { frog: 0x66bb6a, chickenEye: 0xff7043, shadowHead: 0xff1744 };
+
+const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
+const ix = (o: { x: number; prevX?: number }, a: number) => (o.prevX === undefined ? o.x : o.prevX + (o.x - o.prevX) * a);
+const iy = (o: { y: number; prevY?: number }, a: number) => (o.prevY === undefined ? o.y : o.prevY + (o.y - o.prevY) * a);
+
+/** Little helper: a sprite sized in world pixels. */
+const sized = (texture: Texture, w: number, h: number): Sprite => {
+  const s = new Sprite(texture);
+  s.anchor.set(0.5);
+  s.width = w;
+  s.height = h;
+  return s;
+};
+
+const glowSprite = (glow: Texture, size: number, color: number): Sprite => {
+  const s = new Sprite(glow);
+  s.anchor.set(0.5);
+  s.width = size;
+  s.height = size;
+  s.tint = color;
+  s.blendMode = 'add';
+  return s;
+};
+
+// ---------------------------------------------------------------------------
+// Views
+// ---------------------------------------------------------------------------
+
+class PlatformView {
+  readonly root = new Container();
+  constructor(p: Platform, tex: TextureSet, pal: ThemePalette, themeTex: TextureSet['themes']['adventure']) {
+    const { width: w, height: h } = p;
+    const body = new Sprite(themeTex.platformBody);
+    body.width = w;
+    body.height = h;
+    const truss = new TilingSprite({ texture: themeTex.platformTruss, width: w, height: h });
+    truss.alpha = 0.3;
+    const rail = new Sprite(Texture.WHITE);
+    rail.width = w;
+    rail.height = Math.min(4, h);
+    rail.tint = pal.railHex;
+    const highlight = new Sprite(Texture.WHITE);
+    highlight.width = Math.max(0, w - 4);
+    highlight.height = 2;
+    highlight.position.set(2, Math.min(4, h));
+    highlight.alpha = 0.16;
+    const frame = new Graphics();
+    frame.rect(1, 1, w - 2, h - 2).stroke({ width: 2, color: parseInt(pal.border.slice(1), 16), alpha: 0.9 });
+    const glow = new Sprite(themeTex.railGlow);
+    glow.width = w + 28;
+    glow.height = 46;
+    glow.position.set(-14, -42);
+    glow.tint = pal.railHex;
+    glow.alpha = 0.4;
+    glow.blendMode = 'add';
+    this.root.addChild(body, truss, highlight, rail, frame, glow);
+    this.root.position.set(p.x, p.y);
+    void tex;
+  }
+}
+
+class ItemView {
+  readonly root = new Container();
+  private halo: Sprite;
+  private sprite: Sprite;
+  private phase = Math.random() * 6.28;
+  constructor(item: Item, tex: TextureSet) {
+    this.halo = glowSprite(tex.glow, item.width * 2.6, ITEM_COLOR[item.type]);
+    this.sprite = sized(tex.items[item.type], item.width * 1.25, item.height * 1.25);
+    this.root.addChild(this.halo, this.sprite);
+    this.root.position.set(item.x + item.width / 2, item.y + item.height / 2);
+  }
+  update(now: number) {
+    const t = now / 1000 + this.phase;
+    this.sprite.y = Math.sin(t * 2.6) * 5;
+    this.halo.y = this.sprite.y;
+    this.halo.alpha = 0.45 + Math.sin(t * 3) * 0.15;
+    this.sprite.rotation = Math.sin(t * 1.5) * 0.06;
+  }
+}
+
+class EnemyView {
+  readonly root = new Container();
+  private glow: Sprite;
+  private body: Sprite;
+  private ring: Sprite;
+  private stars: Sprite[] = [];
+  private phase = Math.random() * 10;
+  private spin = 0;
+  private bsx: number;
+  private bsy: number;
+  constructor(private e: Enemy, private tex: TextureSet) {
+    this.glow = glowSprite(tex.glow, e.width * 2.4, ENEMY_COLOR[e.type] ?? 0xffffff);
+    this.body = sized(tex.enemies[`${e.type}:active`] ?? tex.enemies['base:active'], e.width, e.height);
+    this.bsx = Math.abs(this.body.scale.x);
+    this.bsy = Math.abs(this.body.scale.y);
+    this.ring = glowSprite(tex.ring, e.width * 1.5, 0xd500f9);
+    this.ring.visible = false;
+    for (const c of [0xffea00, 0x00e5ff, 0xff4081]) {
+      const s = glowSprite(tex.glow, 14, c);
+      s.visible = false;
+      this.stars.push(s);
+    }
+    this.root.addChild(this.glow, this.body, this.ring, ...this.stars);
+  }
+  update(e: Enemy, a: number, now: number, dtF: number) {
+    const x = ix(e, a);
+    const y = iy(e, a);
+    const captured = e.state === 'captured';
+    const stunned = e.state === 'stunned';
+    const variant = captured ? 'captured' : stunned ? 'stunned' : 'active';
+    this.body.texture = this.tex.enemies[`${e.type}:${variant}`] ?? this.tex.enemies[`${e.type}:active`];
+    const dir = e.direction === 'left' ? -1 : 1;
+    const flying = e.type === 'flyer' || e.type === 'phaser';
+    const sq = flying ? 0 : clamp(-e.vy * 0.01, -0.12, 0.16);
+    let bob = 0;
+    if (e.type === 'flyer') bob = Math.sin(now / 180 + this.phase) * 3;
+    else if (e.type === 'phaser') bob = Math.sin(now / 420 + this.phase) * 6;
+    else if (e.onGround && Math.abs(e.vx) > 0.1) bob = -Math.abs(Math.sin(now / 95 + this.phase)) * 2.5;
+    this.body.scale.set(dir * this.bsx * (1 - sq * 0.6), this.bsy * (1 + sq));
+    if (e.state === 'launched') {
+      this.spin += dtF * 0.32 * (e.vx >= 0 ? 1 : -1);
+      this.body.rotation = this.spin;
+    } else {
+      this.body.rotation = stunned ? Math.sin(now / 55) * 0.14 : e.type === 'phaser' ? Math.sin(now / 500 + this.phase) * 0.08 : 0;
+      this.spin = 0;
+    }
+    this.root.position.set(x + e.width / 2, y + e.height / 2 + bob);
+    this.root.alpha = e.type === 'phaser' ? 0.88 + Math.sin(now / 300 + this.phase) * 0.1 : 1;
+
+    this.glow.tint = captured ? 0xd500f9 : e.state === 'launched' ? (e.isSuperLaunched ? 0xff6d00 : 0x00e5ff) : stunned ? 0xffea00 : ENEMY_COLOR[e.type] ?? 0xffffff;
+    this.glow.alpha = (captured || e.state === 'launched' ? 0.75 : 0.32) + Math.sin(now / 250 + this.phase) * 0.08;
+    this.ring.visible = captured;
+    if (captured) {
+      this.ring.rotation = now / 500;
+      this.ring.alpha = 0.8;
+    }
+    for (let i = 0; i < this.stars.length; i++) {
+      const s = this.stars[i];
+      s.visible = stunned;
+      if (stunned) {
+        const ang = now / 190 + i * 2.094;
+        s.position.set(Math.cos(ang) * 20, -e.height / 2 - 8 + Math.sin(ang) * 5);
+      }
+    }
+  }
+}
+
+class PlayerView {
+  readonly root = new Container();
+  private body: Sprite;
+  private aura: Sprite;
+  private shield: Sprite;
+  private hand: Sprite;
+  private ghosts: Sprite[] = [];
+  private history: Array<{ x: number; y: number; dir: number; pose: PlayerPoseName }> = [];
+  private lastSample = 0;
+  private runClock = 0;
+  private squash = 0;
+  private wasOnGround = true;
+  private lastVy = 0;
+  pose: PlayerPoseName = 'idle';
+  cx = 0;
+  cy = 0;
+
+  constructor(private tex: TextureSet) {
+    this.aura = glowSprite(tex.glow, 190, 0xffea00);
+    this.aura.visible = false;
+    for (let i = 0; i < 3; i++) {
+      const g = sized(tex.player.idle, 54, 74);
+      g.tint = 0x80deea;
+      g.visible = false;
+      this.ghosts.push(g);
+    }
+    this.body = sized(tex.player.idle, 54, 74);
+    this.shield = sized(tex.shield, 88, 106);
+    this.shield.visible = false;
+    this.hand = glowSprite(tex.glow, 60, 0xff9e2c);
+    this.hand.visible = false;
+    this.root.addChild(this.aura, ...this.ghosts, this.body, this.shield, this.hand);
+  }
+
+  update(p: Player, a: number, now: number, dtF: number, world: Container) {
+    const x = ix(p, a);
+    const y = iy(p, a);
+    this.cx = x + p.width / 2;
+    this.cy = y + p.height / 2;
+    const dir = p.direction === 'left' ? -1 : 1;
+    const moving = Math.abs(p.vx) > 0.6;
+
+    let pose: PlayerPoseName = 'idle';
+    if (!p.isOnGround) pose = p.vy < 0 ? 'jump' : 'fall';
+    else if (moving) {
+      this.runClock += Math.abs(p.vx) * dtF * 0.05;
+      pose = (['run0', 'run1', 'run2', 'run3'] as const)[Math.floor(this.runClock) % 4];
+    }
+    this.pose = pose;
+    this.body.texture = this.tex.player[pose];
+
+    if (p.isOnGround && !this.wasOnGround && this.lastVy > 7) this.squash = clamp(this.lastVy / 22, 0.3, 1);
+    this.wasOnGround = p.isOnGround;
+    this.lastVy = p.vy;
+    this.squash = Math.max(0, this.squash - dtF * 0.09);
+    const stretch = p.isOnGround ? 0 : clamp(-p.vy * 0.005, -0.06, 0.08);
+    const breathe = p.isOnGround && !moving ? Math.sin(now / 520) * 0.012 : 0;
+    const sy = 1 + stretch - this.squash * 0.17 + breathe;
+    const sx = 1 - stretch * 0.6 + this.squash * 0.12;
+    const bw = 54 / this.tex.player.idle.width;
+    const bh = 74 / this.tex.player.idle.height;
+    this.body.scale.set(dir * bw * sx, bh * sy);
+    this.body.y = (1 - sy) * 37; // keep the feet planted while squashing
+    this.root.position.set(this.cx, this.cy);
+    this.body.alpha = p.isInvincible && Math.floor(now / 90) % 2 === 0 ? 0.45 : 1;
+
+    const boost = p.activePowerUp === 'speed-boost';
+    const power = boost || p.activePowerUp === 'super-throw';
+    this.aura.visible = power;
+    if (power) {
+      this.aura.tint = boost ? 0xffea00 : 0xff6d00;
+      this.aura.alpha = 0.55 + Math.sin(now / 130) * 0.15;
+    }
+
+    this.shield.visible = p.hasShield;
+    if (p.hasShield) {
+      this.shield.alpha = 0.7 + Math.sin(now / 160) * 0.2;
+      this.shield.rotation = now / 1400;
+    }
+
+    const holding = p.capturedEnemyId !== null || p.activePowerUp === 'super-throw';
+    this.hand.visible = holding;
+    if (holding) {
+      this.hand.position.set(dir * 17, 4);
+      this.hand.alpha = 0.7 + Math.sin(now / 90) * 0.25;
+    }
+
+    // speed-boost afterimages
+    if (boost && moving) {
+      if (now - this.lastSample > 42) {
+        this.lastSample = now;
+        this.history.unshift({ x: this.cx, y: this.cy, dir, pose });
+        if (this.history.length > 3) this.history.pop();
+      }
+    } else if (this.history.length) {
+      this.history.pop();
+    }
+    this.ghosts.forEach((g, i) => {
+      const h = this.history[i];
+      g.visible = Boolean(h);
+      if (h) {
+        g.texture = this.tex.player[h.pose];
+        g.scale.set(h.dir * bw, bh);
+        g.position.set(h.x - this.cx, h.y - this.cy);
+        g.alpha = 0.34 - i * 0.1;
+      }
+    });
+    void world;
+  }
+}
+
+class BossView {
+  readonly root = new Container();
+  private body: Sprite;
+  private flash: Sprite;
+  private glow: Sprite;
+  private throwAnim = 0;
+  constructor(boss: Boss, private tex: TextureSet) {
+    const t =
+      boss.type === 'frog' ? tex.bosses.frog : boss.type === 'chickenEye' ? tex.bosses.chickenEye : tex.bosses.shadowHead;
+    this.glow = glowSprite(tex.glow, boss.width * 2.1, BOSS_COLOR[boss.type]);
+    this.body = sized(t, boss.width, boss.height);
+    this.flash = sized(t, boss.width, boss.height);
+    this.flash.blendMode = 'add';
+    this.flash.visible = false;
+    this.root.addChild(this.glow, this.body, this.flash);
+  }
+  update(b: Boss, a: number, now: number, dtF: number) {
+    const x = ix(b, a);
+    const y = iy(b, a);
+    const defeated = b.hp <= 0;
+    let bob = 0;
+    if (b.type === 'frog') bob = Math.sin(now / 420) * 6;
+    else if (b.type === 'chickenEye') bob = Math.sin(now / 700) * 4;
+    else bob = Math.sin(now / 520) * 8;
+    if (b.isThrowing) this.throwAnim = 1;
+    this.throwAnim = Math.max(0, this.throwAnim - dtF * 0.07);
+    const bw = b.width / this.body.texture.width;
+    const bh = b.height / this.body.texture.height;
+    const sx = 1 + 0.08 * this.throwAnim;
+    const sy = 1 - 0.08 * this.throwAnim;
+    this.body.scale.set(bw * sx, bh * sy);
+    this.flash.scale.copyFrom(this.body.scale);
+    if (b.type === 'chickenEye') {
+      this.body.texture = Math.sin(now / 1000) > 0.95 ? this.tex.bosses.chickenEyeBlink : this.tex.bosses.chickenEye;
+    }
+    this.root.position.set(x + b.width / 2, y + b.height / 2 + bob);
+    const opacity = b.opacity ?? 1;
+    this.root.alpha = defeated ? 0.55 + Math.sin(now / 45) * 0.45 : opacity;
+    this.flash.visible = b.isHit || defeated;
+    this.flash.alpha = defeated ? 0.5 + Math.sin(now / 60) * 0.3 : 0.75;
+    this.glow.alpha = 0.3 + Math.sin(now / 350) * 0.1 + (b.isHit ? 0.4 : 0);
+    this.root.rotation = defeated ? Math.sin(now / 33) * 0.03 : 0;
+  }
+}
+
+interface ShotView {
+  root: Container;
+  kind: 'bomb' | 'egg' | 'fireball' | 'cdrom' | 'shot';
+  sprite: Sprite;
+}
+
+// ---------------------------------------------------------------------------
+// The renderer
+// ---------------------------------------------------------------------------
+
+export class GameRenderer {
+  private stage: Container;
+  private scene = new Container();
+  private world = new Container();
+  private overlay = new Container();
+  private platformLayer = new Container();
+  private decorLayer = new Container();
+  private itemLayer = new Container();
+  private enemyLayer = new Container();
+  private bossLayer = new Container();
+  private playerLayer = new Container();
+  private projLayer = new Container();
+  private shockG = new Graphics();
+  private textLayer = new Container();
+
+  private background: Background;
+  private lighting: Lighting;
+  private particles: ParticleLayer;
+  private vignette: Sprite;
+  private flash = new Graphics();
+  private debugText: Text;
+  private bloom: AdvancedBloomFilter;
+
+  private platformViews = new Map<number, PlatformView>();
+  private itemViews = new Map<number, ItemView>();
+  private enemyViews = new Map<number, EnemyView>();
+  private projViews = new Map<number, ShotView>();
+  private checkpointSprites: Sprite[] = [];
+  private goal: { root: Container; sprite: Sprite; rings: Sprite[]; remaining: Text; label: Text; w: number; h: number } | null = null;
+  private bossView: BossView | null = null;
+  private player: PlayerView;
+  private texts = new Map<number, Text>();
+
+  private levelSerial = -1;
+  private pal: ThemePalette = PALETTES.adventure;
+  private themeTex: TextureSet['themes']['adventure'];
+  private arena = false;
+  private flashAlpha = 0;
+  private bossFlashDone = -1;
+  private lastNow = 0;
+  private quality: Quality;
+  private debug = false;
+  private moteClock = 0;
+  private runDust = 0;
+  private cssScale = 1;
+  private dpr = 1;
+
+  // frame statistics
+  private statStart = 0;
+  private statFrames = 0;
+  private statMax = 0;
+  private slowWindows = 0;
+  private fps = 0;
+  private avgMs = 0;
+
+  private constructor(
+    private app: Application,
+    private tex: TextureSet,
+    private opts: RendererOptions
+  ) {
+    this.quality = opts.quality;
+    this.stage = app.stage;
+    this.themeTex = tex.themes.adventure;
+
+    this.background = new Background(tex);
+    this.lighting = new Lighting(tex.light);
+    this.particles = new ParticleLayer(tex.glow);
+    this.player = new PlayerView(tex);
+
+    this.world.addChild(
+      this.platformLayer,
+      this.decorLayer,
+      this.itemLayer,
+      this.enemyLayer,
+      this.bossLayer,
+      this.playerLayer,
+      this.projLayer
+    );
+    this.playerLayer.addChild(this.player.root);
+    this.shockG.blendMode = 'add';
+    this.overlay.addChild(this.shockG, this.particles.root, this.textLayer);
+    this.scene.addChild(this.background.root, this.world, this.lighting.sprite, this.overlay);
+    this.scene.filterArea = new Rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+    this.bloom = new AdvancedBloomFilter({ threshold: 0.62, bloomScale: 0.55, brightness: 1, blur: 5, quality: 3 });
+
+    this.vignette = new Sprite(tex.vignette);
+    this.vignette.width = GAME_WIDTH;
+    this.vignette.height = GAME_HEIGHT;
+
+    this.flash.rect(0, 0, GAME_WIDTH, GAME_HEIGHT).fill(0xffffff);
+    this.flash.alpha = 0;
+
+    this.debugText = new Text({
+      text: '',
+      style: { fontFamily: 'monospace', fontSize: 22, fill: '#a5ffb0', stroke: { color: '#000000', width: 4 } },
+    });
+    this.debugText.position.set(GAME_WIDTH - 20, 150);
+    this.debugText.anchor.set(1, 0);
+    this.debugText.visible = false;
+
+    this.stage.addChild(this.scene, this.vignette, this.flash, this.debugText);
+    this.applyQuality();
+  }
+
+  static async create(mount: HTMLElement, opts: RendererOptions): Promise<GameRenderer> {
+    const app = new Application();
+    await app.init({
+      width: GAME_WIDTH,
+      height: GAME_HEIGHT,
+      background: 0x04010c,
+      antialias: true,
+      resolution: 1,
+      autoDensity: true,
+      powerPreference: 'high-performance',
+      preference: 'webgl',
+      autoStart: false,
+      sharedTicker: false,
+    });
+    app.ticker.stop();
+    app.canvas.style.display = 'block';
+    mount.appendChild(app.canvas);
+    try {
+      await document.fonts.load('900 18px "Orbitron Variable"');
+    } catch {
+      // the fallback font is fine
+    }
+    const tex = await buildTextures();
+    return new GameRenderer(app, tex, opts);
+  }
+
+  get rendererName(): string {
+    return this.app.renderer.name;
+  }
+
+  setQuality(q: Quality): void {
+    this.quality = q;
+    this.applyQuality();
+    this.applyResolution();
+  }
+
+  getQuality(): Quality {
+    return this.quality;
+  }
+
+  setDebug(on: boolean): void {
+    this.debug = on;
+    this.debugText.visible = on;
+  }
+
+  /** `cssScale` is how much the page scales the 1920x1080 stage; keeps the canvas sharp on any screen. */
+  resize(cssScale: number, dpr: number): void {
+    this.cssScale = cssScale;
+    this.dpr = dpr;
+    this.applyResolution();
+  }
+
+  private applyResolution(): void {
+    const cap = this.quality === 'high' ? 1.5 : 1;
+    const res = clamp(this.cssScale * this.dpr, 0.5, cap);
+    if (Math.abs(res - this.app.renderer.resolution) > 0.01) {
+      this.app.renderer.resize(GAME_WIDTH, GAME_HEIGHT, res);
+    }
+  }
+
+  private applyQuality(): void {
+    const high = this.quality === 'high';
+    this.scene.filters = high ? [this.bloom] : [];
+    this.lighting.sprite.visible = high;
+    this.particles.setBudget(high ? 900 : 260);
+  }
+
+  destroy(): void {
+    this.app.destroy({ removeView: true }, { children: true });
+  }
+
+  // -------------------------------------------------------------------------
+  // Frame
+  // -------------------------------------------------------------------------
+
+  render(frame: Frame, alpha: number, now: number): void {
+    const dt = clamp(now - this.lastNow, 0, 50);
+    this.lastNow = now;
+    const dtF = dt / 16.667;
+    this.recordStats(now, dt);
+
+    if (frame.levelSerial !== this.levelSerial) this.buildLevel(frame);
+
+    const camX = frame.prevCameraX + (frame.cameraX - frame.prevCameraX) * alpha;
+    const camY = frame.prevCameraY + (frame.cameraY - frame.prevCameraY) * alpha;
+    const shake = frame.screenShake > 0.2 ? frame.screenShake * 1.8 : 0;
+    const shx = shake ? (Math.random() - 0.5) * shake : 0;
+    const shy = shake ? (Math.random() - 0.5) * shake : 0;
+    this.world.position.set(-camX + shx, -camY + shy);
+    this.overlay.position.set(-camX + shx, -camY + shy);
+
+    this.background.update(camX, camY, now);
+    this.lighting.begin();
+
+    this.syncPlatforms(frame, camX, camY);
+    this.syncDecor(frame, camX, camY, now, dtF);
+    this.syncItems(frame, camX, camY, now);
+    this.syncEnemies(frame, alpha, camX, camY, now, dtF);
+    this.syncBoss(frame, alpha, camX, camY, now, dtF);
+    this.syncPlayer(frame, alpha, camX, camY, now, dtF);
+    this.syncProjectiles(frame, alpha, camX, camY);
+    this.drawShockwaves(frame, camX, camY);
+    this.syncTexts(frame);
+    this.ambientFx(frame, camX, camY, dt, now);
+    this.particles.update(frame.particles, alpha, dtF, camX, camY);
+
+    // boss defeat: one big white flash
+    const bossDown = frame.status === 'level-cleared' && frame.boss && frame.boss.hp <= 0;
+    if (bossDown && this.bossFlashDone !== frame.levelSerial) {
+      this.bossFlashDone = frame.levelSerial;
+      this.flashAlpha = 0.9;
+    }
+    this.flashAlpha = Math.max(0, this.flashAlpha - dt * 0.0022);
+    this.flash.alpha = this.flashAlpha;
+
+    if (this.quality === 'high') this.lighting.render(this.app.renderer);
+    this.app.renderer.render({ container: this.stage });
+
+    if (this.debug) {
+      this.debugText.text =
+        `${this.rendererName.toUpperCase()}  ${this.fps} fps  ${this.avgMs.toFixed(1)} ms (max ${this.statMax.toFixed(0)})\n` +
+        `quality ${this.quality}  res ${this.app.renderer.resolution.toFixed(2)}  particles ${this.particles.count}\n` +
+        `platforms ${this.platformViews.size}  enemies ${this.enemyViews.size}  shots ${this.projViews.size}`;
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Level setup
+  // -------------------------------------------------------------------------
+
+  private buildLevel(frame: Frame): void {
+    this.levelSerial = frame.levelSerial;
+    this.pal = PALETTES[frame.theme];
+    this.themeTex = this.tex.themes[frame.theme];
+    for (const v of this.platformViews.values()) v.root.destroy({ children: true });
+    this.platformViews.clear();
+    for (const v of this.itemViews.values()) v.root.destroy({ children: true });
+    this.itemViews.clear();
+    for (const v of this.enemyViews.values()) v.root.destroy({ children: true });
+    this.enemyViews.clear();
+    for (const v of this.projViews.values()) v.root.destroy({ children: true });
+    this.projViews.clear();
+    this.checkpointSprites.forEach(s => s.destroy());
+    this.checkpointSprites = [];
+    this.goal?.root.destroy({ children: true });
+    this.goal = null;
+    this.bossView?.root.destroy({ children: true });
+    this.bossView = null;
+    for (const t of this.texts.values()) t.destroy();
+    this.texts.clear();
+
+    this.arena = frame.boss?.type === 'shadowHead';
+    this.background.setTheme(frame.theme);
+    this.background.setArena(this.arena);
+    this.lighting.setAmbient(this.arena ? 0x6a5870 : this.pal.ambient);
+
+    for (const cp of frame.checkpoints) {
+      const s = sized(this.tex.checkpointOff, cp.width, cp.height);
+      s.position.set(cp.x + cp.width / 2, cp.y + cp.height / 2);
+      this.decorLayer.addChild(s);
+      this.checkpointSprites.push(s);
+    }
+
+    if (frame.goal) {
+      const g = frame.goal;
+      const root = new Container();
+      root.position.set(g.x, g.y);
+      const sprite = sized(this.tex.goalLocked, g.width, g.height);
+      sprite.position.set(g.width / 2, g.height / 2);
+      const rings = [0, 1].map(i => {
+        const r = glowSprite(this.tex.ring, i === 0 ? g.width * 0.62 : g.width * 0.38, i === 0 ? 0x84ffff : 0xffffff);
+        r.position.set(g.width / 2, g.height * 0.566);
+        r.scale.y *= i === 0 ? 1.7 : 1.7;
+        return r;
+      });
+      const style = { fontFamily: 'Orbitron Variable, Orbitron, sans-serif', fontWeight: '900' as const, fontSize: 13 };
+      const remaining = new Text({ text: '', style: { ...style, fill: '#ffeb3b', stroke: { color: '#000000', width: 3 } } });
+      remaining.anchor.set(0.5);
+      remaining.position.set(g.width / 2, g.height * 0.79);
+      remaining.resolution = 3;
+      const label = new Text({ text: 'EXIT OPEN', style: { ...style, fontSize: 10, fill: '#00e676', stroke: { color: '#000000', width: 3 } } });
+      label.anchor.set(0.5);
+      label.position.set(g.width / 2, g.height * 0.12);
+      label.resolution = 3;
+      root.addChild(sprite, ...rings, remaining, label);
+      this.decorLayer.addChild(root);
+      this.goal = { root, sprite, rings, remaining, label, w: g.width, h: g.height };
+    }
+
+    if (frame.boss) {
+      this.bossView = new BossView(frame.boss, this.tex);
+      this.bossLayer.addChild(this.bossView.root);
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Sync helpers (create on first sight, update every frame, remove when gone)
+  // -------------------------------------------------------------------------
+
+  private inView(x: number, y: number, w: number, h: number, camX: number, camY: number, m = 260): boolean {
+    return x + w >= camX - m && x <= camX + GAME_WIDTH + m && y + h >= camY - m && y <= camY + GAME_HEIGHT + m;
+  }
+
+  private syncPlatforms(frame: Frame, camX: number, camY: number): void {
+    const list = frame.platforms;
+    for (let i = 0; i < list.length; i++) {
+      const p = list[i];
+      const visible = this.inView(p.x, p.y, p.width, p.height + 40, camX, camY, 120);
+      let v = this.platformViews.get(i);
+      if (visible) {
+        if (!v) {
+          v = new PlatformView(p, this.tex, this.pal, this.themeTex);
+          this.platformViews.set(i, v);
+          this.platformLayer.addChild(v.root);
+        }
+        v.root.visible = true;
+        // rail light: cheap strip lights along visible platforms (a few segments each)
+        if (p.width < 1400) {
+          const lx = clamp(camX + GAME_WIDTH / 2, p.x, p.x + p.width);
+          this.lighting.add(lx - camX, p.y - camY - 6, Math.min(240, 60 + p.width * 0.35), this.pal.railHex, 0.35);
+        }
+      } else if (v) {
+        v.root.visible = false;
+      }
+    }
+  }
+
+  private syncDecor(frame: Frame, camX: number, camY: number, now: number, dtF: number): void {
+    frame.checkpoints.forEach((cp, i) => {
+      const s = this.checkpointSprites[i];
+      if (!s) return;
+      s.texture = cp.activated ? this.tex.checkpointOn : this.tex.checkpointOff;
+      const lit = cp.activated;
+      this.lighting.add(cp.x + cp.width / 2 - camX, cp.y + 20 - camY, lit ? 190 : 90, lit ? 0x00e676 : 0xff9e2c, lit ? 0.85 : 0.35);
+      if (lit && Math.random() < 0.06 * dtF) {
+        this.particles.emit({ x: cp.x + cp.width / 2 + (Math.random() - 0.5) * 24, y: cp.y + 18, vy: -0.8, vx: (Math.random() - 0.5) * 0.4, life: 900, size: 5, color: 0x69f0ae, alpha: 0.8 });
+      }
+    });
+
+    const g = this.goal;
+    if (g && frame.goal) {
+      const open = frame.collectiblesLeft === 0;
+      g.sprite.texture = open ? this.tex.goalUnlocked : this.tex.goalLocked;
+      g.rings.forEach((r, i) => {
+        r.visible = open;
+        r.rotation = (now / 1600) * (i === 0 ? 1 : -1.6);
+        r.alpha = 0.7;
+      });
+      g.label.visible = open;
+      g.remaining.visible = !open;
+      if (!open) g.remaining.text = `-${frame.collectiblesLeft}`;
+      const pulse = 1 + Math.sin(now / 220) * 0.12;
+      this.lighting.add(
+        frame.goal.x + g.w / 2 - camX,
+        frame.goal.y + g.h / 2 - camY,
+        (open ? 320 : 150) * pulse,
+        open ? 0x84ffff : 0xff3d00,
+        open ? 1 : 0.55
+      );
+      if (open && this.inView(frame.goal.x, frame.goal.y, g.w, g.h, camX, camY)) {
+        if (Math.random() < 0.5 * dtF) {
+          const ang = Math.random() * Math.PI * 2;
+          const r = 56 + Math.random() * 20;
+          const cx = frame.goal.x + g.w / 2;
+          const cy = frame.goal.y + g.h * 0.56;
+          this.particles.emit({ x: cx + Math.cos(ang) * r, y: cy + Math.sin(ang) * r * 1.4, vx: -Math.cos(ang) * 1.1, vy: -Math.sin(ang) * 1.5, life: 600, size: 5, color: Math.random() < 0.5 ? 0x84ffff : 0xffffff, alpha: 0.9 });
+        }
+      }
+    }
+  }
+
+  private syncItems(frame: Frame, camX: number, camY: number, now: number): void {
+    const seen = new Set<number>();
+    for (const it of frame.items) {
+      seen.add(it.id);
+      if (!this.inView(it.x, it.y, it.width, it.height, camX, camY)) {
+        this.itemViews.get(it.id)?.root.removeFromParent();
+        continue;
+      }
+      let v = this.itemViews.get(it.id);
+      if (!v) {
+        v = new ItemView(it, this.tex);
+        this.itemViews.set(it.id, v);
+      }
+      if (!v.root.parent) this.itemLayer.addChild(v.root);
+      v.update(now);
+      this.lighting.add(it.x + it.width / 2 - camX, it.y + it.height / 2 - camY, 130, ITEM_COLOR[it.type], 0.8);
+      if (Math.random() < 0.012) {
+        this.particles.emit({ x: it.x + Math.random() * it.width, y: it.y + Math.random() * it.height, vy: -0.5, life: 700, size: 4, color: ITEM_COLOR[it.type], alpha: 0.9 });
+      }
+    }
+    for (const [id, v] of this.itemViews) {
+      if (!seen.has(id)) {
+        v.root.destroy({ children: true });
+        this.itemViews.delete(id);
+      }
+    }
+  }
+
+  private syncEnemies(frame: Frame, a: number, camX: number, camY: number, now: number, dtF: number): void {
+    const seen = new Set<number>();
+    for (const e of frame.enemies) {
+      if (e.state === 'defeated') continue;
+      seen.add(e.id);
+      const x = ix(e, a);
+      const y = iy(e, a);
+      if (!this.inView(x, y, e.width, e.height, camX, camY)) {
+        this.enemyViews.get(e.id)?.root.removeFromParent();
+        continue;
+      }
+      let v = this.enemyViews.get(e.id);
+      if (!v) {
+        v = new EnemyView(e, this.tex);
+        this.enemyViews.set(e.id, v);
+      }
+      if (!v.root.parent) this.enemyLayer.addChild(v.root);
+      v.update(e, a, now, dtF);
+      const hot = e.state === 'launched' || e.state === 'captured';
+      this.lighting.add(
+        x + e.width / 2 - camX,
+        y + e.height / 2 - camY,
+        hot ? 190 : 100,
+        e.state === 'captured' ? 0xd500f9 : e.state === 'launched' ? (e.isSuperLaunched ? 0xff6d00 : 0x00e5ff) : ENEMY_COLOR[e.type] ?? 0xffffff,
+        hot ? 0.9 : 0.5
+      );
+      if (e.state === 'launched' && Math.random() < 0.9) {
+        this.particles.emit({ x: x + e.width / 2, y: y + e.height / 2, vx: -e.vx * 0.05, vy: (Math.random() - 0.5) * 0.6, life: 360, size: 9, growth: -0.01, color: e.isSuperLaunched ? 0xff6d00 : 0x00e5ff, alpha: 0.8 });
+      }
+    }
+    for (const [id, v] of this.enemyViews) {
+      if (!seen.has(id)) {
+        v.root.destroy({ children: true });
+        this.enemyViews.delete(id);
+      }
+    }
+  }
+
+  private syncBoss(frame: Frame, a: number, camX: number, camY: number, now: number, dtF: number): void {
+    const b = frame.boss;
+    if (!b || !this.bossView) return;
+    this.bossView.update(b, a, now, dtF);
+    const x = ix(b, a) + b.width / 2;
+    const y = iy(b, a) + b.height / 2;
+    const strength = b.type === 'shadowHead' ? (b.opacity ?? 1) : 1;
+    this.lighting.add(x - camX, y - camY, 520, BOSS_COLOR[b.type], 0.8 * strength + (b.isHit ? 0.2 : 0));
+    if (b.hp > 0 && Math.random() < 0.35 * dtF * strength) {
+      this.particles.emit({ x: x + (Math.random() - 0.5) * b.width * 0.8, y: y + b.height * 0.35, vx: (Math.random() - 0.5) * 0.6, vy: -0.9 - Math.random(), life: 900, size: 7, color: BOSS_COLOR[b.type], alpha: 0.7 });
+    }
+  }
+
+  private syncPlayer(frame: Frame, a: number, camX: number, camY: number, now: number, dtF: number): void {
+    const p = frame.player;
+    if (!p.width) return;
+    this.player.update(p, a, now, dtF, this.world);
+    const boost = p.activePowerUp === 'speed-boost';
+    const color = boost ? 0xffee58 : p.activePowerUp === 'super-throw' ? 0xff9e2c : p.hasShield ? 0x80deea : 0xfff1dc;
+    this.lighting.add(this.player.cx - camX, this.player.cy - camY, 360, color, 0.95);
+
+    // dust while running / landing
+    if (p.isOnGround && Math.abs(p.vx) > 3) {
+      this.runDust += dtF;
+      if (this.runDust > 3.2) {
+        this.runDust = 0;
+        this.particles.emit({ x: this.player.cx - Math.sign(p.vx) * 10, y: p.y + p.height - 2, vx: -p.vx * 0.06, vy: -0.35, life: 320, size: 6, growth: 0.004, color: 0xcfd8dc, alpha: 0.35 });
+      }
+    }
+  }
+
+  private syncProjectiles(frame: Frame, a: number, camX: number, camY: number): void {
+    const seen = new Set<number>();
+    const handle = (pr: Projectile | PlayerProjectile, mine: boolean) => {
+      const id = mine ? -pr.id : pr.id;
+      seen.add(id);
+      const x = ix(pr, a);
+      const y = iy(pr, a);
+      if (!this.inView(x, y, pr.width, pr.height, camX, camY)) {
+        this.projViews.get(id)?.root.removeFromParent();
+        return;
+      }
+      const ep = pr as Projectile;
+      const kind: ShotView['kind'] = mine ? 'shot' : ep.isBomb ? 'bomb' : ep.isEgg ? 'egg' : ep.isFireball ? 'fireball' : 'cdrom';
+      let v = this.projViews.get(id);
+      if (!v) {
+        const t = this.tex.projectiles[kind];
+        const sprite = sized(t, pr.width, kind === 'egg' ? pr.height : pr.height);
+        const root = new Container();
+        const glowColor = kind === 'fireball' ? 0xff6d00 : kind === 'bomb' ? 0xff9100 : kind === 'egg' ? 0xffe082 : kind === 'cdrom' ? 0x00e5ff : 0xff9e2c;
+        root.addChild(glowSprite(this.tex.glow, pr.width * 3.2, glowColor), sprite);
+        v = { root, kind, sprite };
+        this.projViews.set(id, v);
+      }
+      if (!v.root.parent) this.projLayer.addChild(v.root);
+      const cx = x + pr.width / 2;
+      const cy = y + pr.height / 2;
+      v.root.position.set(cx, cy);
+      const t = this.lastNow / 1000;
+      if (v.kind === 'cdrom') v.sprite.rotation = t * 9;
+      else if (v.kind === 'bomb') v.sprite.rotation = Math.atan2(pr.vy, pr.vx) * 0.3 + t * 3;
+      else if (v.kind === 'egg') v.sprite.rotation = Math.atan2(pr.vy, pr.vx) - Math.PI / 2 + Math.sin(t * 12) * 0.25;
+      else if (v.kind === 'fireball') v.sprite.rotation = t * 6;
+      else v.sprite.rotation = Math.atan2(pr.vy, pr.vx);
+      const lightColor = v.kind === 'fireball' ? 0xff6d00 : v.kind === 'bomb' ? 0xff9100 : v.kind === 'egg' ? 0xffe082 : v.kind === 'cdrom' ? 0x00e5ff : 0xff9e2c;
+      this.lighting.add(cx - camX, cy - camY, v.kind === 'fireball' ? 190 : v.kind === 'shot' ? 140 : 100, lightColor, v.kind === 'fireball' ? 0.95 : 0.7);
+      if (v.kind === 'fireball' || v.kind === 'shot') {
+        this.particles.emit({ x: cx, y: cy, vx: -pr.vx * 0.04, vy: -pr.vy * 0.04, life: 320, size: v.kind === 'fireball' ? 12 : 8, growth: -0.02, color: lightColor, alpha: 0.7 });
+      } else if (v.kind === 'bomb' && Math.random() < 0.4) {
+        this.particles.emit({ x: cx + 6, y: cy - 10, vy: -0.6, vx: (Math.random() - 0.5) * 0.8, life: 280, size: 4, color: 0xffea00, alpha: 0.9 });
+      }
+    };
+    for (const p of frame.projectiles) handle(p, false);
+    for (const p of frame.playerProjectiles) handle(p, true);
+    for (const [id, v] of this.projViews) {
+      if (!seen.has(id)) {
+        v.root.destroy({ children: true });
+        this.projViews.delete(id);
+      }
+    }
+  }
+
+  private drawShockwaves(frame: Frame, camX: number, camY: number): void {
+    const g = this.shockG;
+    g.clear();
+    for (const sw of frame.shockwaves) {
+      const color = parseColor(sw.color);
+      g.circle(sw.x, sw.y, sw.radius).stroke({ width: sw.strokeWidth * 2.4, color, alpha: sw.life * 0.28 });
+      g.circle(sw.x, sw.y, sw.radius).stroke({ width: sw.strokeWidth * 0.8, color: 0xffffff, alpha: sw.life * 0.75 });
+      this.lighting.add(sw.x - camX, sw.y - camY, sw.radius * 1.9, color, sw.life * 0.9);
+    }
+  }
+
+  private syncTexts(frame: Frame): void {
+    const seen = new Set<number>();
+    for (const ft of frame.floatingTexts) {
+      seen.add(ft.id);
+      let t = this.texts.get(ft.id);
+      if (!t) {
+        t = new Text({
+          text: ft.text,
+          style: {
+            fontFamily: 'Orbitron Variable, Orbitron, sans-serif',
+            fontWeight: '900',
+            fontSize: 20,
+            letterSpacing: 1.2,
+            fill: ft.color,
+            stroke: { color: '#090318', width: 5 },
+            dropShadow: { color: ft.color, blur: 8, distance: 0, alpha: 0.8 },
+          },
+        });
+        t.anchor.set(0.5);
+        t.resolution = 2;
+        this.texts.set(ft.id, t);
+        this.textLayer.addChild(t);
+      }
+      t.position.set(ft.x, ft.y);
+      t.scale.set(ft.scale);
+      t.alpha = clamp(ft.life * 1.4, 0, 1);
+    }
+    for (const [id, t] of this.texts) {
+      if (!seen.has(id)) {
+        t.destroy();
+        this.texts.delete(id);
+      }
+    }
+  }
+
+  private ambientFx(frame: Frame, camX: number, camY: number, dtMs: number, now: number): void {
+    if (this.arena && frame.boss) {
+      // vortex of embers around the dark arena
+      this.moteClock += dtMs;
+      while (this.moteClock > 70) {
+        this.moteClock -= 70;
+        this.particles.emit({ x: camX + Math.random() * GAME_WIDTH, y: camY + GAME_HEIGHT + 10, vx: (Math.random() - 0.5) * 0.7, vy: -1 - Math.random() * 1.4, life: 2400, size: 5 + Math.random() * 5, color: Math.random() < 0.7 ? 0xff1744 : 0xff6d00, alpha: 0.55 });
+      }
+      return;
+    }
+    this.moteClock += dtMs;
+    const interval = this.quality === 'high' ? 260 : 700;
+    while (this.moteClock > interval) {
+      this.moteClock -= interval;
+      const c = this.pal.motes[Math.floor(Math.random() * this.pal.motes.length)];
+      this.particles.emit({
+        x: camX + Math.random() * GAME_WIDTH,
+        y: camY + Math.random() * GAME_HEIGHT,
+        vx: (Math.random() - 0.5) * 0.35 + Math.sin(now / 3000) * 0.1,
+        vy: -0.15 - Math.random() * 0.3,
+        life: 4200,
+        size: 2 + Math.random() * 2.5,
+        color: c,
+        alpha: 0.4,
+      });
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Statistics / adaptive quality
+  // -------------------------------------------------------------------------
+
+  private recordStats(now: number, dt: number): void {
+    if (!this.statStart) this.statStart = now;
+    this.statFrames++;
+    this.statMax = Math.max(this.statMax, dt);
+    if (now - this.statStart >= 1000) {
+      const secs = (now - this.statStart) / 1000;
+      this.fps = Math.round(this.statFrames / secs);
+      this.avgMs = (now - this.statStart) / this.statFrames;
+      (window as unknown as { __pdPerf?: unknown }).__pdPerf = {
+        fps: this.fps,
+        avgMs: this.avgMs,
+        maxMs: this.statMax,
+        quality: this.quality,
+        renderer: this.rendererName,
+        resolution: this.app.renderer.resolution,
+        particles: this.particles.count,
+      };
+      if (this.opts.autoQuality && this.quality === 'high' && this.fps < 40) {
+        this.slowWindows++;
+        if (this.slowWindows >= 3) {
+          this.slowWindows = 0;
+          this.setQuality('low');
+          this.opts.onQualityChange?.('low', true);
+        }
+      } else {
+        this.slowWindows = 0;
+      }
+      this.statStart = now;
+      this.statFrames = 0;
+      this.statMax = 0;
+    }
+  }
+}

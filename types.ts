@@ -8,6 +8,9 @@ export interface GameObject {
 export interface DynamicObject extends GameObject {
   vx: number;
   vy: number;
+  /** Position at the start of the previous simulation step (used by the renderer to interpolate). */
+  prevX?: number;
+  prevY?: number;
 }
 
 export interface Player extends DynamicObject {
