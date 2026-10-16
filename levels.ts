@@ -401,6 +401,7 @@ const level3 = buildExponentialExtension(rawLevel3, {
 const bossLevel1: LevelData = {
   name: "Level 4 — BOSS: Cyclops Frog",
   musicTheme: 'boss',
+  musicTrack: 'bossFrog',
   levelWidth: 2688,
   levelHeight: 1200,
   playerStart: { x: 200, y: 1200 - 130 },
@@ -530,6 +531,7 @@ const level6 = buildExponentialExtension(rawLevel6, {
 const bossLevel2: LevelData = {
   name: "Level 7 — BOSS: LeGallineNellOcchi",
   musicTheme: 'boss',
+  musicTrack: 'bossChickenEye',
   levelWidth: 2688,
   levelHeight: 1250,
   playerStart: { x: 200, y: 1250 - 130 },
@@ -725,6 +727,7 @@ const level10 = buildExponentialExtension(rawLevel10, {
 const bossLevel3: LevelData = {
   name: "Level 11 — BOSS: CapocciaNelBuio",
   musicTheme: 'boss',
+  musicTrack: 'bossShadowHead',
   isZeroG: true,
   levelWidth: 2688,
   levelHeight: 1512,

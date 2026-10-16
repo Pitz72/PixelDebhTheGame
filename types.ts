@@ -124,7 +124,10 @@ export type MusicTheme = 'adventure' | 'industrial' | 'ethereal' | 'boss';
 
 export interface LevelData {
   name: string;
+  /** Picks the colors of the level (and the music, unless musicTrack says otherwise). */
   musicTheme: MusicTheme;
+  /** Name of the music track when it should differ from the theme (one per boss). */
+  musicTrack?: string;
   isZeroG?: boolean;
   timeLimit?: number;
   levelWidth?: number;

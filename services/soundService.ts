@@ -1,297 +1,382 @@
 import * as storage from './storage';
+import { SAMPLE_RATE } from '../audio/chip';
+import { SFX, SFX_NAMES, isSfxName, renderSfx, type SfxName, type SfxRecipe } from '../audio/sfx';
+import { placeholderLoop } from '../audio/placeholderMusic';
+import { ONE_SHOT_TRACKS, parseManifest, trackForTheme, type Manifest, type TrackKey } from '../audio/tracks';
 
-let audioContext: AudioContext | null = null;
-let masterGain: GainNode | null = null;
-let soundsLoaded = false;
+/**
+ * Audio engine.
+ *
+ *   sfxBus ----------------------------------.
+ *   musicBus -> musicFilter -> musicDuck -----+-> master -> limiter -> speakers
+ *
+ * Effects are chip-synth recipes rendered once into buffers (audio/sfx.ts). Music is a looping
+ * buffer decoded from public/audio/music/ (or a built-in placeholder loop when the file is
+ * missing), cross-faded on track changes and resumed from where it stopped after a pause.
+ */
+
+export type VolumeKind = 'master' | 'music' | 'sfx';
+
+const MUSIC_URL = '/audio/music/';
+const CROSSFADE_S = 0.6;
+const MAX_VOICES = 24;
+
+const MUTED_KEY = 'pixelDebhMuted';
+const VOLUME_KEYS: Record<VolumeKind, string> = {
+  master: 'pixelDebhVolMaster',
+  music: 'pixelDebhVolMusic',
+  sfx: 'pixelDebhVolSfx',
+};
+const DEFAULT_VOLUMES: Record<VolumeKind, number> = { master: 0.9, music: 0.8, sfx: 1 };
+
+let ctx: AudioContext | null = null;
+let master: GainNode | null = null;
+let sfxBus: GainNode | null = null;
+let musicBus: GainNode | null = null;
+let musicFilter: BiquadFilterNode | null = null;
+let musicDuck: GainNode | null = null;
+let probe: AnalyserNode | null = null;
+
 let muted = false;
+const volumes: Record<VolumeKind, number> = { ...DEFAULT_VOLUMES };
 
-// --- Music variables ---
-let musicContext: { timer: number | null; activeOscillator?: OscillatorNode | null } | null = null;
-let currentMusicName: string | null = null;
-let pausedMusicName: string | null = null;
+/** Slider position -> gain: a squared curve feels linear to the ear. */
+const gainOf = (v: number) => v * v;
 
-/** Every voice goes through the master gain so volume / mute apply to all of them. */
-const output = (): AudioNode => masterGain ?? (audioContext as AudioContext).destination;
-
-interface SoundEffect {
-  type: OscillatorType;
-  startFreq: number;
-  endFreq: number;
-  attack: number;
-  decay: number;
-  volume: number;
-}
-
-interface Note {
-  freq: number;
-  duration: number; // in seconds
-  type: OscillatorType;
-  volume: number;
-}
-
-const soundEffects: { [key: string]: SoundEffect } = {
-  jump: { type: 'square', startFreq: 280, endFreq: 560, attack: 0.01, decay: 0.14, volume: 0.12 },
-  doubleJump: { type: 'triangle', startFreq: 420, endFreq: 880, attack: 0.01, decay: 0.16, volume: 0.15 },
-  collect: { type: 'sine', startFreq: 880, endFreq: 1320, attack: 0.01, decay: 0.18, volume: 0.2 },
-  checkpoint: { type: 'triangle', startFreq: 523.25, endFreq: 1046.5, attack: 0.02, decay: 0.35, volume: 0.22 },
-  powerup: { type: 'sawtooth', startFreq: 440, endFreq: 987.77, attack: 0.04, decay: 0.3, volume: 0.22 },
-  capture: { type: 'square', startFreq: 260, endFreq: 160, attack: 0.01, decay: 0.1, volume: 0.2 },
-  launch: { type: 'square', startFreq: 160, endFreq: 680, attack: 0.01, decay: 0.2, volume: 0.22 },
-  start: { type: 'sawtooth', startFreq: 220, endFreq: 660, attack: 0.08, decay: 0.35, volume: 0.2 },
-  damage: { type: 'sawtooth', startFreq: 160, endFreq: 55, attack: 0.01, decay: 0.25, volume: 0.28 },
-  gameOver: { type: 'sawtooth', startFreq: 440, endFreq: 110, attack: 0.1, decay: 0.8, volume: 0.28 },
-  hit: { type: 'square', startFreq: 120, endFreq: 80, attack: 0.01, decay: 0.1, volume: 0.25 },
-  levelClear: { type: 'triangle', startFreq: 523.25, endFreq: 1046.5, attack: 0.08, decay: 0.5, volume: 0.25 },
-  bossShoot: { type: 'sawtooth', startFreq: 220, endFreq: 95, attack: 0.03, decay: 0.18, volume: 0.2 },
-  bomberShoot: { type: 'sine', startFreq: 400, endFreq: 110, attack: 0.02, decay: 0.28, volume: 0.18 },
-  bossHit: { type: 'square', startFreq: 480, endFreq: 220, attack: 0.01, decay: 0.22, volume: 0.32 },
-  bossDefeat: { type: 'sawtooth', startFreq: 880, endFreq: 55, attack: 0.18, decay: 1.4, volume: 0.42 },
-  playerShoot: { type: 'square', startFreq: 780, endFreq: 1240, attack: 0.01, decay: 0.09, volume: 0.14 },
-};
-
-const jingles: { [key: string]: Note[] } = {
-  levelStart: [
-    { freq: 523.25, duration: 0.1, type: 'square', volume: 0.1 },
-    { freq: 659.25, duration: 0.1, type: 'square', volume: 0.1 },
-    { freq: 783.99, duration: 0.18, type: 'square', volume: 0.12 },
-  ],
-  respawn: [
-    { freq: 392.00, duration: 0.1, type: 'triangle', volume: 0.14 },
-    { freq: 523.25, duration: 0.2, type: 'triangle', volume: 0.14 },
-  ],
-  extraLife: [
-    { freq: 523.25, duration: 0.09, type: 'square', volume: 0.15 },
-    { freq: 659.25, duration: 0.09, type: 'square', volume: 0.15 },
-    { freq: 783.99, duration: 0.09, type: 'square', volume: 0.15 },
-    { freq: 1046.50, duration: 0.22, type: 'square', volume: 0.16 },
-  ],
-  standardTheme: [],
-};
-
-const music: { [key: string]: Note[] } = {
-  startScreenTheme: [
-    { freq: 220.00, duration: 0.15, type: 'square', volume: 0.08 },
-    { freq: 220.00, duration: 0.15, type: 'square', volume: 0.08 },
-    { freq: 440.00, duration: 0.15, type: 'square', volume: 0.08 },
-    { freq: 329.63, duration: 0.15, type: 'square', volume: 0.08 },
-    { freq: 261.63, duration: 0.15, type: 'square', volume: 0.08 },
-    { freq: 392.00, duration: 0.15, type: 'square', volume: 0.08 },
-    { freq: 329.63, duration: 0.30, type: 'triangle', volume: 0.09 },
-  ],
-  adventureTheme: [
-    { freq: 261.63, duration: 0.18, type: 'square', volume: 0.07 },
-    { freq: 329.63, duration: 0.18, type: 'square', volume: 0.07 },
-    { freq: 392.00, duration: 0.18, type: 'square', volume: 0.07 },
-    { freq: 523.25, duration: 0.18, type: 'square', volume: 0.07 },
-    { freq: 392.00, duration: 0.18, type: 'square', volume: 0.07 },
-    { freq: 329.63, duration: 0.18, type: 'square', volume: 0.07 },
-    { freq: 440.00, duration: 0.36, type: 'triangle', volume: 0.08 },
-    { freq: 349.23, duration: 0.36, type: 'triangle', volume: 0.08 },
-    { freq: 293.66, duration: 0.18, type: 'square', volume: 0.07 },
-    { freq: 392.00, duration: 0.18, type: 'square', volume: 0.07 },
-  ],
-  industrialTheme: [
-    { freq: 110.00, duration: 0.15, type: 'sawtooth', volume: 0.08 },
-    { freq: 110.00, duration: 0.15, type: 'sawtooth', volume: 0.08 },
-    { freq: 0,      duration: 0.10, type: 'sawtooth', volume: 0 },
-    { freq: 146.83, duration: 0.20, type: 'square', volume: 0.07 },
-    { freq: 110.00, duration: 0.20, type: 'sawtooth', volume: 0.08 },
-    { freq: 82.41,  duration: 0.35, type: 'sawtooth', volume: 0.09 },
-    { freq: 123.47, duration: 0.20, type: 'square', volume: 0.07 },
-    { freq: 130.81, duration: 0.20, type: 'square', volume: 0.07 },
-  ],
-  etherealTheme: [
-    { freq: 659.25, duration: 0.45, type: 'sine', volume: 0.07 },
-    { freq: 587.33, duration: 0.45, type: 'sine', volume: 0.07 },
-    { freq: 523.25, duration: 0.45, type: 'sine', volume: 0.07 },
-    { freq: 783.99, duration: 0.45, type: 'sine', volume: 0.07 },
-    { freq: 1046.50, duration: 0.55, type: 'triangle', volume: 0.06 },
-    { freq: 0, duration: 0.15, type: 'sine', volume: 0 },
-    { freq: 880.00, duration: 0.55, type: 'sine', volume: 0.06 },
-  ],
-  bossTheme: [
-    { freq: 110.00, duration: 0.16, type: 'sawtooth', volume: 0.09 },
-    { freq: 103.83, duration: 0.16, type: 'sawtooth', volume: 0.09 },
-    { freq: 110.00, duration: 0.16, type: 'sawtooth', volume: 0.09 },
-    { freq: 123.47, duration: 0.16, type: 'sawtooth', volume: 0.09 },
-    { freq: 87.31,  duration: 0.16, type: 'sawtooth', volume: 0.10 },
-    { freq: 82.41,  duration: 0.16, type: 'sawtooth', volume: 0.10 },
-  ],
-};
-
-// Map short theme names from LevelData ('adventure', 'industrial', 'ethereal', 'boss') to full track keys
-const themeAliasMap: Record<string, string> = {
-  adventure: 'adventureTheme',
-  industrial: 'industrialTheme',
-  ethereal: 'etherealTheme',
-  boss: 'bossTheme',
-  standardTheme: 'adventureTheme',
-};
+// --- context and buses ---------------------------------------------------------------
 
 export function initAudio() {
   try {
-    if (!audioContext) {
-      audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-      masterGain = audioContext.createGain();
-      masterGain.gain.value = muted ? 0 : 1;
-      masterGain.connect(audioContext.destination);
+    if (!ctx) {
+      const Ctor = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      ctx = new Ctor();
+
+      master = ctx.createGain();
+      master.gain.value = muted ? 0 : gainOf(volumes.master);
+
+      const limiter = ctx.createDynamicsCompressor();
+      limiter.threshold.value = -4;
+      limiter.knee.value = 0;
+      limiter.ratio.value = 20;
+      limiter.attack.value = 0.003;
+      limiter.release.value = 0.12;
+      master.connect(limiter);
+      limiter.connect(ctx.destination);
+      probe = ctx.createAnalyser(); // read by the test probe below, costs nothing otherwise
+      probe.fftSize = 2048;
+      limiter.connect(probe);
+
+      sfxBus = ctx.createGain();
+      sfxBus.gain.value = gainOf(volumes.sfx) * 0.7; // headroom for several effects at once
+      sfxBus.connect(master);
+
+      musicFilter = ctx.createBiquadFilter();
+      musicFilter.type = 'lowpass';
+      musicFilter.frequency.value = 20000;
+      musicDuck = ctx.createGain();
+      musicBus = ctx.createGain();
+      musicBus.gain.value = gainOf(volumes.music);
+      musicBus.connect(musicFilter);
+      musicFilter.connect(musicDuck);
+      musicDuck.connect(master);
+
+      for (const name of SFX_NAMES) bufferFor(name);
+      installProbe();
     }
-    if (audioContext.state === 'suspended') {
-      audioContext.resume();
-    }
-    soundsLoaded = true;
+    if (ctx.state === 'suspended') void ctx.resume().catch(() => {});
   } catch (e) {
-    console.error("Could not initialize audio context", e);
+    console.error('Could not initialize audio context', e);
   }
 }
 
-export function playSound(name: string) {
-  if (!soundsLoaded || !audioContext) {
-    initAudio();
-  }
-  if (!audioContext) return;
-  if (audioContext.state === 'suspended') {
-    audioContext.resume().catch(() => {});
-  }
+function ensureContext(): AudioContext | null {
+  if (!ctx) initAudio();
+  else if (ctx.state === 'suspended') void ctx.resume().catch(() => {});
+  return ctx;
+}
 
-  const effect = soundEffects[name];
-  if (!effect) return;
+function toAudioBuffer(data: Float32Array, rate: number): AudioBuffer {
+  const b = (ctx as AudioContext).createBuffer(1, data.length, rate);
+  b.copyToChannel(data as Float32Array<ArrayBuffer>, 0);
+  return b;
+}
+
+// --- sound effects -----------------------------------------------------------------
+
+const sfxBuffers = new Map<SfxName, AudioBuffer>();
+const lastPlayed = new Map<SfxName, number>();
+let activeVoices = 0;
+let duckFloor = 1;
+let duckUntil = 0;
+
+function bufferFor(name: SfxName): AudioBuffer {
+  let b = sfxBuffers.get(name);
+  if (!b) {
+    b = toAudioBuffer(renderSfx(name, SAMPLE_RATE), SAMPLE_RATE);
+    sfxBuffers.set(name, b);
+  }
+  return b;
+}
+
+/** Lowers the music for a moment so a big effect is heard clearly. */
+function duckMusic(fraction: number, ms: number) {
+  if (!ctx || !musicDuck) return;
+  const now = ctx.currentTime;
+  const floor = 1 - fraction;
+  const end = now + ms / 1000;
+  const currentFloor = now < duckUntil ? duckFloor : 1;
+  if (end <= duckUntil && floor >= currentFloor) return; // already covered by a stronger duck
+  duckFloor = Math.min(floor, currentFloor);
+  duckUntil = Math.max(end, duckUntil);
+  const g = musicDuck.gain;
+  g.cancelScheduledValues(now);
+  g.setTargetAtTime(duckFloor, now, 0.02);
+  g.setTargetAtTime(1, duckUntil, 0.25);
+}
+
+export function playSound(name: string) {
+  if (!isSfxName(name)) return;
+  if (!ensureContext() || !ctx || !sfxBus) return;
+  const recipe: SfxRecipe = SFX[name];
+
+  const now = performance.now();
+  const last = lastPlayed.get(name);
+  if (recipe.minGapMs && last !== undefined && now - last < recipe.minGapMs) return;
+  if (activeVoices >= MAX_VOICES) return;
+  lastPlayed.set(name, now);
 
   try {
-    const now = audioContext.currentTime;
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-
-    oscillator.connect(gainNode);
-    gainNode.connect(output());
-
-    oscillator.type = effect.type;
-    gainNode.gain.setValueAtTime(0, now);
-    gainNode.gain.linearRampToValueAtTime(effect.volume, now + effect.attack);
-    gainNode.gain.linearRampToValueAtTime(0, now + effect.attack + effect.decay);
-
-    oscillator.frequency.setValueAtTime(Math.max(1, effect.startFreq), now);
-    oscillator.frequency.exponentialRampToValueAtTime(Math.max(1, effect.endFreq), now + effect.attack + effect.decay);
-
-    oscillator.start(now);
-    oscillator.stop(now + effect.attack + effect.decay);
+    const src = ctx.createBufferSource();
+    src.buffer = bufferFor(name);
+    if (recipe.jitter) src.playbackRate.value = 1 + (Math.random() * 2 - 1) * recipe.jitter;
+    src.connect(sfxBus);
+    activeVoices++;
+    src.onended = () => {
+      activeVoices--;
+      src.disconnect();
+    };
+    src.start();
+    if (recipe.duck) duckMusic(recipe.duck[0], recipe.duck[1]);
   } catch (e) {
     console.error(`Could not play sound: ${name}`, e);
   }
 }
 
+/** Stingers live in the same bank as the effects. */
 export function playJingle(name: 'levelStart' | 'respawn' | 'extraLife') {
-  if (!soundsLoaded || !audioContext) return;
-  const jingle = jingles[name];
-  if (!jingle) return;
+  playSound(name);
+}
 
-  const now = audioContext.currentTime;
-  let startTime = now;
+// --- music ----------------------------------------------------------------------
 
-  jingle.forEach(note => {
-    const oscillator = audioContext!.createOscillator();
-    const gainNode = audioContext!.createGain();
+interface TrackBuffer {
+  /** 'file' when decoded from public/audio/music, 'placeholder' for the built-in loop. */
+  origin: 'file' | 'placeholder';
+  buffer: AudioBuffer;
+  loopStart: number;
+  loopEnd: number;
+  gain: number;
+}
 
-    oscillator.connect(gainNode);
-    gainNode.connect(output());
+interface Playing {
+  key: TrackKey;
+  loop: boolean;
+  track: TrackBuffer;
+  source: AudioBufferSourceNode;
+  fade: GainNode;
+  startedAt: number; // ctx.currentTime when the source started
+  offset: number; // position in the buffer when it started
+}
 
-    oscillator.type = note.type;
-    oscillator.frequency.setValueAtTime(Math.max(1, note.freq), startTime);
+let manifestPromise: Promise<Manifest> | null = null;
+const trackCache = new Map<TrackKey, Promise<TrackBuffer | null>>();
+let current: Playing | null = null;
+let wanted: { key: TrackKey; loop: boolean } | null = null;
+let held: { track: TrackBuffer; key: TrackKey; loop: boolean; pos: number } | null = null;
+let holding = false; // pauseMusic() is in effect
+let loadToken = 0;
 
-    gainNode.gain.setValueAtTime(0, startTime);
-    gainNode.gain.linearRampToValueAtTime(note.volume, startTime + 0.01);
-    gainNode.gain.linearRampToValueAtTime(0, startTime + note.duration);
+function loadManifest(): Promise<Manifest> {
+  if (!manifestPromise) {
+    manifestPromise = fetch(`${MUSIC_URL}manifest.json`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(parseManifest)
+      .catch(() => ({}) as Manifest);
+  }
+  return manifestPromise;
+}
 
-    oscillator.start(startTime);
-    oscillator.stop(startTime + note.duration);
+async function decodeTrack(key: TrackKey): Promise<TrackBuffer | null> {
+  const c = ctx;
+  if (!c) return null;
+  try {
+    const entry = (await loadManifest())[key];
+    if (entry) {
+      const res = await fetch(MUSIC_URL + entry.file);
+      if (res.ok) {
+        const buffer = await c.decodeAudioData(await res.arrayBuffer());
+        const loopEnd = entry.loopEnd > 0 ? Math.min(entry.loopEnd, buffer.duration) : buffer.duration;
+        return { origin: 'file', buffer, loopStart: Math.min(entry.loopStart, loopEnd), loopEnd, gain: Math.pow(10, entry.gainDb / 20) };
+      }
+    }
+  } catch (e) {
+    console.warn(`Music track "${key}" unavailable, using the placeholder`, e);
+  }
+  const loop = ONE_SHOT_TRACKS.has(key) ? null : placeholderLoop(key, SAMPLE_RATE);
+  if (!loop) return null;
+  const buffer = toAudioBuffer(loop, SAMPLE_RATE);
+  return { origin: 'placeholder', buffer, loopStart: 0, loopEnd: buffer.duration, gain: 1 };
+}
 
-    startTime += note.duration;
+function loadTrack(key: TrackKey): Promise<TrackBuffer | null> {
+  let p = trackCache.get(key);
+  if (!p) {
+    p = decodeTrack(key);
+    trackCache.set(key, p);
+  }
+  return p;
+}
+
+function positionOf(p: Playing): number {
+  if (!ctx) return p.offset;
+  const pos = p.offset + (ctx.currentTime - p.startedAt);
+  if (!p.loop) return Math.min(pos, p.track.buffer.duration);
+  const { loopStart, loopEnd } = p.track;
+  return pos < loopEnd ? pos : loopStart + ((pos - loopStart) % (loopEnd - loopStart));
+}
+
+function fadeOutAndStop(p: Playing, seconds: number) {
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  p.fade.gain.cancelScheduledValues(now);
+  p.fade.gain.setValueAtTime(p.fade.gain.value, now);
+  p.fade.gain.linearRampToValueAtTime(0, now + seconds);
+  try {
+    p.source.stop(now + seconds + 0.02);
+  } catch {
+    // already stopped
+  }
+  p.source.onended = () => {
+    p.source.disconnect();
+    p.fade.disconnect();
+  };
+}
+
+function begin(key: TrackKey, loop: boolean, track: TrackBuffer, offset: number, fadeS: number) {
+  if (!ctx || !musicBus) return;
+  const previous = current;
+  if (previous) fadeOutAndStop(previous, fadeS);
+
+  const fade = ctx.createGain();
+  const now = ctx.currentTime;
+  fade.gain.setValueAtTime(0, now);
+  fade.gain.linearRampToValueAtTime(track.gain, now + fadeS);
+  fade.connect(musicBus);
+
+  const source = ctx.createBufferSource();
+  source.buffer = track.buffer;
+  source.loop = loop;
+  if (loop) {
+    source.loopStart = track.loopStart;
+    source.loopEnd = track.loopEnd;
+  }
+  source.connect(fade);
+  source.start(0, offset);
+
+  const playing: Playing = { key, loop, track, source, fade, startedAt: now, offset };
+  current = playing;
+  if (!loop) {
+    source.onended = () => {
+      if (current === playing) current = null;
+      source.disconnect();
+      fade.disconnect();
+    };
+  }
+}
+
+function startTrack(key: TrackKey, loop: boolean) {
+  if (!ensureContext()) return;
+  // The same track again (the next level of the same world) keeps playing without a restart.
+  if (wanted?.key === key && (current || held || holding)) return;
+  wanted = { key, loop };
+  held = null;
+  const token = ++loadToken;
+  void loadTrack(key).then(track => {
+    if (token !== loadToken || !track) return;
+    if (holding) held = { track, key, loop, pos: 0 };
+    else begin(key, loop, track, 0, current ? CROSSFADE_S : 0.05);
   });
 }
 
+/** Starts the music for a theme name used by the engine or the screens. Loops unless it is a jingle. */
 export function playMusicLoop(name: string) {
-  if (!soundsLoaded || !audioContext) {
-    initAudio();
-  }
-  if (!audioContext) return;
-  stopMusic();
-
-  const trackName = themeAliasMap[name] || name;
-  const track = music[trackName];
-  if (!track || track.length === 0) return;
-  currentMusicName = name;
-  pausedMusicName = null;
-
-  let noteIndex = 0;
-  musicContext = { timer: null, activeOscillator: null };
-
-  const playNote = () => {
-    if (!audioContext || !musicContext) return;
-    const note = track[noteIndex % track.length];
-
-    if (note.freq > 0 && note.volume > 0) {
-      try {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        oscillator.connect(gainNode);
-        gainNode.connect(output());
-
-        const now = audioContext.currentTime;
-        oscillator.type = note.type;
-        oscillator.frequency.setValueAtTime(note.freq, now);
-        gainNode.gain.setValueAtTime(0, now);
-        gainNode.gain.linearRampToValueAtTime(note.volume, now + 0.015);
-        gainNode.gain.linearRampToValueAtTime(0, now + Math.max(0.03, note.duration - 0.015));
-
-        oscillator.start(now);
-        oscillator.stop(now + note.duration);
-        musicContext.activeOscillator = oscillator;
-      } catch {
-        // Ignore transient WebAudio errors
-      }
-    }
-
-    noteIndex++;
-    if (musicContext) {
-      musicContext.timer = window.setTimeout(playNote, note.duration * 1000);
-    }
-  };
-
-  playNote();
+  const key = trackForTheme(name);
+  if (key) startTrack(key, !ONE_SHOT_TRACKS.has(key));
 }
 
-/** Pause = stop the loop but remember it, so resumeMusic() restarts the same track. */
+/** Plays a track once from its start (victory, game over). */
+export function playMusicOnce(name: string) {
+  const key = trackForTheme(name);
+  if (!key) return;
+  wanted = null; // a one-shot always restarts
+  startTrack(key, false);
+}
+
+/** Pause = fade out and remember the position, so resumeMusic() continues from the same spot. */
 export function pauseMusic() {
-  if (!musicContext || !currentMusicName) return;
-  const name = currentMusicName;
-  stopMusic();
-  pausedMusicName = name;
+  if (holding) return;
+  holding = true;
+  if (!current) return;
+  held = { track: current.track, key: current.key, loop: current.loop, pos: positionOf(current) };
+  fadeOutAndStop(current, 0.08);
+  current = null;
 }
 
 export function resumeMusic() {
-  if (!pausedMusicName) return;
-  const name = pausedMusicName;
-  pausedMusicName = null;
-  playMusicLoop(name);
+  if (!holding) return;
+  holding = false;
+  const h = held;
+  held = null;
+  if (h) begin(h.key, h.loop, h.track, h.pos, 0.12);
+}
+
+export function stopMusic() {
+  loadToken++;
+  wanted = null;
+  held = null;
+  holding = false;
+  if (current) fadeOutAndStop(current, 0.3);
+  current = null;
+}
+
+// --- volume, mute and saved settings ---------------------------------------------------
+
+function applyVolumes() {
+  if (!ctx || !master || !sfxBus || !musicBus) return;
+  const t = ctx.currentTime;
+  master.gain.setTargetAtTime(muted ? 0 : gainOf(volumes.master), t, 0.015);
+  sfxBus.gain.setTargetAtTime(gainOf(volumes.sfx) * 0.7, t, 0.015);
+  musicBus.gain.setTargetAtTime(gainOf(volumes.music), t, 0.015);
 }
 
 export function isMuted(): boolean {
   return muted;
 }
 
-const MUTED_KEY = 'pixelDebhMuted';
-
-/** Restore the saved mute setting (call once after initStorage). */
+/** Restore the saved audio settings (call once after initStorage). */
 export function loadAudioSettings() {
   muted = storage.getItem(MUTED_KEY) === '1';
+  for (const kind of Object.keys(VOLUME_KEYS) as VolumeKind[]) {
+    const raw = storage.getItem(VOLUME_KEYS[kind]);
+    const saved = raw === null ? NaN : Number(raw);
+    volumes[kind] = Number.isFinite(saved) ? Math.max(0, Math.min(1, saved / 100)) : DEFAULT_VOLUMES[kind];
+  }
 }
 
 export function setMuted(value: boolean) {
   muted = value;
   storage.setItem(MUTED_KEY, muted ? '1' : '0');
-  if (masterGain && audioContext) {
-    masterGain.gain.setTargetAtTime(muted ? 0 : 1, audioContext.currentTime, 0.015);
-  }
+  applyVolumes();
 }
 
 export function toggleMuted(): boolean {
@@ -299,19 +384,52 @@ export function toggleMuted(): boolean {
   return muted;
 }
 
-export function stopMusic() {
-  currentMusicName = null;
-  pausedMusicName = null;
-  if (!musicContext) return;
-  if (musicContext.timer) {
-    clearTimeout(musicContext.timer);
-  }
-  if (musicContext.activeOscillator) {
-    try {
-      musicContext.activeOscillator.stop();
-    } catch {
-      // Already stopped
-    }
-  }
-  musicContext = null;
+export function getVolume(kind: VolumeKind): number {
+  return volumes[kind];
+}
+
+/** Slider position 0..1. Saved right away so an interrupted session keeps it. */
+export function setVolume(kind: VolumeKind, value: number) {
+  volumes[kind] = Math.max(0, Math.min(1, value));
+  storage.setItem(VOLUME_KEYS[kind], String(Math.round(volumes[kind] * 100)));
+  applyVolumes();
+}
+
+// --- test probe ------------------------------------------------------------------------
+
+/**
+ * window.__pdAudio lets the test scripts (tools/dev) see what the engine is doing in the
+ * real app: context state, the track that is playing and where, and the level at the output.
+ */
+function installProbe() {
+  (window as unknown as { __pdAudio?: unknown }).__pdAudio = {
+    state: () => ctx?.state ?? null,
+    time: () => ctx?.currentTime ?? 0,
+    voices: () => activeVoices,
+    music: () =>
+      current
+        ? {
+            key: current.key,
+            origin: current.track.origin,
+            loop: current.loop,
+            position: positionOf(current),
+            duration: current.track.buffer.duration,
+            loopStart: current.track.loopStart,
+            loopEnd: current.track.loopEnd,
+          }
+        : null,
+    level: () => {
+      if (!probe) return null;
+      const data = new Float32Array(probe.fftSize);
+      probe.getFloatTimeDomainData(data);
+      let peak = 0;
+      let sq = 0;
+      for (const v of data) {
+        peak = Math.max(peak, Math.abs(v));
+        sq += v * v;
+      }
+      const db = (x: number) => 20 * Math.log10(Math.max(x, 1e-9));
+      return { peakDb: db(peak), rmsDb: db(Math.sqrt(sq / data.length)) };
+    },
+  };
 }

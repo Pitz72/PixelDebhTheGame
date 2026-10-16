@@ -428,7 +428,7 @@ export function loadLevel(w: World, levelIndex: number): void {
   }
 
   w.status = 'playing';
-  emit(w, { type: 'music', theme: levelData.musicTheme || (levelData.boss ? 'boss' : 'adventure') });
+  emit(w, { type: 'music', theme: levelData.musicTrack || levelData.musicTheme || (levelData.boss ? 'boss' : 'adventure') });
   emit(w, { type: 'jingle', name: 'levelStart' });
 }
 

@@ -37,14 +37,14 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
     -   **Ghosty (Phaser):** A persistent threat that slowly follows the player, passing through walls and platforms.
 -   **Arcade High Score Leaderboard:** Compete for the top score! If you make it into the top 5, the game features a fully immersive highscore entry screen where you select your initials by scrolling through the alphabet, just like on a real arcade cabinet. The leaderboard is pre-filled with default scores.
 -   **Arcade-Style Attract Mode:** The title screen simulates a classic arcade cabinet, automatically and seamlessly alternating between the "Character Parade" intro and the high score leaderboard. The player can press Enter on either screen to start the game. The chiptune theme plays continuously throughout, creating a fluid attract mode experience.
--   **Dynamic Background Music:** Three distinct musical themes (Adventure, Industrial, Ethereal) that change as you progress through the world, plus tense boss themes.
+-   **Dynamic Background Music:** A track for each world (Adventure, Industrial, Ethereal), one for each of the three bosses, and one each for the title screen, the leaderboard, victory and game over. The music is loaded from `public/audio/music/` (see `docs/MUSIC_BRIEF.md`); a track without a file falls back to a short built-in loop, so the game is never silent.
 -   **Dynamic Arcade-Style Intro:** A vibrant, animated intro sequence to welcome players.
 -   **Unique Boss Encounters:** Multiple bosses with distinct AI behaviors (Random Float vs Figure-8 vs Teleport/Fade) and attack patterns.
 -   Classic 2D platforming action with a consistent pixel-perfect look
 -   Vast, horizontally scrolling levels with a dynamic camera system
 -   Immersive parallax background for a sense of depth
 -   Special power-ups: Speed Boost, Shield, and the powerful Super Throw!
--   Programmatically generated chiptune sound effects, jingles, and music
+-   Chiptune sound effects and jingles synthesised by the code itself (pulse, triangle and noise channels, `audio/`), with an audio settings panel (`O`: master, music and effects volume, mute)
 -   Enhanced visual feedback (screen flash, fade-to-black transitions, particle effects)
 -   Dynamic extra life system that rewards high scores (up to a maximum of 3 lives)
 -   Score tracking and a lives system
@@ -59,6 +59,7 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 -   **Shoot (Boss Battles / Zero-G):** `Left Shift` (Hold movement keys to aim in 8 directions)
 -   **Pause:** `ESC` (the game also pauses by itself when the window loses focus)
 -   **Mute:** `M`
+-   **Audio settings (volume, music, effects, mute):** `O` on the start screen and in the pause menu
 -   **Fullscreen / window:** `F`, `F11` or `Alt+Enter`
 -   **Graphics quality:** `Q` switches between High (dynamic lights, bloom) and Low; the game drops to Low by itself if it cannot hold 40 fps
 -   **Performance overlay:** `F3` (renderer, fps, quality, particle count)
@@ -91,7 +92,7 @@ npx tauri build --bundles nsis        # Windows installer  -> src-tauri/target/r
 npx tauri build --bundles deb,appimage  # Linux packages (build this on Linux)
 ```
 
-- High scores and settings (mute) are saved in `save.json` in the app data folder (`%APPDATA%\com.pixeldebh.retrorescue` on Windows, `~/.local/share/com.pixeldebh.retrorescue` on Linux). In a browser they fall back to `localStorage`.
+- High scores and settings (mute and volumes) are saved in `save.json` in the app data folder (`%APPDATA%\com.pixeldebh.retrorescue` on Windows, `~/.local/share/com.pixeldebh.retrorescue` on Linux). In a browser they fall back to `localStorage`.
 - Linux packages: `.deb`, `.rpm` and an `.AppImage`. The AppImage bundles GStreamer, which WebKitGTK needs for Web Audio; the `.deb` depends on the GStreamer base and good plugins.
 - Linux status: build, tests, launch (fullscreen), keyboard input and save file were checked on Ubuntu 24.04 (WSL2 with WSLg); the WebGL renderer runs on WebKitGTK there, but WSLg has no GPU acceleration (software GL, about 23 fps at 1080p, so the game switched itself to Low quality). It has not been tried yet on a native desktop with a real GPU, and audio has not been listened to. If the window comes up blank (seen with some NVIDIA/Wayland setups on WebKitGTK), the usual workaround is to start it with `WEBKIT_DISABLE_DMABUF_RENDERER=1`; that was not needed in the checks above.
 - The app always starts **fullscreen**, as a console-style desktop game should. `F`, `F11` or `Alt+Enter` drop to a 16:9 window (and back) for the current session only; it is not remembered. `npm run desktop` (dev mode) starts windowed so it does not take over your screen while you work.

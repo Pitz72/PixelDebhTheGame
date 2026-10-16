@@ -139,6 +139,8 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart }) => {
               <div><strong className="text-cyan-400">[SPAZIO]:</strong> Salto / Doppio Salto</div>
               <div><strong className="text-cyan-400">[C] o [X]:</strong> Cattura / Lancia Nemico</div>
               <div><strong className="text-cyan-400">[SHIFT SX]:</strong> Spara (Boss &amp; Zero-G)</div>
+              <div><strong className="text-cyan-400">[O]:</strong> Opzioni audio</div>
+              <div><strong className="text-cyan-400">[M]:</strong> Muto</div>
             </div>
           </div>
         )}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Hud from './components/Hud';
 import DomScene from './components/DomScene';
+import AudioOptions from './components/AudioOptions';
 import * as soundService from './services/soundService';
 import * as storage from './services/storage';
 import { levels } from './levels';
@@ -114,6 +115,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
   const [hud, setHud] = useState<HudData>(() => deriveHud(frameRef.current as Frame));
   const [domFrame, setDomFrame] = useState<Frame>(() => frameRef.current as Frame);
   const [isPaused, setIsPaused] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
   // Why WebGL could not be used (shown briefly, and with F3, when the compatibility renderer takes over).
   const [renderError, setRenderError] = useState<string | null>(null);
   const [showCompat, setShowCompat] = useState(true);
@@ -216,8 +218,11 @@ const GameScreen: React.FC<GameScreenProps> = ({
       if (paused) {
         input.reset();
         soundService.pauseMusic();
+        soundService.playSound('pause');
       } else {
+        setShowOptions(false);
         soundService.resumeMusic();
+        soundService.playSound('resume');
       }
     };
 
@@ -239,6 +244,11 @@ const GameScreen: React.FC<GameScreenProps> = ({
 
       if (e.key.toLowerCase() === 'q' && !e.repeat) {
         applyQuality(qualityRef.current === 'high' ? 'low' : 'high');
+        return;
+      }
+
+      if (e.key.toLowerCase() === 'o' && pausedRef.current) {
+        if (!e.repeat) setShowOptions(true);
         return;
       }
 
@@ -436,6 +446,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
           <div className="mt-12 bg-white/5 border border-cyan-500/30 rounded-2xl px-8 py-4 text-sm text-gray-300 space-y-1 text-center">
             <p>
               <strong className="text-cyan-400">[M]</strong> Muto •{' '}
+              <strong className="text-cyan-400">[O]</strong> Audio •{' '}
               <strong className="text-cyan-400">[F]</strong> Schermo intero / finestra •{' '}
               <strong className="text-cyan-400">[Q]</strong> Qualità grafica:{' '}
               <span className="text-yellow-300">{quality === 'high' ? 'ALTA' : 'BASSA'}</span> •{' '}
@@ -451,6 +462,8 @@ const GameScreen: React.FC<GameScreenProps> = ({
           </div>
         </div>
       )}
+
+      {isPaused && showOptions && <AudioOptions onClose={() => setShowOptions(false)} />}
 
       {/* Level Cleared Banner */}
       {hud.status === 'level-cleared' && (

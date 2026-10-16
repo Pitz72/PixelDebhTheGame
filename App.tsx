@@ -7,6 +7,7 @@ import GameoverScreen from './components/GameoverScreen';
 import PixelArcadeIntro from './components/PixelArcadeIntro';
 import HighscoreScreen from './components/HighscoreScreen';
 import EnterHighscoreScreen from './components/EnterHighscoreScreen';
+import AudioOptions from './components/AudioOptions';
 import { GameState } from './types';
 import { GAME_WIDTH, GAME_HEIGHT } from './constants';
 import * as highscoreService from './services/highscoreService';
@@ -26,6 +27,7 @@ function App() {
   const [loopCount, setLoopCount] = useState(1);
   // Score and lives travel with the player from one loop (New Game+) to the next.
   const [carry, setCarry] = useState<Carry>({ score: 0 });
+  const [showOptions, setShowOptions] = useState(false);
   const { dimensions, margins } = useGameScale();
 
   // The desktop app always starts fullscreen (window config), so nothing to request there.
@@ -55,6 +57,9 @@ function App() {
         void toggleAppFullscreen();
       } else if (key === 'm') {
         soundService.toggleMuted();
+      } else if (key === 'o' && (gameState === 'start' || gameState === 'highscore')) {
+        soundService.initAudio();
+        setShowOptions(true);
       } else if (gameState === 'intro') {
         requestAppFullscreen();
       }
@@ -134,14 +139,22 @@ function App() {
     };
   }, [gameState]);
 
-  // Manage start screen music loop
+  // Music of the screens outside the game (the levels start their own from the engine events).
   useEffect(() => {
-    if (gameState === 'start') {
-      soundService.playMusicLoop('startScreenTheme');
-      return () => {
-        soundService.stopMusic();
-      };
-    }
+    const track: Partial<Record<GameState, { name: string; once?: boolean }>> = {
+      start: { name: 'startScreenTheme' },
+      highscore: { name: 'highscore' },
+      'enter-highscore': { name: 'highscore' },
+      completed: { name: 'victory', once: true },
+      gameover: { name: 'gameover', once: true },
+    };
+    const t = track[gameState];
+    if (!t) return;
+    if (t.once) soundService.playMusicOnce(t.name);
+    else soundService.playMusicLoop(t.name);
+    return () => {
+      soundService.stopMusic();
+    };
   }, [gameState]);
 
   const renderContent = () => {
@@ -204,6 +217,7 @@ function App() {
         }}
       >
         <div
+          className="relative"
           style={{
             transform: `scale(${dimensions.width / GAME_WIDTH})`,
             transformOrigin: 'top left',
@@ -212,6 +226,7 @@ function App() {
           }}
         >
           {renderContent()}
+          {showOptions && <AudioOptions onClose={() => setShowOptions(false)} />}
         </div>
       </div>
     </div>

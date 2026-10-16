@@ -5,3 +5,10 @@ Scritti per Windows 11 + PowerShell + WSL2 Ubuntu. Alcuni script contengono anco
 - `cdp2.mjs` / `cdp_frames.mjs`: leggono console, `window.__pdPerf` e `window.__pdPlayer` dall'app Tauri avviata con `--remote-debugging-port`, e catturano strisce di fotogrammi che seguono Debh.
 - `shot.ps1`, `crop.ps1`, `strip.ps1`: screenshot di una finestra (anche WSLg con `-ProcName msrdc`), ritaglio, striscia di fotogrammi.
 - `wsl_setup.sh`, `wsl_update_build.sh`, `wsl_quick.sh`, `wsl_launch2.sh`: preparare Rust/Node in WSL, ricostruire i pacchetti Linux e avviare l'app con WSLg e xdotool.
+
+## Audio (`tools/audio/`)
+
+- `export-sfx.ts`: scrive ogni effetto in WAV e stampa le misure. Si lancia con esbuild + node: `npx esbuild tools/audio/export-sfx.ts --bundle --platform=node --format=esm --outfile=<tmp>/export-sfx.mjs` poi `node <tmp>/export-sfx.mjs <cartella-uscita>`.
+- `prepare_music.py`: prepara i brani generati (loop, loudness, OGG, manifest). Vedi `docs/MUSIC_BRIEF.md`.
+- Nell'app avviata con `--remote-debugging-port` la sonda `window.__pdAudio` (`state()`, `time()`, `voices()`, `music()`, `level()`) mostra cosa fa il motore audio. Con `--autoplay-policy=no-user-gesture-required` in `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS` il contesto parte anche senza un clic vero. I tasti sintetici vanno inviati a `document.body`, non a `window` (altrimenti non passano dalla fase di cattura come quelli reali).
+
