@@ -4,7 +4,7 @@
 Riprendiamo il lavoro su PixelDebh: Retro-Rescue! (repo C:\Users\Utente\Documents\GitHub\PIXELDEBH, branch main, remoto Pitz72/PixelDebhTheGame).
 Leggi prima: docs/NEXT_SESSION.md, docs/AUDIT.md, docs/MUSIC_BRIEF.md, README.md, log/1.3.0.md e la memoria del progetto.
 
-Stato: Fasi 1-4 fatte e pubblicate su main (v1.2.0). Fase 5 (audio) fatta in locale, NON ancora committata: motore audio, 24 effetti sintetici, pannello `O`, caricamento musica da file con loop e crossfade, strumento tools/audio/prepare_music.py. Mancano solo i brani veri.
+Stato: Fasi 1-4 fatte e pubblicate su main (v1.2.0). Fase 5 (audio) fatta e pubblicata su main (v1.3.0, commit 442fc1b): motore audio, 24 effetti sintetici, pannello `O`, caricamento musica da file con loop e crossfade, strumento tools/audio/prepare_music.py. Mancano solo i brani veri.
 - Fase 1: motore di gioco puro in engine/ (timestep fisso 60 Hz) + bug gravissimi/gravi corretti + 76 test (npm test).
 - Fase 2: app desktop Tauri v2 (src-tauri/), sempre a schermo intero, salvataggi in save.json, installatore Windows NSIS, pacchetti Linux (deb/rpm/AppImage) verificati in WSL2.
 - Fase 3: renderer PixiJS/WebGL (renderer/) con luci dinamiche, bloom, particelle, parallasse, interpolazione; il vecchio DOM resta come ripiego.
@@ -19,7 +19,7 @@ Da fare ora, in ordine:
 4. Ancora da verificare in gioco: capriola, posa a gravita' zero, reazione al danno, pollice alzato a fine livello; schermi 4K e 144 Hz; Linux nativo con GPU e audio; inserimento classifica da interfaccia in Tauri.
 5. Rifinitura: opzioni/gamepad/rimappa tasti, localizzazione IT/EN coerente, firma dell'installatore Windows (SmartScreen), `npm audit` (braces via Tailwind 3), aprire l'audit docs/AUDIT.md per i punti ancora aperti (M4, M7, M8, L4, L8, L9, L10).
 
-Regole di lavoro: testa SEMPRE l'exe di release (la CSP stretta nasconde problemi che `tauri dev` non mostra); strumenti di test in tools/dev/ (CDP, screenshot, strisce di fotogrammi, script WSL); non fare push o merge senza che l'utente lo chieda; dichiara cio' che non hai potuto verificare (audio, FPS su hardware diverso).
+Regole di lavoro: testa SEMPRE l'exe di release (la CSP stretta nasconde problemi che `tauri dev` non mostra); strumenti di test in tools/dev/ (CDP, screenshot, strisce di fotogrammi, script WSL); regola fissa dell'utente: ogni fase si chiude con commit E push su main (nessuna conferma da chiedere), con tutte le verifiche fatte prima; merge di altri rami e force push solo se l'utente lo chiede; dichiara cio' che non hai potuto verificare (audio, FPS su hardware diverso).
 ```
 
 ## Comandi utili
