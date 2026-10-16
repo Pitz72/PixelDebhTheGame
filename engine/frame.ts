@@ -11,7 +11,7 @@ import {
   Checkpoint,
   MusicTheme,
 } from '../types';
-import { World, WorldStatus, Shockwave, FloatingText } from './world';
+import { World, WorldStatus, Shockwave, FloatingText, isZeroG } from './world';
 import { collectiblesLeft } from './step';
 
 /**
@@ -30,6 +30,8 @@ export interface Frame {
   timeRemaining: number | null;
   damageFlash: boolean;
   collectiblesLeft: number;
+  /** Gravity-free level or arena: the character floats instead of running. */
+  zeroG: boolean;
 
   player: Player;
   enemies: Enemy[];
@@ -70,6 +72,7 @@ export function makeFrame(w: World): Frame {
     timeRemaining: w.timeRemaining,
     damageFlash: w.damageFlash > 0,
     collectiblesLeft: collectiblesLeft(w),
+    zeroG: isZeroG(w),
 
     player: { ...w.player },
     enemies: w.enemies.map(e => ({ ...e })),

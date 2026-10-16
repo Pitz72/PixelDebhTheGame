@@ -6,7 +6,10 @@ import { AdvancedBloomFilter } from 'pixi-filters';
 import { Boss, Enemy, Item, ItemType, Platform, Projectile, PlayerProjectile, Player } from '../types';
 import { Frame } from '../engine/frame';
 import { GAME_HEIGHT, GAME_WIDTH } from '../constants';
-import { buildTextures, PlayerPoseName, TextureSet } from './textures';
+import { buildTextures, TextureSet } from './textures';
+import { bakeDebh, DebhTextures } from '../characters/debh/bake';
+import { DebhRig, RIG_HEIGHT, STAND_GROUND_Y, HIP } from '../characters/debh/rig';
+import { DebhAnimator } from '../characters/debh/anim';
 import { PALETTES, ThemePalette } from './palette';
 import { Background } from './background';
 import { Lighting } from './lighting';
@@ -187,114 +190,100 @@ class EnemyView {
   }
 }
 
+/** On-screen height of Debh (feet to the top of her hair), in game pixels. The hitbox is 90 tall. */
+const DEBH_HEIGHT = 122;
+const RIG_SCALE = DEBH_HEIGHT / RIG_HEIGHT;
+
 class PlayerView {
   readonly root = new Container();
-  private body: Sprite;
+  private holder = new Container(); // origin = feet, scaled to game pixels, flipped by facing
+  private shifted = new Container(); // rig space, shifted so the ground line sits on the feet
+  private rig: DebhRig;
+  private animator = new DebhAnimator();
   private aura: Sprite;
   private shield: Sprite;
-  private hand: Sprite;
-  private ghosts: Sprite[] = [];
-  private history: Array<{ x: number; y: number; dir: number; pose: PlayerPoseName }> = [];
-  private lastSample = 0;
-  private runClock = 0;
-  private squash = 0;
-  private wasOnGround = true;
-  private lastVy = 0;
-  pose: PlayerPoseName = 'idle';
+  private handGlow: Sprite;
   cx = 0;
   cy = 0;
-
-  constructor(private tex: TextureSet) {
-    this.aura = glowSprite(tex.glow, 190, 0xffea00);
+  feetY = 0;
+  facing = 1;
+  /** Where the gamepad / muzzle is, in game pixels relative to the hitbox centre (set while aiming). */
+  constructor(private tex: TextureSet, debh: DebhTextures) {
+    this.rig = new DebhRig(debh);
+    this.aura = glowSprite(tex.glow, 200, 0xffea00);
     this.aura.visible = false;
-    for (let i = 0; i < 3; i++) {
-      const g = sized(tex.player.idle, 54, 74);
-      g.tint = 0x80deea;
-      g.visible = false;
-      this.ghosts.push(g);
-    }
-    this.body = sized(tex.player.idle, 54, 74);
-    this.shield = sized(tex.shield, 88, 106);
+    this.shield = sized(tex.shield, 96, 128);
     this.shield.visible = false;
-    this.hand = glowSprite(tex.glow, 60, 0xff9e2c);
-    this.hand.visible = false;
-    this.root.addChild(this.aura, ...this.ghosts, this.body, this.shield, this.hand);
+    this.handGlow = glowSprite(tex.glow, 380, 0xff9e2c); // rig units: it lives inside the scaled holder
+    this.handGlow.visible = false;
+
+    this.shifted.addChild(this.rig.root, this.handGlow);
+    this.holder.scale.set(RIG_SCALE);
+    this.holder.addChild(this.shifted);
+    this.root.addChild(this.aura, this.holder, this.shield);
   }
 
-  update(p: Player, a: number, now: number, dtF: number, world: Container) {
+  update(p: Player, a: number, now: number, dtF: number, frame: Frame) {
     const x = ix(p, a);
     const y = iy(p, a);
     this.cx = x + p.width / 2;
     this.cy = y + p.height / 2;
+    this.feetY = y + p.height;
     const dir = p.direction === 'left' ? -1 : 1;
-    const moving = Math.abs(p.vx) > 0.6;
+    this.facing = dir;
 
-    let pose: PlayerPoseName = 'idle';
-    if (!p.isOnGround) pose = p.vy < 0 ? 'jump' : 'fall';
-    else if (moving) {
-      this.runClock += Math.abs(p.vx) * dtF * 0.05;
-      pose = (['run0', 'run1', 'run2', 'run3'] as const)[Math.floor(this.runClock) % 4];
-    }
-    this.pose = pose;
-    this.body.texture = this.tex.player[pose];
+    const out = this.animator.update(
+      {
+        onGround: p.isOnGround,
+        vx: p.vx,
+        vy: p.vy,
+        direction: p.direction,
+        jumpCount: p.jumpCount,
+        holding: p.capturedEnemyId !== null,
+        superThrow: p.activePowerUp === 'super-throw',
+        speedBoost: p.activePowerUp === 'speed-boost',
+        shootAnim: p.shootAnim ?? 0,
+        aimX: p.aimX ?? 1,
+        aimY: p.aimY ?? 0,
+        throwAnim: p.throwAnim ?? 0,
+        hurtAnim: p.hurtAnim ?? 0,
+        cheer: frame.status === 'level-cleared' && !frame.boss && p.isOnGround,
+        zeroG: frame.zeroG,
+      },
+      (dtF * 16.667) / 1000
+    );
 
-    if (p.isOnGround && !this.wasOnGround && this.lastVy > 7) this.squash = clamp(this.lastVy / 22, 0.3, 1);
-    this.wasOnGround = p.isOnGround;
-    this.lastVy = p.vy;
-    this.squash = Math.max(0, this.squash - dtF * 0.09);
-    const stretch = p.isOnGround ? 0 : clamp(-p.vy * 0.005, -0.06, 0.08);
-    const breathe = p.isOnGround && !moving ? Math.sin(now / 520) * 0.012 : 0;
-    const sy = 1 + stretch - this.squash * 0.17 + breathe;
-    const sx = 1 - stretch * 0.6 + this.squash * 0.12;
-    const bw = 54 / this.tex.player.idle.width;
-    const bh = 74 / this.tex.player.idle.height;
-    this.body.scale.set(dir * bw * sx, bh * sy);
-    this.body.y = (1 - sy) * 37; // keep the feet planted while squashing
-    this.root.position.set(this.cx, this.cy);
-    this.body.alpha = p.isInvincible && Math.floor(now / 90) % 2 === 0 ? 0.45 : 1;
+    this.rig.apply(out.pose);
+    this.root.position.set(this.cx, this.feetY);
+    this.holder.scale.set(dir * RIG_SCALE * out.squashX, RIG_SCALE * out.squashY);
+    // rotate about the hip (somersault), keeping the planted foot where it is
+    this.shifted.pivot.set(HIP[0], HIP[1]);
+    this.shifted.position.set(HIP[0], HIP[1] - out.groundY);
+    this.shifted.rotation = out.spin;
+    this.holder.alpha = p.isInvincible && Math.floor(now / 90) % 2 === 0 ? 0.45 : 1;
 
     const boost = p.activePowerUp === 'speed-boost';
     const power = boost || p.activePowerUp === 'super-throw';
     this.aura.visible = power;
+    this.aura.position.set(0, -DEBH_HEIGHT * 0.45);
     if (power) {
       this.aura.tint = boost ? 0xffea00 : 0xff6d00;
-      this.aura.alpha = 0.55 + Math.sin(now / 130) * 0.15;
+      this.aura.alpha = 0.5 + Math.sin(now / 130) * 0.15;
     }
 
     this.shield.visible = p.hasShield;
+    this.shield.position.set(0, -DEBH_HEIGHT * 0.44);
     if (p.hasShield) {
       this.shield.alpha = 0.7 + Math.sin(now / 160) * 0.2;
       this.shield.rotation = now / 1400;
     }
 
     const holding = p.capturedEnemyId !== null || p.activePowerUp === 'super-throw';
-    this.hand.visible = holding;
+    this.handGlow.visible = holding;
     if (holding) {
-      this.hand.position.set(dir * 17, 4);
-      this.hand.alpha = 0.7 + Math.sin(now / 90) * 0.25;
+      this.handGlow.position.set(250, 96 + out.groundY - STAND_GROUND_Y + 0);
+      this.handGlow.alpha = 0.55 + Math.sin(now / 90) * 0.2;
     }
-
-    // speed-boost afterimages
-    if (boost && moving) {
-      if (now - this.lastSample > 42) {
-        this.lastSample = now;
-        this.history.unshift({ x: this.cx, y: this.cy, dir, pose });
-        if (this.history.length > 3) this.history.pop();
-      }
-    } else if (this.history.length) {
-      this.history.pop();
-    }
-    this.ghosts.forEach((g, i) => {
-      const h = this.history[i];
-      g.visible = Boolean(h);
-      if (h) {
-        g.texture = this.tex.player[h.pose];
-        g.scale.set(h.dir * bw, bh);
-        g.position.set(h.x - this.cx, h.y - this.cy);
-        g.alpha = 0.34 - i * 0.1;
-      }
-    });
-    void world;
   }
 }
 
@@ -413,6 +402,7 @@ export class GameRenderer {
   private constructor(
     private app: Application,
     private tex: TextureSet,
+    debh: DebhTextures,
     private opts: RendererOptions
   ) {
     this.quality = opts.quality;
@@ -422,7 +412,7 @@ export class GameRenderer {
     this.background = new Background(tex);
     this.lighting = new Lighting(tex.light);
     this.particles = new ParticleLayer(tex.glow);
-    this.player = new PlayerView(tex);
+    this.player = new PlayerView(tex, debh);
 
     this.world.addChild(
       this.platformLayer,
@@ -482,8 +472,10 @@ export class GameRenderer {
     } catch {
       // the fallback font is fine
     }
-    const tex = await buildTextures();
-    return new GameRenderer(app, tex, opts);
+    const loadStart = performance.now();
+    const [tex, debh] = await Promise.all([buildTextures(), bakeDebh()]);
+    (window as unknown as { __pdLoadMs?: number }).__pdLoadMs = Math.round(performance.now() - loadStart);
+    return new GameRenderer(app, tex, debh, opts);
   }
 
   get rendererName(): string {
@@ -513,7 +505,7 @@ export class GameRenderer {
   }
 
   private applyResolution(): void {
-    const cap = this.quality === 'high' ? 1.5 : 1;
+    const cap = this.quality === 'high' ? 1.5 : 0.75; // Low also renders fewer pixels, for weak or software GPUs
     const res = clamp(this.cssScale * this.dpr, 0.5, cap);
     if (Math.abs(res - this.app.renderer.resolution) > 0.01) {
       this.app.renderer.resize(GAME_WIDTH, GAME_HEIGHT, res);
@@ -815,7 +807,11 @@ export class GameRenderer {
   private syncPlayer(frame: Frame, a: number, camX: number, camY: number, now: number, dtF: number): void {
     const p = frame.player;
     if (!p.width) return;
-    this.player.update(p, a, now, dtF, this.world);
+    this.player.update(p, a, now, dtF, frame);
+    // screen position of the character (game pixels), read by the test tooling
+    const probe = ((window as unknown as { __pdPlayer?: { x: number; y: number } }).__pdPlayer ??= { x: 0, y: 0 });
+    probe.x = this.player.cx - camX;
+    probe.y = this.player.feetY - camY;
     const boost = p.activePowerUp === 'speed-boost';
     const color = boost ? 0xffee58 : p.activePowerUp === 'super-throw' ? 0xff9e2c : p.hasShield ? 0x80deea : 0xfff1dc;
     this.lighting.add(this.player.cx - camX, this.player.cy - camY, 360, color, 0.95);

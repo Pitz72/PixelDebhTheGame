@@ -282,3 +282,48 @@ describe('determinism', () => {
     );
   });
 });
+
+describe('character size and animation cues', () => {
+  it('keeps the feet where the level data put them even though Debh is taller', () => {
+    const w = makeWorld([makeLevel({ playerStart: { x: 100, y: FLOOR_Y - 74 } })]);
+    expect(w.player.y + w.player.height).toBe(FLOOR_Y);
+  });
+
+  it('flags a hurt animation when she falls into a pit', () => {
+    const w = makeWorld([makeLevel()]);
+    w.player.y = 1500;
+    step(w);
+    expect(w.player.hurtAnim ?? 0).toBeGreaterThan(0);
+  });
+
+  it('records the aim and starts the shooting animation, shots leaving from the gamepad', () => {
+    const bossLevel = makeLevel({
+      levelWidth: 2688,
+      levelHeight: 1250,
+      boss: { type: 'frog', x: 1900, y: 300, width: 320, height: 320, maxHp: 10 },
+    });
+    const w = makeWorld([bossLevel]);
+    w.input = { left: false, right: false, up: true, down: false, shoot: true };
+    step(w);
+    expect(w.player.shootAnim ?? 0).toBeGreaterThan(0);
+    expect(w.player.aimX).toBeCloseTo(0, 5);
+    expect(w.player.aimY).toBeCloseTo(-1, 5);
+    const shot = w.playerProjectiles[0];
+    const cx = w.player.x + w.player.width / 2;
+    expect(shot.x + shot.width / 2).toBeCloseTo(cx, 3); // straight up: same x as her body
+    expect(shot.y + shot.height / 2).toBeLessThan(w.player.y + w.player.height / 2); // above her centre
+  });
+
+  it('starts the throw animation when a held enemy is launched', () => {
+    const w = makeWorld([makeLevel({ enemies: [enemy('base', 150, FLOOR_Y - 50)] })]);
+    const e = w.enemies[0];
+    e.x = w.player.x + 40;
+    w.actions.push('capture');
+    step(w);
+    expect(w.player.capturedEnemyId).toBe(e.id);
+    w.actions.push('capture');
+    step(w);
+    expect(w.player.throwAnim ?? 0).toBeGreaterThan(0);
+    expect(e.state).toBe('launched');
+  });
+});

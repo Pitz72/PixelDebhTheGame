@@ -94,6 +94,10 @@ export const areHurtboxesColliding = (
 
 const sound = (w: World, name: string) => emit(w, { type: 'sound', name });
 
+/** Height of Debh's shoulder above her feet, and how far the gamepad reaches from it (game pixels). */
+const SHOULDER_HEIGHT = 78;
+const MUZZLE_REACH = 40;
+
 // ---------------------------------------------------------------------------
 // Public entry point
 // ---------------------------------------------------------------------------
@@ -226,6 +230,7 @@ function doCaptureOrLaunch(w: World): void {
       isSuper ? 4.5 : 3
     );
     if (isSuper) triggerShake(w, 6);
+    p.throwAnim = 260;
     const held = w.enemies.find(en => en.id === p.capturedEnemyId);
     if (held) {
       held.state = 'launched';
@@ -272,6 +277,9 @@ function doCaptureOrLaunch(w: World): void {
 function updatePlayerTimers(w: World): void {
   const p = w.player;
   if (p.shootCooldown > 0) p.shootCooldown = Math.max(0, p.shootCooldown - STEP_MS);
+  if ((p.shootAnim ?? 0) > 0) p.shootAnim = Math.max(0, (p.shootAnim ?? 0) - STEP_MS);
+  if ((p.throwAnim ?? 0) > 0) p.throwAnim = Math.max(0, (p.throwAnim ?? 0) - STEP_MS);
+  if ((p.hurtAnim ?? 0) > 0) p.hurtAnim = Math.max(0, (p.hurtAnim ?? 0) - STEP_MS);
   if (p.coyoteTimer > 0) p.coyoteTimer = Math.max(0, p.coyoteTimer - STEP_MS);
   if (p.jumpBufferTimer > 0) p.jumpBufferTimer = Math.max(0, p.jumpBufferTimer - STEP_MS);
   if (p.isInvincible) {
@@ -320,9 +328,16 @@ function updatePlayerShooting(w: World): void {
 
   const rapid = w.boss && w.boss.type === 'shadowHead';
   p.shootCooldown = rapid ? PLAYER_RAPID_SHOOT_COOLDOWN : PLAYER_SHOOT_COOLDOWN;
+  const mag = Math.hypot(vx, vy) || 1;
+  p.aimX = vx / mag;
+  p.aimY = vy / mag;
+  p.shootAnim = p.shootCooldown * 0.9 + 140;
 
-  const spawnX = p.x + p.width / 2 - PLAYER_PROJECTILE_WIDTH / 2;
-  const spawnY = p.y + p.height / 2 - PLAYER_PROJECTILE_HEIGHT / 2;
+  // Shots leave from the gamepad she holds out: shoulder height, a bit along the aim direction.
+  const muzzleX = p.x + p.width / 2 + (p.aimX ?? 1) * MUZZLE_REACH;
+  const muzzleY = p.y + p.height - SHOULDER_HEIGHT + (p.aimY ?? 0) * MUZZLE_REACH;
+  const spawnX = muzzleX - PLAYER_PROJECTILE_WIDTH / 2;
+  const spawnY = muzzleY - PLAYER_PROJECTILE_HEIGHT / 2;
   spawnParticles(w, spawnX + 10, spawnY + 10, '#00e5ff', 3);
 
   w.playerProjectiles.push({
@@ -555,6 +570,7 @@ export function damagePlayer(w: World): void {
   }
 
   hurtEffects(w);
+  p.hurtAnim = 420;
   releaseCapturedEnemy(w);
   loseLife(w);
 }
@@ -573,6 +589,7 @@ export function fallIntoPit(w: World): void {
   }
 
   hurtEffects(w);
+  w.player.hurtAnim = 420;
   loseLife(w);
 }
 
@@ -905,8 +922,8 @@ function updateEnemies(w: World, zeroG: boolean): void {
 
     if (enemy.state === 'captured') {
       if (p.capturedEnemyId === enemy.id) {
-        enemy.x = p.x + (p.direction === 'right' ? p.width - 6 : -enemy.width + 6);
-        enemy.y = p.y - 12;
+        enemy.x = p.x + (p.direction === 'right' ? p.width - 22 : -enemy.width + 22);
+        enemy.y = p.y + 4;
         enemy.direction = p.direction;
       } else {
         enemy.state = 'active';

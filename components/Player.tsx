@@ -35,9 +35,10 @@ const Player: React.FC<PlayerProps> = React.memo(({ player }) => {
       {/* Speed Boost Holographic Afterimage */}
       {speedBoostActive && isMoving && (
         <div
-          className="absolute top-0 w-full h-full opacity-40 pointer-events-none"
+          className="absolute bottom-0 w-full opacity-40 pointer-events-none"
           style={{
             left: trailOffset,
+            height: 74,
             filter: 'hue-rotate(160deg) brightness(1.4) blur(1px)',
           }}
         >
@@ -52,8 +53,9 @@ const Player: React.FC<PlayerProps> = React.memo(({ player }) => {
 
       {/* Main HD Vector Player Sprite */}
       <div
-        className="absolute inset-0"
+        className="absolute left-0 right-0 bottom-0"
         style={{
+          height: 74,
           opacity: player.isInvincible && Math.floor(Date.now() / 90) % 2 === 0 ? 0.45 : 1,
           filter: speedBoostActive ? 'saturate(1.4) brightness(1.15)' : 'none',
         }}

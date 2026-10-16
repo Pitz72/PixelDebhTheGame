@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { levels } from '../levels';
-import { PLAYER_WIDTH, PLAYER_HEIGHT } from '../constants';
+import { PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_LEGACY_HEIGHT } from '../constants';
 
 const overlap = (
   a: { x: number; y: number; width: number; height: number },
@@ -11,7 +11,12 @@ describe('level data sanity', () => {
   levels.forEach((level, i) => {
     describe(`#${i + 1} ${level.name}`, () => {
       it('has a valid player start', () => {
-        const start = { ...level.playerStart, width: PLAYER_WIDTH, height: PLAYER_HEIGHT };
+        const start = {
+          x: level.playerStart.x,
+          y: level.playerStart.y - (PLAYER_HEIGHT - PLAYER_LEGACY_HEIGHT), // same shift as loadLevel
+          width: PLAYER_WIDTH,
+          height: PLAYER_HEIGHT,
+        };
         expect(level.platforms.some(p => overlap(start, p))).toBe(false);
       });
 

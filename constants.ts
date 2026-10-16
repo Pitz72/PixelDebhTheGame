@@ -4,7 +4,9 @@ export const GAME_HEIGHT = 1080;
 
 // Player physics
 export const PLAYER_WIDTH = 54;
-export const PLAYER_HEIGHT = 74;
+export const PLAYER_HEIGHT = 90; // was 74: the new, bigger Debh. The width stays so levels play the same.
+/** Level data gives playerStart.y for the original 74px body; spawns are shifted so the feet stay where they were. */
+export const PLAYER_LEGACY_HEIGHT = 74;
 export const PLAYER_SPEED = 9;
 export const PLAYER_FAST_SPEED = 14;
 export const PLAYER_ACCEL = 2.2;

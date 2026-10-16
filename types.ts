@@ -26,6 +26,12 @@ export interface Player extends DynamicObject {
   activePowerUp: ItemType | null;
   powerUpTimer: number;
   shootCooldown: number;
+  // Animation cues for the renderer (milliseconds left, aim as a unit vector)
+  shootAnim?: number;
+  aimX?: number;
+  aimY?: number;
+  throwAnim?: number;
+  hurtAnim?: number;
 }
 
 export type EnemyType = 'base' | 'jumper' | 'flyer' | 'bomber' | 'phaser';

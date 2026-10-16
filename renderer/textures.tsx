@@ -3,8 +3,6 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { Texture } from 'pixi.js';
 import { Boss, ItemType, MusicTheme } from '../types';
 import {
-  PlayerSprite,
-  PLAYER_POSES,
   EnemySprite,
   ItemSprite,
   GoalSprite,
@@ -23,8 +21,6 @@ import { mulberry32 } from '../engine/rng';
 import { PALETTES } from './palette';
 import { extractSvg, stripText, svgToCanvas } from './svgTexture';
 
-export type PlayerPoseName = 'idle' | 'run0' | 'run1' | 'run2' | 'run3' | 'jump' | 'fall';
-
 export interface ThemeTextures {
   sky: Texture;
   starsFar: Texture;
@@ -40,7 +36,6 @@ export interface ThemeTextures {
 }
 
 export interface TextureSet {
-  player: Record<PlayerPoseName, Texture>;
   enemies: Record<string, Texture>;
   items: Record<ItemType, Texture>;
   projectiles: { bomb: Texture; egg: Texture; fireball: Texture; cdrom: Texture; shot: Texture };
@@ -405,19 +400,6 @@ async function buildTexturesUncached(): Promise<TextureSet> {
     return tex(await svgToCanvas(svg, w, h, scale), { mipmaps: true });
   };
 
-  const poseNames = Object.keys(PLAYER_POSES) as PlayerPoseName[];
-  const player = {} as Record<PlayerPoseName, Texture>;
-  await Promise.all(
-    poseNames.map(async name => {
-      player[name] = await art(
-        <PlayerSprite direction="right" isInvincible={false} pose={PLAYER_POSES[name]} />,
-        54,
-        74,
-        4
-      );
-    })
-  );
-
   const enemyDefs: Array<[string, string, string, number, number]> = [];
   for (const type of ['base', 'jumper', 'bomber', 'phaser']) {
     for (const state of ['active', 'captured', 'stunned']) {
@@ -464,7 +446,6 @@ async function buildTexturesUncached(): Promise<TextureSet> {
   for (const t of Object.keys(PALETTES) as MusicTheme[]) themes[t] = buildTheme(t);
 
   return {
-    player,
     enemies,
     items,
     projectiles: { bomb, egg, fireball, cdrom, shot },

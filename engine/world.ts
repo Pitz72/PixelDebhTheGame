@@ -18,6 +18,7 @@ import {
   EXTRA_LIFE_SCORE_START,
   PLAYER_WIDTH,
   PLAYER_HEIGHT,
+  PLAYER_LEGACY_HEIGHT,
   BOSS_INITIAL_VX,
   BOSS_INITIAL_VY,
   FLYER_SPEED,
@@ -147,6 +148,11 @@ const emptyPlayer = (): Player => ({
   activePowerUp: null,
   powerUpTimer: 0,
   shootCooldown: 0,
+  shootAnim: 0,
+  aimX: 1,
+  aimY: 0,
+  throwAnim: 0,
+  hurtAnim: 0,
 });
 
 export const nextExtraLifeFor = (score: number): number => {
@@ -343,13 +349,14 @@ export function loadLevel(w: World, levelIndex: number): void {
   w.levelSerial += 1;
   w.levelWidth = width;
   w.levelHeight = height;
-  w.respawnPoint = { ...levelData.playerStart };
+  const startY = levelData.playerStart.y - (PLAYER_HEIGHT - PLAYER_LEGACY_HEIGHT);
+  w.respawnPoint = { x: levelData.playerStart.x, y: startY };
   w.cameraX = Math.max(0, Math.min(levelData.playerStart.x - GAME_WIDTH / 2, width - GAME_WIDTH));
   w.cameraY = Math.max(0, Math.min(levelData.playerStart.y - GAME_HEIGHT / 2, height - GAME_HEIGHT));
   w.prevCameraX = w.cameraX;
   w.prevCameraY = w.cameraY;
 
-  w.player = { ...emptyPlayer(), x: levelData.playerStart.x, y: levelData.playerStart.y };
+  w.player = { ...emptyPlayer(), x: levelData.playerStart.x, y: startY };
 
   w.platforms = levelData.platforms;
   w.checkpoints = (levelData.checkpoints || []).map((cp, idx) => ({
