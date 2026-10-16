@@ -4,9 +4,12 @@ Prepares the game's music tracks from generated audio files (see docs/MUSIC_BRIE
 
 For every <track>.(mp3|wav|flac|ogg|m4a) found in --src it:
   1. decodes it with ffmpeg to 48 kHz stereo and trims digital silence at both ends;
-  2. loops tracks: estimates tempo and beat grid, picks the loop start/end on the beat grid
-     (a whole number of bars apart) where the music before the two points sounds most alike,
-     aligns the waveform at the seam and bakes a short crossfade into the end of the loop;
+  2. loops tracks: estimates the tempo (and its 3:2 and 2:1 relatives, which dotted rhythms
+     can disguise as the beat), puts the loop start and end on the beat grid a whole number of
+     bars apart, and keeps the pair where the music before the end sounds most like the music
+     before the start. A track that repeats itself well gets the waveform aligned at the seam
+     and a 30 ms crossfade; one that does not (the feature distance is printed) gets a crossfade
+     of about a bar, so the end blends into the way into the start instead of jumping;
      one-shot tracks (victory, game over): adds a short fade-out if the file stops abruptly;
   3. normalises the loudness to -18 LUFS (BS.1770, gated) without exceeding -1.5 dBFS peak;
   4. encodes Ogg Vorbis, decodes it again and re-measures length, loudness and the loop seam;
@@ -37,7 +40,9 @@ from scipy.signal import lfilter, stft
 SR = 48000
 TARGET_LUFS = -18.0
 PEAK_CEILING_DB = -1.5
-FADE_S = 0.030  # crossfade baked into the loop seam
+FADE_S = 0.030  # crossfade baked into the seam of a loop that repeats itself well
+MAX_FADE_S = 3.0  # longest crossfade, used when the two loop points do not sound alike
+WELL_MATCHED = 2.0  # feature distance below which the short crossfade is enough
 
 LOOPING = ['title', 'world-adventure', 'world-industrial', 'world-ethereal',
            'boss-frog', 'boss-chicken-eye', 'boss-shadow-head', 'highscore']
@@ -133,38 +138,50 @@ def onset_strength(lm):
     return o / max(o.std(), 1e-9)
 
 
-def estimate_beat(o):
-    """Beat period in seconds and the time of the first beat, from the onset envelope."""
+def comb_refine(o, period):
+    """Slides a comb of beats over the whole onset envelope to refine the period and find the phase."""
+    n = len(o)
+    t_end = (n - 1) * FRAME_S
+    best_score, best_period, best_phase = -1e18, period, 0.0
+    for p in period * (1 + np.linspace(-0.015, 0.015, 301)):
+        for ph in np.linspace(0, p, 48, endpoint=False):
+            idx = np.round(np.arange(ph, t_end, p) / FRAME_S).astype(int)
+            idx = idx[idx < n]
+            sc = o[idx].mean()
+            if sc > best_score:
+                best_score, best_period, best_phase = sc, p, ph
+    return best_period, best_phase
+
+
+def tempo_hypotheses(o):
+    """
+    (period, phase) candidates. The strongest periodicity of the onset envelope is often not the
+    beat but a related rhythm (dotted notes give 2/3 of the tempo), so the 3:2 and 2:1 relatives
+    are tried as well; find_loop() keeps whichever gives the best loop.
+    """
     o = o - o.mean()
     n = len(o)
     ac = np.fft.irfft(np.abs(np.fft.rfft(o, 2 * n)) ** 2)[:n]
     lags = np.arange(1, n)
     bpm = 60 / (lags * FRAME_S)
     weight = np.exp(-0.5 * (np.log2(bpm / 120) / 0.8) ** 2) * ((bpm >= 70) & (bpm <= 180))
-    best = int(lags[np.argmax(ac[1:] * weight)])
-    period = best * FRAME_S
-
-    # refine the period (and find the phase) by sliding a comb of beats over the whole track
-    t = np.arange(n) * FRAME_S
-    best_score, best_period, best_phase = -1e18, period, 0.0
-    for p in period * (1 + np.linspace(-0.015, 0.015, 301)):
-        phases = np.linspace(0, p, 48, endpoint=False)
-        for ph in phases:
-            idx = np.round((np.arange(ph, t[-1], p)) / FRAME_S).astype(int)
-            idx = idx[idx < n]
-            s = o[idx].mean()
-            if s > best_score:
-                best_score, best_period, best_phase = s, p, ph
-    return best_period, best_phase
+    base = int(lags[np.argmax(ac[1:] * weight)]) * FRAME_S
+    periods = []
+    for ratio in (1, 1.5, 2 / 3, 2, 0.5):
+        p = base * ratio
+        if 60 / 200 <= p <= 60 / 70 and not any(abs(p / q - 1) < 0.03 for q in periods):
+            periods.append(p)
+    return [comb_refine(o, p) for p in periods]
 
 
-def window_features(lm, centre_s, beat_s):
-    """The bar before `centre_s` as 4 beat-averages of the log-mel spectrum, flattened."""
+def window_features(lm, start_s):
+    """Half a second at a time over two seconds from `start_s`: 4 average log-mel spectra, flattened."""
     parts = []
     for k in range(4):
-        a = int(round((centre_s - (4 - k) * beat_s) / FRAME_S))
-        b = int(round((centre_s - (3 - k) * beat_s) / FRAME_S))
-        a, b = max(a, 0), max(b, a + 1)
+        a = int(round((start_s + 0.5 * k) / FRAME_S))
+        b = int(round((start_s + 0.5 * (k + 1)) / FRAME_S))
+        a = min(max(a, 0), lm.shape[1] - 1)
+        b = min(max(b, a + 1), lm.shape[1])
         parts.append(lm[:, a:b].mean(axis=1))
     return np.concatenate(parts)
 
@@ -175,41 +192,55 @@ def rms_db(x):
 
 # --- loop search ------------------------------------------------------------------------
 
-def find_loop(x, lm, beat_s, phase):
+def find_loop(x, lm, hypotheses):
+    """
+    Picks loop start and end on a beat grid, a whole number of bars apart, for every tempo
+    hypothesis, and keeps the pair where the music before the end sounds most like the music
+    before the start (so the way into the start is what the loop end already sounds like), with
+    about the same energy before the end and after the start.
+    """
     dur = len(x) / SR
     mono = x.mean(axis=1)
-    # the last stretch to consider: before the outro fades out
     env = np.array([rms_db(mono[i:i + SR // 4]) for i in range(0, len(mono) - SR // 4, SR // 4)])
     steady = np.median(env[len(env) // 4:])
     quiet = np.nonzero(env < steady - 12)[0]
     quiet = quiet[quiet > len(env) // 2]
-    end_limit = min(dur - 0.5, (quiet[0] * 0.25) if len(quiet) else dur - 0.5)
+    end_limit = min(dur - 2.0, (quiet[0] * 0.25) if len(quiet) else dur - 2.0)
+    min_len = max(20.0, 0.25 * dur)
 
-    grid = np.arange(phase, dur, beat_s)
-    starts = [t for t in grid if FADE_S + 0.02 <= t <= min(0.35 * dur, 25.0)]
-    ends = [t for t in grid if t >= 0.4 * dur and t <= end_limit]
-    if not starts or not ends:
-        sys.exit('track too short or too irregular to loop (need 20 s or more with a steady beat)')
-
-    feat = {round(t, 4): window_features(lm, t, beat_s) for t in starts + ends}
-    level = {round(t, 4): rms_db(mono[max(0, int((t - 1.0) * SR)):int(t * SR)]) for t in starts + ends}
-    scale = np.sqrt(len(next(iter(feat.values()))))
+    def level(a, b):
+        return rms_db(mono[max(0, int(a * SR)):int(b * SR)])
 
     best = None
-    for s in starts:
-        for e in ends:
-            beats = (e - s) / beat_s
-            if abs(beats - round(beats)) > 0.1 or int(round(beats)) % 4 != 0:
-                continue
-            if abs(level[round(s, 4)] - level[round(e, 4)]) > 2.5:
-                continue
-            dist = np.linalg.norm(feat[round(s, 4)] - feat[round(e, 4)]) / scale
-            score = dist * (1 + 0.5 * (1 - (e - s) / dur))
-            if best is None or score < best[0]:
-                best = (score, s, e, dist)
+    for beat_s, phase in hypotheses:
+        grid = np.arange(phase, dur, beat_s)
+        starts = np.array([t for t in grid if MAX_FADE_S + 0.02 <= t <= min(0.6 * dur, dur - min_len - 2.0)])
+        ends = np.array([t for t in grid if 0.35 * dur <= t <= end_limit])
+        if len(starts) == 0 or len(ends) == 0:
+            continue
+        pre = lambda t: window_features(lm, t - 2.0)
+        pre_s = np.array([pre(t) for t in starts])
+        pre_e = np.array([pre(t) for t in ends])
+        scale = np.sqrt(pre_s.shape[1])
+        d_pre = np.linalg.norm(pre_s[:, None, :] - pre_e[None, :, :], axis=2) / scale
+        lvl_pre_e = np.array([level(t - 2.0, t) for t in ends])
+        lvl_post_s = np.array([level(t, t + 2.0) for t in starts])
+        for i, s in enumerate(starts):
+            for j, e in enumerate(ends):
+                length = e - s
+                beats = length / beat_s
+                if length < min_len or abs(beats - round(beats)) > 0.1 or int(round(beats)) % 4 != 0:
+                    continue
+                if abs(lvl_post_s[i] - lvl_pre_e[j]) > 3.0:
+                    continue
+                dist = d_pre[i, j]
+                score = dist * (1 + 0.5 * (1 - length / dur))
+                if best is None or score < best[0]:
+                    best = (score, s, e, dist, beat_s)
     if best is None:
-        sys.exit('no loop point pair found: the music changes too much between start and end')
-    return best[1], best[2], best[3]
+        sys.exit('no loop point pair found: the music changes too much between start and end '
+                 '(or the beat is not steady). Generate it again or pick another take.')
+    return best[1], best[2], best[3], best[4]
 
 
 def align_end(mono, ls, le, search_s=0.003, win_s=0.010):
@@ -225,13 +256,13 @@ def align_end(mono, ls, le, search_s=0.003, win_s=0.010):
     return best, best_c
 
 
-def bake_crossfade(x, ls, le, corr):
-    """Fades the last FADE_S before the loop end into the audio that precedes the loop start."""
-    n = int(FADE_S * SR)
+def bake_crossfade(x, ls, le, corr, fade_s=FADE_S):
+    """Fades the last `fade_s` before the loop end into the audio that precedes the loop start."""
+    n = int(fade_s * SR)
     t = np.linspace(0, 1, n, endpoint=False)[:, None]
-    if corr > 0.7:  # coherent signals: equal gain
+    if fade_s <= 0.1 and corr > 0.7:  # short and coherent: equal gain
         fo, fi = 1 - t, t
-    else:  # unrelated signals: equal power
+    else:  # unrelated signals or a long blend: equal power
         fo, fi = np.cos(t * np.pi / 2), np.sin(t * np.pi / 2)
     y = x[:le].copy()
     y[le - n:le] = x[le - n:le] * fo + x[ls - n:ls] * fi
@@ -291,15 +322,16 @@ def process(ffmpeg, key, src, out_dir):
 
     if looping:
         lm = log_mel(x.mean(axis=1))
-        beat_s, phase = estimate_beat(onset_strength(lm))
-        ls_s, le_s, dist = find_loop(x, lm, beat_s, phase)
+        ls_s, le_s, dist, beat_s = find_loop(x, lm, tempo_hypotheses(onset_strength(lm)))
         ls = int(round(ls_s * SR))
         le, corr = align_end(x.mean(axis=1), ls, int(round(le_s * SR)))
-        y = bake_crossfade(x, ls, le, corr)
+        fade_s = FADE_S if dist <= WELL_MATCHED else float(min(MAX_FADE_S, max(1.0, 4 * beat_s)))
+        y = bake_crossfade(x, ls, le, corr, fade_s)
         info.update({'loopStart': round(ls / SR, 6), 'loopEnd': round(le / SR, 6), 'gainDb': 0,
-                     'bpm': round(60 / beat_s, 2), 'loopBars': int(round((le - ls) / SR / beat_s / 4))})
+                     'bpm': round(60 / beat_s, 2), 'loopBars': int(round((le - ls) / SR / beat_s / 4)),
+                     'featureDistance': round(float(dist), 2), 'crossfadeMs': round(fade_s * 1000)})
         notes.append(f"{info['bpm']} BPM, loop {ls / SR:.3f} -> {le / SR:.3f} s ({info['loopBars']} bars), "
-                     f"feature distance {dist:.2f}, waveform correlation {corr:.2f}")
+                     f"feature distance {dist:.2f}, waveform correlation {corr:.2f}, crossfade {fade_s * 1000:.0f} ms")
     else:
         y = x.copy()
         tail = int(0.05 * SR)
