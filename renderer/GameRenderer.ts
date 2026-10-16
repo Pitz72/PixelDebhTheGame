@@ -1,3 +1,6 @@
+// The app ships with a strict Content-Security-Policy (no 'unsafe-eval'). Pixi normally compiles
+// uniform/shader sync code with `new Function`; this module swaps in CSP-safe implementations.
+import 'pixi.js/unsafe-eval';
 import { Application, Container, Graphics, Rectangle, Sprite, Text, Texture, TilingSprite } from 'pixi.js';
 import { AdvancedBloomFilter } from 'pixi-filters';
 import { Boss, Enemy, Item, ItemType, Platform, Projectile, PlayerProjectile, Player } from '../types';
@@ -404,6 +407,8 @@ export class GameRenderer {
   private slowWindows = 0;
   private fps = 0;
   private avgMs = 0;
+  private cpuAcc = 0;
+  private cpuMs = 0;
 
   private constructor(
     private app: Application,
@@ -531,6 +536,7 @@ export class GameRenderer {
   // -------------------------------------------------------------------------
 
   render(frame: Frame, alpha: number, now: number): void {
+    const cpuStart = performance.now();
     const dt = clamp(now - this.lastNow, 0, 50);
     this.lastNow = now;
     const dtF = dt / 16.667;
@@ -572,11 +578,12 @@ export class GameRenderer {
 
     if (this.quality === 'high') this.lighting.render(this.app.renderer);
     this.app.renderer.render({ container: this.stage });
+    this.cpuAcc += performance.now() - cpuStart;
 
     if (this.debug) {
       this.debugText.text =
         `${this.rendererName.toUpperCase()}  ${this.fps} fps  ${this.avgMs.toFixed(1)} ms (max ${this.statMax.toFixed(0)})\n` +
-        `quality ${this.quality}  res ${this.app.renderer.resolution.toFixed(2)}  particles ${this.particles.count}\n` +
+        `cpu ${this.cpuMs.toFixed(2)} ms/frame  quality ${this.quality}  res ${this.app.renderer.resolution.toFixed(2)}  particles ${this.particles.count}\n` +
         `platforms ${this.platformViews.size}  enemies ${this.enemyViews.size}  shots ${this.projViews.size}`;
     }
   }
@@ -960,10 +967,13 @@ export class GameRenderer {
       const secs = (now - this.statStart) / 1000;
       this.fps = Math.round(this.statFrames / secs);
       this.avgMs = (now - this.statStart) / this.statFrames;
+      this.cpuMs = this.cpuAcc / this.statFrames;
+      this.cpuAcc = 0;
       (window as unknown as { __pdPerf?: unknown }).__pdPerf = {
         fps: this.fps,
         avgMs: this.avgMs,
         maxMs: this.statMax,
+        cpuMs: this.cpuMs,
         quality: this.quality,
         renderer: this.rendererName,
         resolution: this.app.renderer.resolution,

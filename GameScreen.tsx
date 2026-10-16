@@ -114,12 +114,16 @@ const GameScreen: React.FC<GameScreenProps> = ({
   const [hud, setHud] = useState<HudData>(() => deriveHud(frameRef.current as Frame));
   const [domFrame, setDomFrame] = useState<Frame>(() => frameRef.current as Frame);
   const [isPaused, setIsPaused] = useState(false);
+  // Why WebGL could not be used (shown briefly, and with F3, when the compatibility renderer takes over).
+  const [renderError, setRenderError] = useState<string | null>(null);
+  const [showCompat, setShowCompat] = useState(true);
   const pausedRef = useRef(false);
   const [quality, setQualityState] = useState<Quality>(() =>
     storage.getItem(QUALITY_KEY) === 'low' ? 'low' : 'high'
   );
   const qualityRef = useRef<Quality>(quality);
   const debugRef = useRef(false);
+  const showCompatRef = useRef(true);
 
   const callbacksRef = useRef({ onGameOver, onCompleted });
   callbacksRef.current = { onGameOver, onCompleted };
@@ -175,7 +179,11 @@ const GameScreen: React.FC<GameScreenProps> = ({
       })
       .catch(error => {
         console.error('WebGL renderer unavailable, using the DOM renderer:', error);
-        if (!cancelled) changeMode('dom');
+        (window as unknown as { __pdRenderError?: string }).__pdRenderError = String(error);
+        if (!cancelled) {
+          setRenderError(error instanceof Error ? error.message : String(error));
+          changeMode('dom');
+        }
       });
 
     return () => {
@@ -186,6 +194,15 @@ const GameScreen: React.FC<GameScreenProps> = ({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (mode !== 'dom') return;
+    const id = window.setTimeout(() => {
+      showCompatRef.current = false;
+      if (!debugRef.current) setShowCompat(false);
+    }, 12000);
+    return () => window.clearTimeout(id);
+  }, [mode]);
 
   // --- Keyboard, focus and pause handling ---------------------------------
   useEffect(() => {
@@ -215,6 +232,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
         if (!e.repeat) {
           debugRef.current = !debugRef.current;
           rendererRef.current?.setDebug(debugRef.current);
+          setShowCompat(debugRef.current || showCompatRef.current);
         }
         return;
       }
@@ -385,6 +403,17 @@ const GameScreen: React.FC<GameScreenProps> = ({
         playerX={hud.playerX}
         levelWidth={hud.levelWidth}
       />
+
+      {mode === 'dom' && showCompat && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 pointer-events-none text-center">
+          <p className="text-lg font-black text-yellow-300 tracking-wider bg-black/70 px-6 py-2 rounded-xl border border-yellow-400/60">
+            MODALITÀ COMPATIBILITÀ: WebGL NON DISPONIBILE (niente luci dinamiche)
+          </p>
+          {renderError && (
+            <p className="mt-2 text-xs font-mono text-gray-300 bg-black/70 px-3 py-1 rounded max-w-[1200px] mx-auto">{renderError.slice(0, 300)}</p>
+          )}
+        </div>
+      )}
 
       {mode === 'loading' && (
         <div className="absolute inset-0 flex justify-center items-center z-40 pointer-events-none">
