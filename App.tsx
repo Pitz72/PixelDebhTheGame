@@ -11,6 +11,8 @@ import { GameState } from './types';
 import { GAME_WIDTH, GAME_HEIGHT } from './constants';
 import * as highscoreService from './services/highscoreService';
 import * as soundService from './services/soundService';
+import * as storage from './services/storage';
+import { isTauri, setFullscreen, toggleFullscreen } from './services/platform';
 
 interface Carry {
   score: number;
@@ -27,24 +29,31 @@ function App() {
   const [carry, setCarry] = useState<Carry>({ score: 0 });
   const { dimensions, margins } = useGameScale();
 
+  // In a browser tab the game asks for fullscreen on the first interaction (browsers need a
+  // user gesture). The desktop app starts windowed and remembers the player's choice instead.
   const requestAppFullscreen = useCallback(() => {
-    if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-      document.documentElement.requestFullscreen().catch(() => {});
-    }
+    if (!isTauri()) void setFullscreen(true);
   }, []);
 
-  // Global keys: F toggles fullscreen, M toggles mute (neither while typing initials);
-  // any key during the intro also enters fullscreen.
+  const toggleAppFullscreen = useCallback(async () => {
+    const on = await toggleFullscreen();
+    if (isTauri()) storage.setItem('pixelDebhFullscreen', on ? '1' : '0');
+  }, []);
+
+  // Global keys: F / F11 / Alt+Enter toggle fullscreen, M toggles mute
+  // (F and M are ignored while typing initials).
   useEffect(() => {
     const handleGlobalKey = (e: KeyboardEvent) => {
-      if (gameState === 'enter-highscore' || e.repeat) return;
+      if (e.repeat) return;
+      if (e.key === 'F11' || (e.altKey && e.key === 'Enter')) {
+        e.preventDefault();
+        void toggleAppFullscreen();
+        return;
+      }
+      if (gameState === 'enter-highscore') return;
       const key = e.key.toLowerCase();
       if (key === 'f') {
-        if (!document.fullscreenElement) {
-          document.documentElement.requestFullscreen().catch(() => {});
-        } else {
-          document.exitFullscreen().catch(() => {});
-        }
+        void toggleAppFullscreen();
       } else if (key === 'm') {
         soundService.toggleMuted();
       } else if (gameState === 'intro') {
@@ -53,7 +62,7 @@ function App() {
     };
     window.addEventListener('keydown', handleGlobalKey);
     return () => window.removeEventListener('keydown', handleGlobalKey);
-  }, [gameState, requestAppFullscreen]);
+  }, [gameState, requestAppFullscreen, toggleAppFullscreen]);
 
   const handleIntroComplete = useCallback(() => {
     requestAppFullscreen();

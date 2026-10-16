@@ -1,3 +1,5 @@
+import * as storage from './storage';
+
 let audioContext: AudioContext | null = null;
 let masterGain: GainNode | null = null;
 let soundsLoaded = false;
@@ -277,8 +279,16 @@ export function isMuted(): boolean {
   return muted;
 }
 
+const MUTED_KEY = 'pixelDebhMuted';
+
+/** Restore the saved mute setting (call once after initStorage). */
+export function loadAudioSettings() {
+  muted = storage.getItem(MUTED_KEY) === '1';
+}
+
 export function setMuted(value: boolean) {
   muted = value;
+  storage.setItem(MUTED_KEY, muted ? '1' : '0');
   if (masterGain && audioContext) {
     masterGain.gain.setTargetAtTime(muted ? 0 : 1, audioContext.currentTime, 0.015);
   }

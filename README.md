@@ -79,6 +79,20 @@ npm run typecheck  # tsc --noEmit
 npm run build      # production bundle (everything is bundled locally, no CDN, works offline)
 ```
 
+### Desktop app (Tauri v2, Windows and Linux)
+
+The game also ships as a native desktop app (`src-tauri/`). It needs [Rust](https://rustup.rs) and the [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) for your OS (on Windows: Visual Studio Build Tools with the C++ workload and WebView2; on Linux: `libwebkit2gtk-4.1-dev` and friends).
+
+```bash
+npm run desktop                       # run the app in dev mode (hot reload)
+npx tauri build --bundles nsis        # Windows installer  -> src-tauri/target/release/bundle/nsis
+npx tauri build --bundles deb,appimage  # Linux packages (build this on Linux)
+```
+
+- High scores and settings (mute, fullscreen) are saved in `save.json` in the app data folder (`%APPDATA%\com.pixeldebh.retrorescue` on Windows). In a browser they fall back to `localStorage`.
+- The app starts windowed (16:9, resizable). `F`, `F11` or `Alt+Enter` toggle fullscreen and the choice is remembered.
+- The `Desktop build` GitHub workflow (`.github/workflows/desktop.yml`, run by hand or on a `v*` tag) builds the Windows installer and the Linux packages and uploads them as artifacts.
+
 The game simulation lives in `engine/` as plain TypeScript with a fixed 60 Hz timestep and no DOM or audio access: it emits events (sounds, music, game over) that `GameScreen.tsx` forwards to the UI and to `services/soundService.ts`. That is what the automated tests exercise.
 
 ## Built With

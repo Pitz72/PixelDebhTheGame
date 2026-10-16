@@ -1,0 +1,62 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "PixelDebh Retro-Rescue",
+  "version": "1.2.0",
+  "identifier": "com.pixeldebh.retrorescue",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:3000",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "PixelDebh: Retro-Rescue!",
+        "width": 1280,
+        "height": 720,
+        "minWidth": 960,
+        "minHeight": 540,
+        "center": true,
+        "resizable": true,
+        "fullscreen": false,
+        "backgroundColor": "#04010c"
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' blob: data:; connect-src 'self' ipc: http://ipc.localhost; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
+      "devCsp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "publisher": "Pixel Debh",
+    "category": "Game",
+    "shortDescription": "PixelDebh: Retro-Rescue! - arcade platformer",
+    "longDescription": "PixelDebh: Retro-Rescue! is a retro arcade platformer: capture enemies, throw them at the others, collect the retro gear and beat three bosses.",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "displayLanguageSelector": true,
+        "languages": ["Italian", "English"]
+      }
+    },
+    "linux": {
+      "appimage": {
+        "bundleMediaFramework": true
+      },
+      "deb": {
+        "depends": ["gstreamer1.0-plugins-base", "gstreamer1.0-plugins-good"]
+      }
+    }
+  }
+}

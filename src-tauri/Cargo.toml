@@ -1,0 +1,27 @@
+[package]
+name = "pixeldebh"
+version = "1.2.0"
+description = "PixelDebh: Retro-Rescue! - arcade platformer"
+authors = ["Pixel Debh"]
+license = ""
+repository = "https://github.com/Pitz72/PixelDebhTheGame"
+edition = "2021"
+rust-version = "1.77.2"
+
+[lib]
+name = "pixeldebh_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-store = "2"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

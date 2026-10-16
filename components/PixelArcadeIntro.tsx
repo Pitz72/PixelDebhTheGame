@@ -196,7 +196,7 @@ const PixelArcadeIntro: React.FC<PixelArcadeIntroProps> = ({ onIntroComplete }) 
       </div>
 
       <div className="absolute bottom-3 text-cyan-300/60 text-xs tracking-widest font-bold z-20">
-        V.1.1.0 — OFFICIAL LOGO EDITION • ULTRA HD VECTOR ENGINE &amp; VISUAL FX
+        V.{__APP_VERSION__} — OFFICIAL LOGO EDITION • ULTRA HD VECTOR ENGINE &amp; VISUAL FX
       </div>
     </div>
   );

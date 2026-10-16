@@ -1,5 +1,6 @@
 import { HighscoreEntry } from '../types';
 import { HIGHSCORE_KEY } from '../constants';
+import * as storage from './storage';
 
 const MAX_SCORES = 5;
 
@@ -12,7 +13,7 @@ const createDefaultScores = (): HighscoreEntry[] => {
 
 export function getHighscores(): HighscoreEntry[] {
   try {
-    const scoresJSON = localStorage.getItem(HIGHSCORE_KEY);
+    const scoresJSON = storage.getItem(HIGHSCORE_KEY);
     if (!scoresJSON) return createDefaultScores();
     
     const scores = JSON.parse(scoresJSON);
@@ -40,7 +41,7 @@ function saveHighscores(scores: HighscoreEntry[]): void {
         sortedScores.push({ name: 'AAA', score: 0 });
     }
 
-    localStorage.setItem(HIGHSCORE_KEY, JSON.stringify(sortedScores));
+    storage.setItem(HIGHSCORE_KEY, JSON.stringify(sortedScores));
   } catch (error) {
     console.error("Failed to save highscores:", error);
   }
