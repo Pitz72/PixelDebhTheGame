@@ -1,3 +1,45 @@
+# Decisioni e cose da fare per arrivare al 100% (stato al 2026-10-17, v1.18.0)
+
+Il gioco e' finito: tutte le 7 fasi della roadmap e tutto l'audit sono chiusi (`docs/AUDIT.md`), `npm audit` e' a zero, 582 test verdi, tutto pubblicato su `main`. Quello che manca e' la **pubblicazione**, qualche **decisione** e le **prove che solo l'utente puo' fare**. Verificato su GitHub il 2026-10-17: repo `Pitz72/PixelDebhTheGame` **pubblico**, **nessun segreto** impostato, **nessuna esecuzione** del workflow, **nessuna release**, nessuna licenza.
+
+## Decisioni dell'utente (da prendere per prime)
+
+| # | Decisione | Perche' serve | Consiglio |
+|---|---|---|---|
+| D1 | **Licenza** del repo (codice, grafica, musiche Lyria) e file `LICENSE` | Il repo e' pubblico ma senza licenza: per legge tutti i diritti restano all'autore e nessuno puo' riusare niente. Per le musiche vanno visti i termini di Lyria | Decidere cosa si puo' fare con codice e grafica (per esempio codice sotto una licenza aperta, grafica e musiche con tutti i diritti riservati) |
+| D2 | OK a impostare i **2 segreti GitHub** (`TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`) | Senza, la build non firma i pacchetti dell'aggiornamento | Prima una **copia sicura** della cartella `C:\Users\Utente\.pixeldebh-signing\` (se la chiave si perde non si aggiornano piu' i giochi gia' installati) |
+| D3 | **Firma del codice** (SmartScreen di Windows) | Senza, i giocatori vedono "Esegui comunque" | SignPath Foundation: gratuita per l'open source, richiede una domanda. Si puo' rimandare a dopo la prima release |
+| D4 | **Classifica online** per tutti (`docs/CLASSIFICA_ONLINE.md`) | E' la richiesta 11: va deciso se e quando farla | Fase 1 su Cloudflare, poi la verifica per rigiocata contro i trucchi |
+| D5 | **Dove e come si scarica** il gioco gratuito (solo GitHub Releases? un sito? itch.io?) | Per ora c'e' solo la pagina Release | Dirlo all'inizio della sessione: le pagine di download e il README si scrivono di conseguenza |
+
+## Azioni dell'assistente (dopo le decisioni)
+
+| # | Azione | Quando |
+|---|---|---|
+| A1 | `LICENSE` e voce nel README | Dopo D1 |
+| A2 | Impostare i segreti con `gh secret set` (comandi in `docs/RILASCIO.md`) | Dopo D2 |
+| A3 | Prima build di prova `build-only` (Windows e Linux) con `gh workflow run release.yml -f mode=build-only`, guardare i log e correggere | Dopo A2 (mai partita: e' la prova vera) |
+| A4 | Bozza di release `mode=draft` con `latest.json` e `log/<versione>.md`; **l'utente preme "Publish release"** | Dopo A3 |
+| A5 | **Prova dell'aggiornamento automatico**: servono due release pubblicate in fila (per esempio 1.18.0 e 1.18.1) e un installatore vero. Provare anche l'avviso della portable | Dopo A4 |
+| A6 | Domanda a SignPath e firma nella build | Dopo D3 |
+| A7 | Classifica online (fase 1) | Dopo D4 |
+| A8 | `cargo audit` (installare lo strumento, circa 5 minuti) | Quando si vuole |
+| A9 | Ripiego DOM (`?dom`): ha ancora il vecchio Debh e il vecchio sfondo; aggiornarlo oppure dichiararlo non supportato | Bassa priorita' |
+
+## Prove che solo l'utente puo' fare
+
+-   Giocare a mano e **regolare i numeri**: forza delle molle (`SPRING_FORCE`), periodi di ascensore (L5, 6 s) e traghetto (L9, 7 s) in `levels.ts`, finestra della catena (`COMBO_WINDOW_MS`), fasi dei boss (`BOSS_PHASE_RATE`/`BOSS_PHASE_SPEED`), difficolta' facile/normale/difficile, labirinto (zoom 1,3, Debh all'80%, timer 17:00), stage finale a tre boss, livelli 10 e 11, soglie dei trofei.
+-   **Ascoltare l'audio**: i 4 loop con dissolvenza lunga (world-adventure, boss-frog, boss-shadow-head, boss-chicken-eye), il bilanciamento dal pannello `O`, il jingle del trofeo; `Orbital_Lockdown.mp3` non e' assegnato.
+-   **Rileggere `PRESENTAZIONE.md`** (riscritta dall'assistente il 2026-10-17, commit 712232f).
+-   Dove possibile: provare su un **Linux vero** con GPU e audio, e su un monitor a **144 Hz o 4K** (qui il monitor e' a 60 Hz e il 4K e' emulato).
+-   A gusto: gli archi del mondo boss sembrano ganci, l'astro del mondo industriale ricorda un pianeta a bande.
+
+## Il percorso piu' corto
+
+D1 + D2 -> A1 + A2 -> A3 (build di prova) -> A4 (bozza, l'utente pubblica) -> A5 (due release, prova dell'aggiornamento). D3, D4, D5 e le prove a mano corrono in parallelo.
+
+---
+
 # Prompt per la prossima sessione (copia e incolla)
 
 ```
