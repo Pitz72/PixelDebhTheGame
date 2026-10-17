@@ -37,6 +37,7 @@ gh secret set TAURI_SIGNING_PRIVATE_KEY_PASSWORD < C:/Users/Utente/.pixeldebh-si
 4.  **Una prova (facoltativa)**: Actions > Build and release > Run workflow > `mode = build-only`. Costruisce Windows e Linux e lascia i file come allegati della corsa, senza pubblicare niente.
 5.  **La bozza**: `mode = draft` (e' il valore predefinito). Costruisce, firma e crea la release **in bozza** `v<versione>` con tutti i file e `latest.json`. Una bozza **non e' visibile** a nessuno, ne' ai giocatori ne' ai giochi che cercano aggiornamenti.
 6.  **Pubblicare**: apri la bozza su GitHub (Releases), controlla i file e le note, premi **Publish release**. Da quel momento diventa la «Latest» e i giochi installati la offrono. (Oppure lancia direttamente `mode = publish`.)
+7.  **La landing del gioco nel catalogo Ecosystem**: nel repo `C:\Users\Utente\Documents\GitHub\SITI-WEB\ECOSYSTEM` aggiorna la scheda `pixeldebh-retro-rescue` in `src/data/products.json` (versione, nomi dei file nei link di download, riga «Versione» della scheda tecnica), poi `npm run build`, la voce nel CHANGELOG del sito e il deploy. I link puntano a una versione precisa: se non li aggiorni, il sito offre la release vecchia.
 
 Da riga di comando: `gh workflow run release.yml -f mode=draft` e poi `gh run watch`.
 
