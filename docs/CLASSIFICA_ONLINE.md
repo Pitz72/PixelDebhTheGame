@@ -1,5 +1,7 @@
 # Una classifica online per tutti: relazione di fattibilita'
 
+> **Stato: SOSPESA (2026-10-18).** L'autore ha deciso di non farla per ora: rendere l'invio dei punteggi compatibile con le regole legali, la privacy e il GDPR gli sembra troppo complicato. L'idea resta per il futuro prossimo. Questa relazione copre la parte tecnica; **manca ancora la valutazione GDPR** (base giuridica, informativa, tempi di conservazione, diritto di cancellazione, dove stanno i dati: un server in UE o Cloudflare). Va fatta prima di scrivere codice. Nel frattempo il gioco ha solo la classifica locale, che non invia nulla.
+
 **In breve.** Si puo' fare, costa zero (o quasi) e si puo' costruire in due tempi. Il punto difficile non e' mostrare la classifica a tutti: e' farla **vera**, cioe' impedire che chiunque scriva "999.999.999" con due righe di codice. Questo e' un gioco gratuito che gira sul computer del giocatore, quindi di suo non c'e' modo di fidarsi di un punteggio che arriva da fuori. Si risolve a strati: controlli semplici subito, e poi una verifica vera, resa possibile da una cosa che il gioco ha gia': **il motore e' puro e deterministico**.
 
 ## 1. Che cosa serve, in generale
