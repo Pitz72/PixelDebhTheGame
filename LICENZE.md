@@ -41,7 +41,8 @@ Il criterio, se un file non è nell'elenco: ciò che **disegna** un personaggio,
 **Tutti i diritti riservati.** Si possono ridistribuire solo come parte di questo gioco, senza modifiche; un'opera derivata deve toglierli o sostituirli, e non può presentarsi come il gioco ufficiale del canale.
 
 - **I nomi**: PixelDebh, Pixel Debh, Debh, «PixelDebh: Retro-Rescue!», Runtime Multimedia e i nomi dei personaggi, dei nemici e dei boss del gioco (Globby, Hoppy, Flappy, Bomby, Ghosty, Cyclops Frog, LeGallineNellOcchi, CapocciaNelBuio).
-- **I loghi**: il logo del canale PixelDebh (`public/pixeldebh-logo.png`), le forme di Debh tracciate da quel logo (`characters/debh/traced/`), le icone dell'app (`src-tauri/icons/`) e il marchio di Runtime Multimedia (`intro/runtimeForme.ts`).
+- **I loghi**: il logo del canale PixelDebh (`public/pixeldebh-logo.png`), le forme di Debh tracciate da quel logo (`characters/debh/traced/`), le icone dell'app (`src-tauri/icons/`) e il marchio di Runtime Multimedia (`intro/runtimeForme.ts` e `tools/branding/assets/`).
+- **Le immagini promozionali**: i banner per i social, l'immagine per GitHub e il poster in `branding/`, che portano nomi e loghi. Il codice che le compone (`tools/branding/`) è MIT, tranne il logo di Runtime Multimedia che contiene.
 - **Le animazioni d'apertura**: l'intro animata di PixelDebh (`public/intro/pixeldebh-intro.webm`) e l'animazione, con il suo suono, del logo di Runtime Multimedia (la cartella `intro/`). La stessa animazione resta MIT nel suo repository d'origine, *Il Relitto Silente*: qui è riservata.
 
 ## Che cosa non è coperto
