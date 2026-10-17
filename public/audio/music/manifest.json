@@ -119,24 +119,6 @@
       "peakDb": -2.6,
       "seamRank": 0.55,
       "clickRatio": 0.2
-    },
-    "victory": {
-      "file": "victory.ogg",
-      "loopStart": 0,
-      "loopEnd": 0,
-      "gainDb": 0,
-      "durationS": 59.038,
-      "lufs": -18.1,
-      "peakDb": -5.4
-    },
-    "gameover": {
-      "file": "gameover.ogg",
-      "loopStart": 0,
-      "loopEnd": 0,
-      "gainDb": 0,
-      "durationS": 59.307,
-      "lufs": -18.9,
-      "peakDb": -1.3
     }
   }
 }
