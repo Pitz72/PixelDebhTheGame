@@ -19,6 +19,7 @@ import {
 import { LEGACY_QUALITY_KEY, SETTINGS_KEY, bindKey, clearKey, defaultSettings, getSettings, keyLabel, parseBindings, parseSettings, updateSettings } from '../services/settings';
 import { bindableKey } from '../components/OptionsScreen';
 import { it as italian } from '../locales/it';
+import { getLanguage, setLanguage } from '../services/i18n';
 import * as storage from '../services/storage';
 
 // the tests run without a browser: a plain in-memory localStorage for the saved settings
@@ -218,7 +219,17 @@ describe('the settings', () => {
   });
 
   it('write keys the way they are read', () => {
-    expect(keyLabel(' ')).toBe('SPAZIO');
+    // the label of the space bar follows the language, which follows the system: set it, so the test
+    // gives the same answer on an Italian PC and on an English CI runner
+    const before = getLanguage();
+    try {
+      setLanguage('it');
+      expect(keyLabel(' ')).toBe('SPAZIO');
+      setLanguage('en');
+      expect(keyLabel(' ')).toBe('SPACE');
+    } finally {
+      setLanguage(before);
+    }
     expect(keyLabel('arrowleft')).toBe('←');
     expect(keyLabel('shift')).toBe('SHIFT');
     expect(keyLabel('k')).toBe('K');
