@@ -1,5 +1,5 @@
-import { LevelData, EnemyType, ItemType } from './types';
-import { GAME_WIDTH, GAME_HEIGHT, BOSS_INITIAL_HP, BOSS_2_HP, BOSS_3_HP, MAZE_PLAYER_SPEED, MAZE_ZOOM } from './constants';
+import { LevelData, EnemyType, ItemType, CollectibleType } from './types';
+import { GAME_WIDTH, GAME_HEIGHT, BOSS_INITIAL_HP, BOSS_2_HP, BOSS_3_HP, MAZE_PLAYER_SPEED, MAZE_ZOOM, COLLECTIBLE_TYPES } from './constants';
 import { generateMaze } from './mazeGen';
 
 const GOAL_WIDTH = 90;
@@ -11,6 +11,45 @@ const seededVal = (seed: number, index: number): number => {
   return x - Math.floor(x);
 };
 
+// ---------------------------------------------------------------------------
+// New collectibles arrive a few at a time: each one debuts in a level of its own and
+// then keeps turning up in the later ones.
+// ---------------------------------------------------------------------------
+
+const isCollectibleType = (t: ItemType): t is CollectibleType => (COLLECTIBLE_TYPES as ItemType[]).includes(t);
+
+/** Collectibles a level may hand out, cumulative: joystick, floppy and cartridge, then one more per level. */
+const TYPES_LEVEL_2 = [...COLLECTIBLE_TYPES.slice(0, 3), 'cassette'] as CollectibleType[];
+const TYPES_LEVEL_3 = [...TYPES_LEVEL_2, 'token'] as CollectibleType[];
+const TYPES_LEVEL_5 = [...TYPES_LEVEL_3, 'webcam'] as CollectibleType[];
+const TYPES_LEVEL_6 = [...TYPES_LEVEL_5, 'microphone'] as CollectibleType[];
+const TYPES_LEVEL_7 = [...TYPES_LEVEL_6, 'crt'] as CollectibleType[];
+const TYPES_ALL = [...TYPES_LEVEL_7, 'ringlight'] as CollectibleType[];
+
+/** The hand-placed collectibles of a level, left to right. */
+const collectibleIndexes = (level: LevelData, minX: number): number[] =>
+  level.items
+    .map((it, i) => ({ it, i }))
+    .filter(({ it }) => isCollectibleType(it.type) && it.x >= minX)
+    .sort((a, b) => a.it.x - b.it.x)
+    .map(({ i }) => i);
+
+/** Debut of a new collectible: swaps the first `count` hand-placed ones, a little way in, for the new type. */
+function introduce(level: LevelData, type: CollectibleType, count = 2): LevelData {
+  const swap = new Set(collectibleIndexes(level, 500).slice(0, count));
+  return { ...level, items: level.items.map((it, i) => (swap.has(i) ? { ...it, type } : it)) };
+}
+
+/** Spreads the given collectible types, in turn, over the hand-placed collectibles of a level. */
+function spreadTypes(level: LevelData, types: CollectibleType[]): LevelData {
+  const order = collectibleIndexes(level, 0);
+  const typeAt = new Map(order.map((idx, n) => [idx, types[n % types.length]]));
+  return {
+    ...level,
+    items: level.items.map((it, i) => (typeAt.has(i) ? { ...it, type: typeAt.get(i) as CollectibleType } : it)),
+  };
+}
+
 interface ExpansionConfig {
   seed: number;
   baseEndX: number;
@@ -20,6 +59,8 @@ interface ExpansionConfig {
   isSkyway?: boolean;
   allowedEnemies: EnemyType[];
   collectibleInterval: number;
+  /** Kinds of collectible the generated sectors hand out, in turn. Default: joystick, floppy, cartridge. */
+  collectibleTypes?: CollectibleType[];
 }
 
 /**
@@ -82,7 +123,8 @@ function buildExponentialExtension(
 
   let cursorX = cfg.baseEndX;
   let sectorIdx = 0;
-  const collectibleTypes: ItemType[] = ['joystick', 'floppy', 'cartridge'];
+  let collectiblesPlaced = 0;
+  const collectibleTypes: ItemType[] = cfg.collectibleTypes ?? COLLECTIBLE_TYPES.slice(0, 3);
   const powerUpTypes: ItemType[] = ['speed-boost', 'shield', 'super-throw'];
 
   while (cursorX < cfg.targetWidth - 900) {
@@ -168,7 +210,11 @@ function buildExponentialExtension(
 
     // 5. Place Collectibles at regular intervals
     if (sectorIdx % cfg.collectibleInterval === 0) {
-      const cType = collectibleTypes[sectorIdx % collectibleTypes.length];
+      // A level with newer collectibles hands them out newest first, so the debut is seen and the older
+      // ones keep coming back; the first level keeps its original rhythm.
+      const cType = cfg.collectibleTypes
+        ? collectibleTypes[collectibleTypes.length - 1 - (collectiblesPlaced++ % collectibleTypes.length)]
+        : collectibleTypes[sectorIdx % collectibleTypes.length];
       items.push({
         type: cType,
         x: p2X + Math.floor(p2W / 2) - 25,
@@ -343,8 +389,9 @@ const rawLevel2: LevelData = {
   ],
 };
 
-const level2 = buildExponentialExtension(rawLevel2, {
+const level2 = buildExponentialExtension(introduce(rawLevel2, 'cassette'), {
   seed: 202,
+  collectibleTypes: TYPES_LEVEL_2,
   baseEndX: 4800,
   targetWidth: 8820,
   levelHeight: 1200,
@@ -388,8 +435,9 @@ const rawLevel3: LevelData = {
   ],
 };
 
-const level3 = buildExponentialExtension(rawLevel3, {
+const level3 = buildExponentialExtension(introduce(rawLevel3, 'token'), {
   seed: 303,
+  collectibleTypes: TYPES_LEVEL_3,
   baseEndX: 4500,
   targetWidth: 12350,
   levelHeight: 1300,
@@ -467,8 +515,9 @@ const rawLevel5: LevelData = {
   ],
 };
 
-const level5 = buildExponentialExtension(rawLevel5, {
+const level5 = buildExponentialExtension(introduce(rawLevel5, 'webcam'), {
   seed: 505,
+  collectibleTypes: TYPES_LEVEL_5,
   baseEndX: 5200,
   targetWidth: 17290,
   levelHeight: 1500,
@@ -518,8 +567,9 @@ const rawLevel6: LevelData = {
   ],
 };
 
-const level6 = buildExponentialExtension(rawLevel6, {
+const level6 = buildExponentialExtension(introduce(rawLevel6, 'microphone'), {
   seed: 606,
+  collectibleTypes: TYPES_LEVEL_6,
   baseEndX: 6000,
   targetWidth: 24200,
   levelHeight: 1550,
@@ -602,8 +652,9 @@ const rawLevel7: LevelData = {
   ],
 };
 
-const level7 = buildExponentialExtension(rawLevel7, {
+const level7 = buildExponentialExtension(introduce(rawLevel7, 'crt'), {
   seed: 808,
+  collectibleTypes: TYPES_LEVEL_7,
   baseEndX: 7500,
   targetWidth: 33880,
   levelHeight: 1650,
@@ -653,8 +704,9 @@ const rawLevel9: LevelData = {
   ],
 };
 
-const level9 = buildExponentialExtension(rawLevel9, {
+const level9 = buildExponentialExtension(introduce(rawLevel9, 'ringlight'), {
   seed: 909,
+  collectibleTypes: TYPES_ALL,
   baseEndX: 9500,
   targetWidth: 47430,
   levelHeight: 1850,
@@ -713,8 +765,9 @@ const rawLevel10: LevelData = {
   ],
 };
 
-const level10 = buildExponentialExtension(rawLevel10, {
+const level10 = buildExponentialExtension(spreadTypes(rawLevel10, TYPES_ALL), {
   seed: 1010,
+  collectibleTypes: TYPES_ALL,
   baseEndX: 11000,
   targetWidth: 66400,
   levelHeight: 2050,
@@ -797,8 +850,9 @@ const rawLevel11: LevelData = {
   ],
 };
 
-const level11 = buildExponentialExtension(rawLevel11, {
+const level11 = buildExponentialExtension(spreadTypes(rawLevel11, TYPES_ALL), {
   seed: 1111,
+  collectibleTypes: TYPES_ALL,
   baseEndX: 10500,
   targetWidth: 92960,
   levelHeight: 2250,
@@ -839,7 +893,20 @@ const labyrinth = generateMaze({
   rows: 22,
   pitch: 256,
   wall: 56,
-  items: { joystick: 6, floppy: 6, cartridge: 6, 'speed-boost': 2, shield: 2, 'super-throw': 2 },
+  items: {
+    joystick: 2,
+    floppy: 2,
+    cartridge: 2,
+    cassette: 2,
+    token: 2,
+    crt: 2,
+    webcam: 2,
+    microphone: 2,
+    ringlight: 2,
+    'speed-boost': 2,
+    shield: 2,
+    'super-throw': 2,
+  },
   enemies: { phaser: 4, flyer: 7, base: 7, jumper: 5, bomber: 4 },
   braid: 0.35,
   straight: 0.55,

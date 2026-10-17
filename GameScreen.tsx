@@ -140,6 +140,13 @@ const GameScreen: React.FC<GameScreenProps> = ({
       god: (on: boolean) => {
         w.isGodMode = on;
       },
+      /** Puts the player somewhere in the level (for looking at a spot without walking there). */
+      warp: (x: number, y: number) => {
+        w.player.x = x;
+        w.player.y = y;
+        w.player.vx = 0;
+        w.player.vy = 0;
+      },
       state: () => ({
         level: w.currentLevelIndex,
         status: w.status,

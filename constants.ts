@@ -1,3 +1,5 @@
+import type { CollectibleType } from './types';
+
 // Game dimensions (Viewport)
 export const GAME_WIDTH = 1920;
 export const GAME_HEIGHT = 1080;
@@ -89,3 +91,16 @@ export const MAX_PARTICLES = 360;
 
 // Highscore settings
 export const HIGHSCORE_KEY = 'pixelDebhHighscores';
+
+/** What the exit asks for: collect every one of these (power-ups are optional). */
+export const COLLECTIBLE_TYPES: CollectibleType[] = [
+  'joystick',
+  'floppy',
+  'cartridge',
+  'cassette',
+  'token',
+  'crt',
+  'webcam',
+  'microphone',
+  'ringlight',
+];

@@ -510,6 +510,15 @@ export const EnemySprite = ({ type, state }: { type: string; state: string }) =>
 // ============================================================================
 // ITEM SPRITES (COLLECTIBLES & POWER-UPS)
 // ============================================================================
+/** The "P" of Pixel on the arcade token, drawn as 4 px blocks. */
+const PIXEL_P: [number, number][] = [
+  [22, 18], [26, 18], [30, 18], [34, 18],
+  [22, 22], [38, 22],
+  [22, 26], [38, 26],
+  [22, 30], [26, 30], [30, 30], [34, 30],
+  [22, 34], [22, 38], [22, 42],
+];
+
 export const ItemSprite = ({ type }: { type: string }) => {
   switch (type) {
     case 'speed-boost':
@@ -649,6 +658,161 @@ export const ItemSprite = ({ type }: { type: string }) => {
           <rect x="31" y="49" width="3" height="7" fill="#ffd740" />
           <rect x="37" y="49" width="3" height="7" fill="#ffd740" />
           <rect x="43" y="49" width="3" height="7" fill="#ffd740" />
+        </svg>
+      );
+
+    case 'cassette':
+      return (
+        <svg viewBox="0 0 64 64" className="w-full h-full animate-vector-float">
+          <defs>
+            <linearGradient id="cass-body" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#ff8a65" />
+              <stop offset="100%" stopColor="#bf360c" />
+            </linearGradient>
+          </defs>
+          <circle cx="32" cy="32" r="28" fill="rgba(255, 112, 67, 0.16)" />
+          <rect x="6" y="14" width="52" height="36" rx="4" fill="url(#cass-body)" stroke="#2A1810" strokeWidth="2.2" />
+          <rect x="11" y="18" width="42" height="16" rx="2" fill="#FFF5DC" stroke="#2A1810" strokeWidth="1.3" />
+          <line x1="15" y1="23" x2="42" y2="23" stroke="#2979ff" strokeWidth="2.2" strokeLinecap="round" />
+          <line x1="15" y1="28" x2="36" y2="28" stroke="#DF5327" strokeWidth="2" strokeLinecap="round" />
+          <rect x="19" y="36" width="26" height="10" rx="5" fill="#212121" stroke="#2A1810" strokeWidth="1.5" />
+          <circle cx="26" cy="41" r="3.6" fill="#cfd8dc" stroke="#2A1810" strokeWidth="1" />
+          <circle cx="38" cy="41" r="3.6" fill="#cfd8dc" stroke="#2A1810" strokeWidth="1" />
+          <circle cx="26" cy="41" r="1.3" fill="#212121" />
+          <circle cx="38" cy="41" r="1.3" fill="#212121" />
+          <circle cx="10" cy="46" r="1.4" fill="#2A1810" />
+          <circle cx="54" cy="46" r="1.4" fill="#2A1810" />
+        </svg>
+      );
+
+    case 'token':
+      return (
+        <svg viewBox="0 0 64 64" className="w-full h-full animate-vector-float">
+          <defs>
+            <radialGradient id="tok-gold" cx="35%" cy="30%" r="75%">
+              <stop offset="0%" stopColor="#fffde7" />
+              <stop offset="45%" stopColor="#ffd54f" />
+              <stop offset="100%" stopColor="#e65100" />
+            </radialGradient>
+          </defs>
+          <circle cx="32" cy="32" r="28" fill="rgba(255, 213, 79, 0.18)" />
+          <circle cx="32" cy="32" r="24" fill="url(#tok-gold)" stroke="#2A1810" strokeWidth="2.2" />
+          <circle cx="32" cy="32" r="18.5" fill="none" stroke="#a65d00" strokeWidth="1.6" strokeDasharray="3 2.4" />
+          <g fill="#7a3b00">
+            {PIXEL_P.map(([x, y]) => (
+              <rect key={`${x}-${y}`} x={x} y={y} width="4" height="4" />
+            ))}
+          </g>
+          <path d="M 14 25 A 20 20 0 0 1 30 12" stroke="#fffde7" strokeWidth="2.5" fill="none" opacity="0.75" strokeLinecap="round" />
+        </svg>
+      );
+
+    case 'crt':
+      return (
+        <svg viewBox="0 0 64 64" className="w-full h-full animate-vector-float">
+          <defs>
+            <linearGradient id="crt-body" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#607d8b" />
+              <stop offset="100%" stopColor="#263238" />
+            </linearGradient>
+            <radialGradient id="crt-screen" cx="40%" cy="35%" r="70%">
+              <stop offset="0%" stopColor="#b9f6ca" />
+              <stop offset="55%" stopColor="#00e5ff" />
+              <stop offset="100%" stopColor="#006064" />
+            </radialGradient>
+          </defs>
+          <circle cx="32" cy="34" r="28" fill="rgba(0, 229, 255, 0.14)" />
+          <path d="M 24 14 L 18 4 M 40 14 L 46 4" stroke="#cfd8dc" strokeWidth="2.4" strokeLinecap="round" />
+          <circle cx="18" cy="4" r="1.8" fill="#cfd8dc" />
+          <circle cx="46" cy="4" r="1.8" fill="#cfd8dc" />
+          <rect x="6" y="13" width="52" height="40" rx="7" fill="url(#crt-body)" stroke="#2A1810" strokeWidth="2.2" />
+          <rect x="11" y="18" width="33" height="29" rx="9" fill="url(#crt-screen)" stroke="#2A1810" strokeWidth="1.8" />
+          <g stroke="rgba(0, 60, 70, 0.35)" strokeWidth="1">
+            <line x1="14" y1="25" x2="41" y2="25" />
+            <line x1="14" y1="29" x2="41" y2="29" />
+            <line x1="14" y1="33" x2="41" y2="33" />
+            <line x1="14" y1="37" x2="41" y2="37" />
+            <line x1="14" y1="41" x2="41" y2="41" />
+          </g>
+          <path d="M 15 27 C 16 22, 24 20, 30 20.5" stroke="#ffffff" strokeWidth="2.2" fill="none" strokeLinecap="round" opacity="0.85" />
+          <circle cx="51" cy="25" r="3.2" fill="#cfd8dc" stroke="#2A1810" strokeWidth="1.3" />
+          <circle cx="51" cy="35" r="3.2" fill="#cfd8dc" stroke="#2A1810" strokeWidth="1.3" />
+          <path d="M 48 42 L 54 42 M 48 45 L 54 45 M 48 48 L 54 48" stroke="#1c262b" strokeWidth="1.4" strokeLinecap="round" />
+          <rect x="12" y="53" width="8" height="4" rx="1.5" fill="#212121" />
+          <rect x="44" y="53" width="8" height="4" rx="1.5" fill="#212121" />
+        </svg>
+      );
+
+    case 'webcam':
+      return (
+        <svg viewBox="0 0 64 64" className="w-full h-full animate-vector-float">
+          <defs>
+            <radialGradient id="cam-lens" cx="38%" cy="34%" r="70%">
+              <stop offset="0%" stopColor="#80d8ff" />
+              <stop offset="45%" stopColor="#1565c0" />
+              <stop offset="100%" stopColor="#0a1a3a" />
+            </radialGradient>
+            <linearGradient id="cam-body" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#90a4ae" />
+              <stop offset="100%" stopColor="#37474f" />
+            </linearGradient>
+          </defs>
+          <circle cx="32" cy="30" r="28" fill="rgba(179, 136, 255, 0.15)" />
+          <path d="M 14 52 L 50 52 L 50 56 C 50 59, 14 59, 14 56 Z" fill="#37474f" stroke="#2A1810" strokeWidth="2" strokeLinejoin="round" />
+          <rect x="26" y="43" width="12" height="9" rx="1.5" fill="#455a64" stroke="#2A1810" strokeWidth="1.6" />
+          <circle cx="32" cy="26" r="19" fill="url(#cam-body)" stroke="#2A1810" strokeWidth="2.2" />
+          <circle cx="32" cy="26" r="13.5" fill="#263238" stroke="#2A1810" strokeWidth="1.6" />
+          <circle cx="32" cy="26" r="9.5" fill="url(#cam-lens)" stroke="#2A1810" strokeWidth="1.4" />
+          <ellipse cx="28.5" cy="22.5" rx="3.2" ry="2" fill="#ffffff" opacity="0.85" transform="rotate(-30 28.5 22.5)" />
+          <circle cx="32" cy="10.5" r="1.8" fill="#ff1744" />
+        </svg>
+      );
+
+    case 'microphone':
+      return (
+        <svg viewBox="0 0 64 64" className="w-full h-full animate-vector-float">
+          <defs>
+            <linearGradient id="mic-metal" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#eceff1" />
+              <stop offset="50%" stopColor="#b0bec5" />
+              <stop offset="100%" stopColor="#546e7a" />
+            </linearGradient>
+          </defs>
+          <circle cx="32" cy="32" r="28" fill="rgba(255, 82, 82, 0.15)" />
+          <path d="M 17 24 C 17 42, 47 42, 47 24" fill="none" stroke="#2A1810" strokeWidth="5.4" strokeLinecap="round" />
+          <path d="M 17 24 C 17 42, 47 42, 47 24" fill="none" stroke="#607d8b" strokeWidth="3" strokeLinecap="round" />
+          <rect x="30" y="39" width="4" height="13" fill="#546e7a" stroke="#2A1810" strokeWidth="1.5" />
+          <rect x="19" y="51" width="26" height="6" rx="3" fill="#37474f" stroke="#2A1810" strokeWidth="2" />
+          <rect x="23" y="5" width="18" height="32" rx="9" fill="url(#mic-metal)" stroke="#2A1810" strokeWidth="2.2" />
+          <g stroke="#2A1810" strokeWidth="1" opacity="0.4">
+            <line x1="26" y1="11" x2="38" y2="11" />
+            <line x1="26" y1="15" x2="38" y2="15" />
+            <line x1="26" y1="26" x2="38" y2="26" />
+            <line x1="26" y1="30" x2="38" y2="30" />
+          </g>
+          <rect x="23" y="19" width="18" height="3.6" fill="#ff1744" opacity="0.92" />
+          <path d="M 27 9 L 27 17" stroke="#ffffff" strokeWidth="2" opacity="0.65" strokeLinecap="round" />
+        </svg>
+      );
+
+    case 'ringlight':
+      return (
+        <svg viewBox="0 0 64 64" className="w-full h-full animate-vector-float">
+          <defs>
+            <linearGradient id="ring-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#ffffff" />
+              <stop offset="50%" stopColor="#fff59d" />
+              <stop offset="100%" stopColor="#ffb300" />
+            </linearGradient>
+          </defs>
+          <circle cx="32" cy="28" r="27" fill="rgba(255, 245, 157, 0.2)" />
+          <path d="M 32 44 L 32 54 M 32 54 L 20 61 M 32 54 L 44 61" stroke="#2A1810" strokeWidth="5" strokeLinecap="round" fill="none" />
+          <path d="M 32 44 L 32 54 M 32 54 L 20 61 M 32 54 L 44 61" stroke="#78909c" strokeWidth="2.4" strokeLinecap="round" fill="none" />
+          <circle cx="32" cy="26" r="17" fill="none" stroke="#2A1810" strokeWidth="11.5" />
+          <circle cx="32" cy="26" r="17" fill="none" stroke="url(#ring-glow)" strokeWidth="8" />
+          <circle cx="32" cy="26" r="17" fill="none" stroke="#ffffff" strokeWidth="2.4" opacity="0.7" strokeDasharray="12 90" strokeLinecap="round" />
+          <rect x="26" y="19" width="12" height="14" rx="2.5" fill="#37474f" stroke="#2A1810" strokeWidth="1.8" />
+          <circle cx="32" cy="26" r="3" fill="#80d8ff" stroke="#2A1810" strokeWidth="1" />
         </svg>
       );
 

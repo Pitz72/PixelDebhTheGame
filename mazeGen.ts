@@ -56,7 +56,7 @@ export interface MazeLevelParts {
   };
 }
 
-const RETRO_ITEMS: ItemType[] = ['joystick', 'floppy', 'cartridge'];
+const POWER_UPS: ItemType[] = ['speed-boost', 'shield', 'super-throw'];
 const GOAL_W = 90;
 const GOAL_H = 150;
 const ENEMY_SIZE: Record<EnemyType, { w: number; h: number }> = {
@@ -233,7 +233,7 @@ export function generateMaze(spec: MazeSpec): MazeLevelParts {
     return chosen;
   };
 
-  // items: the retro gear in dead ends, power-ups at junctions
+  // items: the things to collect in dead ends, power-ups at junctions
   const items: LevelData['items'] = [];
   const place = (type: ItemType, cell: number) => {
     const { c, r } = cr(cell);
@@ -242,8 +242,8 @@ export function generateMaze(spec: MazeSpec): MazeLevelParts {
   };
   const anywhere = Array.from({ length: total }, (_, i) => i);
   for (const [type, count] of Object.entries(spec.items) as [ItemType, number][]) {
-    const isRetro = RETRO_ITEMS.includes(type);
-    let cells = pick(isRetro ? deadEnds : junctions, count, 7);
+    const isPowerUp = POWER_UPS.includes(type);
+    let cells = pick(isPowerUp ? junctions : deadEnds, count, 7);
     // a small labyrinth may run out of dead ends or junctions: fill up from anywhere
     if (cells.length < count) cells = cells.concat(pick(anywhere, count - cells.length, 5));
     if (cells.length < count) throw new Error(`not enough cells for ${count} ${type}`);

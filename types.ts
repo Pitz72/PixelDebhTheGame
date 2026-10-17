@@ -58,7 +58,19 @@ export interface Enemy extends DynamicObject {
   mazeCell?: number;
 }
 
-export type ItemType = 'joystick' | 'floppy' | 'cartridge' | 'speed-boost' | 'shield' | 'super-throw';
+/** Things to collect: retro gear and Debh's streaming setup, introduced a few at a time. */
+export type CollectibleType =
+  | 'joystick'
+  | 'floppy'
+  | 'cartridge'
+  | 'cassette'
+  | 'token'
+  | 'crt'
+  | 'webcam'
+  | 'microphone'
+  | 'ringlight';
+export type PowerUpType = 'speed-boost' | 'shield' | 'super-throw';
+export type ItemType = CollectibleType | PowerUpType;
 export interface Item extends GameObject {
   id: number;
   type: ItemType;

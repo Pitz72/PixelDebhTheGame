@@ -1,4 +1,4 @@
-import { Enemy, MazeData, Projectile } from '../types';
+import { CollectibleType, Enemy, ItemType, MazeData, Projectile } from '../types';
 import {
   GRAVITY,
   MAX_FALL_SPEED,
@@ -50,6 +50,7 @@ import {
   FIREBALL_HEIGHT,
   GAME_WIDTH,
   GAME_HEIGHT,
+  COLLECTIBLE_TYPES,
 } from '../constants';
 import {
   World,
@@ -1365,11 +1366,13 @@ function updateItems(w: World): void {
   });
 }
 
-export const COLLECTIBLE_TYPES = ['joystick', 'floppy', 'cartridge'];
+/** Collectibles open the exit; power-ups are optional. */
+export const isCollectible = (type: ItemType): type is CollectibleType =>
+  (COLLECTIBLE_TYPES as ItemType[]).includes(type);
 
 export function collectiblesLeft(w: World): number {
   if (w.maze) return w.items.length; // in the labyrinth every item has to be picked up
-  return w.items.filter(item => COLLECTIBLE_TYPES.includes(item.type)).length;
+  return w.items.filter(item => isCollectible(item.type)).length;
 }
 
 function updateGoal(w: World): void {
