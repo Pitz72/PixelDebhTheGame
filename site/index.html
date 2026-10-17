@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="it" data-lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PixelDebh: Retro-Rescue! - il gioco</title>
+  <meta name="description" content="PixelDebh: Retro-Rescue! è un platform retro 2D gratuito per Windows e Linux: cattura i nemici, lanciali, raccogli tutto il retro-gaming. / A free retro 2D platformer for Windows and Linux.">
+  <meta name="theme-color" content="#0b0620">
+  <link rel="icon" type="image/png" href="img/icona-32.png">
+  <link rel="canonical" href="https://pitz72.github.io/PixelDebhTheGame/">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PixelDebh: Retro-Rescue!">
+  <meta property="og:title" content="PixelDebh: Retro-Rescue!">
+  <meta property="og:description" content="Cattura. Lancia. Raccogli tutto. Un platform retro 2D gratuito per Windows e Linux.">
+  <meta property="og:url" content="https://pitz72.github.io/PixelDebhTheGame/">
+  <meta property="og:image" content="https://pitz72.github.io/PixelDebhTheGame/img/social.png">
+  <meta property="og:image:width" content="1280">
+  <meta property="og:image:height" content="640">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="preload" href="fonts/press-start-2p-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <style>
+    @font-face {
+      font-family: 'Press Start 2P';
+      src: url('fonts/press-start-2p-latin-400-normal.woff2') format('woff2');
+      font-weight: 400;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Orbitron';
+      src: url('fonts/orbitron-latin-wght-normal.woff2') format('woff2');
+      font-weight: 400 900;
+      font-display: swap;
+    }
+
+    :root {
+      --bg: #0b0620;
+      --bg-2: #1a0b3a;
+      --panel: #150a30;
+      --panel-line: #3a2670;
+      --text: #ece6ff;
+      --muted: #b4a8d8;
+      --orange: #ffa43b;
+      --pink: #ff3d8b;
+      --cyan: #5ee7ff;
+      --yellow: #ffd23f;
+      --gutter: 16px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 400 1.0625rem/1.65 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    img { max-width: 100%; height: auto; display: block; }
+    a { color: var(--cyan); }
+    a:hover { color: #fff; }
+    :focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; border-radius: 4px; }
+
+    /* One language at a time: Italian by default, English when the visitor's browser asks for it. */
+    html[data-lang="it"] [data-l="en"],
+    html[data-lang="en"] [data-l="it"] { display: none !important; }
+
+    .wrap { width: min(1080px, 100% - 2 * var(--gutter)); margin-inline: auto; }
+
+    /* Top bar */
+    .bar { position: absolute; inset: 0 0 auto 0; z-index: 3; }
+    .bar .wrap { display: flex; justify-content: space-between; align-items: center; padding-block: 14px; gap: 12px; }
+    .brand { display: flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; font: 700 0.8rem/1 'Orbitron', sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+    .brand img { width: 32px; height: 32px; border-radius: 50%; }
+    .lang { display: inline-flex; border: 1px solid var(--panel-line); border-radius: 999px; overflow: hidden; background: rgba(11, 6, 32, .7); }
+    .lang button { all: unset; cursor: pointer; padding: 8px 14px; font: 700 0.75rem/1 'Orbitron', sans-serif; letter-spacing: .1em; color: var(--muted); }
+    .lang button[aria-pressed="true"] { background: var(--orange); color: #1a0b3a; }
+    .lang button:focus-visible { outline: 3px solid var(--yellow); outline-offset: -3px; }
+
+    /* Hero: a synthwave sky and a grid, all CSS */
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 120px 0 96px;
+      text-align: center;
+      background:
+        radial-gradient(circle at 50% 78%, #ffb13b 0, #ff6a3d 14%, rgba(255, 61, 139, .0) 38%),
+        linear-gradient(180deg, #07031a 0%, #1a0b3a 55%, #3b1470 100%);
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      inset: auto 0 0 0;
+      height: 34%;
+      background:
+        linear-gradient(180deg, rgba(11, 6, 32, 0) 0, var(--bg) 100%),
+        repeating-linear-gradient(90deg, rgba(94, 231, 255, .35) 0 1px, transparent 1px 64px),
+        repeating-linear-gradient(0deg, rgba(255, 61, 139, .35) 0 1px, transparent 1px 28px);
+      transform-origin: bottom;
+      pointer-events: none;
+    }
+    .hero .wrap { position: relative; z-index: 2; }
+    .hero .logo { width: 132px; height: 132px; margin: 0 auto 28px; border-radius: 50%; box-shadow: 0 0 0 4px rgba(255, 255, 255, .25), 0 0 60px rgba(255, 164, 59, .55); }
+    h1 { margin: 0; }
+    .t1 { display: block; font: 400 clamp(1.5rem, 6.2vw, 3.4rem)/1.2 'Press Start 2P', monospace; color: #fff; text-shadow: 0 0 18px var(--cyan), 4px 4px 0 var(--pink); letter-spacing: .02em; }
+    .t2 { display: block; margin-top: 18px; font: 400 clamp(0.9rem, 3.6vw, 1.7rem)/1.3 'Press Start 2P', monospace; color: var(--yellow); text-shadow: 3px 3px 0 var(--pink); }
+    .slogan { margin: 28px auto 0; max-width: 34ch; font: 800 clamp(1rem, 2.6vw, 1.35rem)/1.4 'Orbitron', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--cyan); }
+    .cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-top: 36px; }
+    .btn {
+      display: inline-block; padding: 16px 26px; border-radius: 12px; text-decoration: none; cursor: pointer;
+      font: 800 0.9rem/1.2 'Orbitron', sans-serif; letter-spacing: .08em; text-transform: uppercase;
+      border: 2px solid var(--panel-line); color: var(--text); background: rgba(21, 10, 48, .85);
+      transition: transform .12s ease, box-shadow .12s ease;
+    }
+    .btn:hover { color: #fff; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0, 0, 0, .45); }
+    .btn.primary { background: linear-gradient(90deg, #ff3d8b, #ff8a2a); border-color: #ffd9a8; color: #fff; }
+    .badges { margin: 22px 0 0; font: 700 0.78rem/1.4 'Orbitron', sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+
+    /* Sections */
+    section { padding: 72px 0; }
+    section.alt { background: var(--bg-2); }
+    h2 { margin: 0 0 12px; font: 800 clamp(1.3rem, 3.4vw, 1.9rem)/1.25 'Orbitron', sans-serif; letter-spacing: .05em; text-transform: uppercase; color: var(--orange); }
+    .lead { margin: 0 0 36px; max-width: 62ch; color: var(--muted); }
+
+    .cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+    .card { background: var(--panel); border: 1px solid var(--panel-line); border-radius: 14px; padding: 22px; }
+    .card h3 { margin: 0 0 8px; font: 800 0.95rem/1.3 'Orbitron', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--cyan); }
+    .card p { margin: 0; font-size: 0.98rem; }
+
+    .shots { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); margin: 0; padding: 0; list-style: none; }
+    .shots li { background: var(--panel); border: 1px solid var(--panel-line); border-radius: 12px; overflow: hidden; }
+    .shots img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: #07031a; }
+    .shots span { display: block; padding: 10px 14px; font: 700 0.72rem/1.3 'Orbitron', sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+
+    .dl { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-bottom: 28px; }
+    .dl .card h3 { color: var(--orange); }
+    .note { padding: 18px 20px; border-left: 4px solid var(--orange); background: var(--panel); border-radius: 0 12px 12px 0; margin: 0 0 14px; }
+    .note strong { color: var(--yellow); }
+
+    .lic { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+    .lic .card h3 { color: var(--yellow); }
+
+    footer { padding: 40px 0 56px; border-top: 1px solid var(--panel-line); text-align: center; color: var(--muted); font-size: 0.95rem; }
+    footer .by { font: 700 0.8rem/1.5 'Orbitron', sans-serif; letter-spacing: .12em; text-transform: uppercase; color: var(--orange); }
+    footer p { margin: 8px 0; }
+
+    @media (max-width: 520px) {
+      .hero { padding-top: 104px; }
+      .btn { width: 100%; text-align: center; }
+      .brand span { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .btn { transition: none; }
+      .btn:hover { transform: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap">
+    <a class="brand" href="#top"><img src="img/icona-128.png" alt="" width="32" height="32"><span>PixelDebh</span></a>
+    <div class="lang" role="group" aria-label="Lingua / Language">
+      <button type="button" data-set="it" aria-pressed="true">IT</button>
+      <button type="button" data-set="en" aria-pressed="false">EN</button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+  <div class="hero">
+    <div class="wrap">
+      <img class="logo" src="img/icona-128.png" alt="Il logo del canale PixelDebh: Debh con le cuffie e il pad in mano" width="132" height="132">
+      <h1>
+        <span class="t1">PIXELDEBH</span>
+        <span class="t2">RETRO-RESCUE!</span>
+      </h1>
+      <p class="slogan"><span data-l="it">Cattura. Lancia. Raccogli tutto.</span><span data-l="en">Capture. Launch. Collect it all.</span></p>
+      <div class="cta">
+        <a class="btn primary" href="https://github.com/Pitz72/PixelDebhTheGame/releases/latest"><span data-l="it">Scarica gratis</span><span data-l="en">Download for free</span></a>
+        <a class="btn" href="https://ecosystem.runtimeradio.com/it/multimedia/pixeldebh-retro-rescue/" data-l="it">Pagina del gioco</a>
+        <a class="btn" href="https://ecosystem.runtimeradio.com/en/multimedia/pixeldebh-retro-rescue/" data-l="en">Game page</a>
+      </div>
+      <p class="badges"><span data-l="it">Gratis · Windows · Linux</span><span data-l="en">Free · Windows · Linux</span></p>
+    </div>
+  </div>
+
+  <section id="gioco">
+    <div class="wrap">
+      <h2><span data-l="it">Il gioco</span><span data-l="en">The game</span></h2>
+      <p class="lead">
+        <span data-l="it">Un platform d'avventura 2D in stile retro. Impersoni Debh, il personaggio del canale YouTube PixelDebh: acchiappi i nemici, li lanci contro gli altri e raccogli tutti gli oggetti del retro-gaming che trovi lungo la strada. Quando li hai presi tutti, la porta si apre.</span>
+        <span data-l="en">A retro-style 2D adventure platformer. You play Debh, the character of the PixelDebh YouTube channel: grab enemies, throw them at the others and collect every piece of retro-gaming gear along the way. Once you have them all, the exit door opens.</span>
+      </p>
+      <div class="cards">
+        <div class="card">
+          <h3><span data-l="it">Cattura e lancia</span><span data-l="en">Capture and launch</span></h3>
+          <p><span data-l="it">Afferra un nemico, poi lancialo come un proiettile. Doppio salto, nemici stordibili da sotto, power-up come scudo e super lancio.</span><span data-l="en">Grab an enemy, then throw it like a projectile. Double jump, enemies you can stun from below, and power-ups such as the shield and the super throw.</span></p>
+        </div>
+        <div class="card">
+          <h3><span data-l="it">14 livelli, 3 boss</span><span data-l="en">14 levels, 3 bosses</span></h3>
+          <p><span data-l="it">Tre mondi con i loro paesaggi, un labirinto in stile Atari 2600 e uno stage finale in cui i tre boss ti aspettano insieme.</span><span data-l="en">Three worlds with their own scenery, an Atari 2600-style maze, and a final stage where all three bosses wait for you together.</span></p>
+        </div>
+        <div class="card">
+          <h3><span data-l="it">22 trofei</span><span data-l="en">22 trophies</span></h3>
+          <p><span data-l="it">Concatena le sconfitte per il moltiplicatore dei punti, sali in classifica come in una sala giochi e sblocca i trofei, fino a finire senza perdere una vita.</span><span data-l="en">Chain your defeats for a score multiplier, climb an arcade-style leaderboard and unlock trophies, up to beating the game without losing a life.</span></p>
+        </div>
+        <div class="card">
+          <h3><span data-l="it">Tastiera o pad</span><span data-l="en">Keyboard or gamepad</span></h3>
+          <p><span data-l="it">Comandi riassegnabili, supporto ai gamepad (Xbox, PlayStation e simili), interfaccia in italiano e in inglese, qualsiasi schermo fino al 4K.</span><span data-l="en">Remappable controls, gamepad support (Xbox, PlayStation and similar), an interface in Italian and English, and any screen up to 4K.</span></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="immagini" class="alt">
+    <div class="wrap">
+      <h2><span data-l="it">Dal gioco</span><span data-l="en">From the game</span></h2>
+      <p class="lead"><span data-l="it">Schermate catturate dal gioco vero.</span><span data-l="en">Screenshots taken from the real game.</span></p>
+      <ul class="shots">
+        <li><img src="img/schermata-titolo.webp" alt="La schermata del titolo con il menu e i personaggi" width="1280" height="720" loading="lazy"><span data-l="it">Il titolo</span><span data-l="en">The title screen</span></li>
+        <li><img src="img/schermata-neon.webp" alt="Il primo mondo: una città al neon" width="1280" height="720" loading="lazy"><span data-l="it">Mondo 1: la città al neon</span><span data-l="en">World 1: the neon city</span></li>
+        <li><img src="img/schermata-raffineria.webp" alt="Il secondo mondo: una raffineria nel smog" width="1280" height="720" loading="lazy"><span data-l="it">Mondo 2: la raffineria</span><span data-l="en">World 2: the refinery</span></li>
+        <li><img src="img/schermata-isole.webp" alt="Il terzo mondo: isole fluttuanti sotto un'aurora" width="1280" height="720" loading="lazy"><span data-l="it">Mondo 3: le isole fluttuanti</span><span data-l="en">World 3: the floating islands</span></li>
+        <li><img src="img/schermata-rana.webp" alt="Lo scontro con la rana ciclope" width="1280" height="720" loading="lazy"><span data-l="it">Boss: Cyclops Frog</span><span data-l="en">Boss: Cyclops Frog</span></li>
+        <li><img src="img/schermata-occhio.webp" alt="Lo scontro con l'occhio gigante con una gallina per pupilla" width="1280" height="720" loading="lazy"><span data-l="it">Boss: LeGallineNellOcchi</span><span data-l="en">Boss: LeGallineNellOcchi</span></li>
+        <li><img src="img/schermata-capoccia.webp" alt="Lo scontro con l'ultimo boss, senza gravità" width="1280" height="720" loading="lazy"><span data-l="it">Boss: CapocciaNelBuio</span><span data-l="en">Boss: CapocciaNelBuio</span></li>
+        <li><img src="img/schermata-labirinto.webp" alt="Il labirinto in stile Atari 2600" width="1280" height="720" loading="lazy"><span data-l="it">Il labirinto</span><span data-l="en">The maze</span></li>
+        <li><img src="img/schermata-caveau.webp" alt="Lo stage finale: il caveau del collezionista" width="1280" height="720" loading="lazy"><span data-l="it">Lo stage finale: il caveau</span><span data-l="en">The final stage: the vault</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="scarica">
+    <div class="wrap">
+      <h2><span data-l="it">Scarica</span><span data-l="en">Download</span></h2>
+      <p class="lead"><span data-l="it">Il gioco è gratuito. I file si trovano nell'ultima versione pubblicata su GitHub: scegli quello per il tuo sistema.</span><span data-l="en">The game is free. The files are in the latest release on GitHub: pick the one for your system.</span></p>
+      <div class="dl">
+        <div class="card">
+          <h3>Windows</h3>
+          <p><span data-l="it">Il file che finisce con <code>-setup.exe</code> lo installa e poi si aggiorna da solo. Il file <code>-portable.exe</code> parte senza installazione e ti avvisa quando esce una nuova versione.</span><span data-l="en">The file ending in <code>-setup.exe</code> installs it, and the game then updates itself. The <code>-portable.exe</code> file runs with no installation and tells you when a new version is out.</span></p>
+        </div>
+        <div class="card">
+          <h3>Linux</h3>
+          <p><span data-l="it"><code>.AppImage</code> (portatile, si aggiorna da solo), <code>.deb</code> oppure <code>.rpm</code>. Provato su Ubuntu 24.04 in WSL2; su un desktop Linux con scheda video vera non ancora.</span><span data-l="en"><code>.AppImage</code> (portable, updates itself), <code>.deb</code> or <code>.rpm</code>. Tried on Ubuntu 24.04 under WSL2; not yet on a native Linux desktop with a real GPU.</span></p>
+        </div>
+      </div>
+      <p><a class="btn primary" href="https://github.com/Pitz72/PixelDebhTheGame/releases/latest"><span data-l="it">Vai all'ultima versione</span><span data-l="en">Go to the latest release</span></a></p>
+      <p class="note">
+        <span data-l="it"><strong>Se Windows ti avvisa.</strong> L'installatore non è firmato con un certificato a pagamento, quindi SmartScreen può mostrare «Windows ha protetto il PC». Scegli «Ulteriori informazioni» e poi «Esegui comunque». Il codice è pubblico e le istruzioni passo per passo sono nella <a href="https://ecosystem.runtimeradio.com/it/multimedia/pixeldebh-retro-rescue/">pagina del gioco</a>.</span>
+        <span data-l="en"><strong>If Windows warns you.</strong> The installer is not signed with a paid certificate, so SmartScreen may show "Windows protected your PC". Choose "More info" and then "Run anyway". The code is public and the step-by-step instructions are on the <a href="https://ecosystem.runtimeradio.com/en/multimedia/pixeldebh-retro-rescue/">game page</a>.</span>
+      </p>
+    </div>
+  </section>
+
+  <section id="licenza" class="alt">
+    <div class="wrap">
+      <h2><span data-l="it">Licenza e crediti</span><span data-l="en">Licence and credits</span></h2>
+      <p class="lead"><span data-l="it">Il gioco è gratuito. Il repository ha tre regimi, scelti dall'autore; il dettaglio è in <a href="https://github.com/Pitz72/PixelDebhTheGame/blob/main/LICENZE.md">LICENZE.md</a>.</span><span data-l="en">The game is free. The repository has three regimes, chosen by the author; the details are in <a href="https://github.com/Pitz72/PixelDebhTheGame/blob/main/LICENZE.md">LICENZE.md</a> (in Italian).</span></p>
+      <div class="lic">
+        <div class="card">
+          <h3><span data-l="it">Il codice</span><span data-l="en">The code</span></h3>
+          <p><span data-l="it">Licenza MIT: puoi farne quello che vuoi, tenendo l'avviso di copyright.</span><span data-l="en">MIT licence: do what you like with it, keeping the copyright notice.</span></p>
+        </div>
+        <div class="card">
+          <h3><span data-l="it">Musiche, grafica e testi</span><span data-l="en">Music, artwork and texts</span></h3>
+          <p><span data-l="it">CC BY-NC-SA 4.0: usali e adattali citando l'autore, senza scopo commerciale e alle stesse condizioni.</span><span data-l="en">CC BY-NC-SA 4.0: use and adapt them with credit to the author, not for commercial purposes, under the same terms.</span></p>
+        </div>
+        <div class="card">
+          <h3><span data-l="it">Nomi, loghi, animazioni</span><span data-l="en">Names, logos, animations</span></h3>
+          <p><span data-l="it">Tutti i diritti riservati: PixelDebh, Debh, Runtime Multimedia, i loghi e le animazioni d'apertura.</span><span data-l="en">All rights reserved: PixelDebh, Debh, Runtime Multimedia, the logos and the opening animations.</span></p>
+        </div>
+      </div>
+      <p style="margin-top:28px">
+        <span data-l="it">Le musiche sono state generate con Lyria (Google); il codice, la grafica vettoriale e l'intro animata sono stati scritti dall'autore con l'aiuto di Claude (Anthropic), sotto la sua direzione.</span>
+        <span data-l="en">The music was generated with Lyria (Google); the code, the vector artwork and the animated intro were written by the author with the help of Claude (Anthropic), under their direction.</span>
+      </p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p class="by">By Simone Pizzi · Runtime Multimedia</p>
+    <p>
+      <a href="https://github.com/Pitz72/PixelDebhTheGame">GitHub</a> ·
+      <a href="https://github.com/Pitz72/PixelDebhTheGame/releases/latest"><span data-l="it">Versioni</span><span data-l="en">Releases</span></a> ·
+      <a href="https://ecosystem.runtimeradio.com/it/multimedia/pixeldebh-retro-rescue/" data-l="it">Pagina del gioco</a><a href="https://ecosystem.runtimeradio.com/en/multimedia/pixeldebh-retro-rescue/" data-l="en">Game page</a>
+    </p>
+    <p><span data-l="it">I caratteri Press Start 2P e Orbitron sono sotto licenza SIL Open Font License 1.1.</span><span data-l="en">The Press Start 2P and Orbitron fonts are under the SIL Open Font License 1.1.</span></p>
+  </div>
+</footer>
+
+<script>
+  // Italian by default; English when the browser asks for it, or when the visitor picked it before.
+  (function () {
+    var root = document.documentElement;
+    var buttons = document.querySelectorAll('.lang button');
+    function apply(lang) {
+      root.setAttribute('data-lang', lang);
+      root.setAttribute('lang', lang);
+      buttons.forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-set') === lang)); });
+    }
+    var saved = null;
+    try { saved = localStorage.getItem('pixeldebh-site-lang'); } catch (e) {}
+    var lang = saved === 'it' || saved === 'en' ? saved : ((navigator.language || 'it').toLowerCase().indexOf('it') === 0 ? 'it' : 'en');
+    apply(lang);
+    buttons.forEach(function (b) {
+      b.addEventListener('click', function () {
+        var l = b.getAttribute('data-set');
+        apply(l);
+        try { localStorage.setItem('pixeldebh-site-lang', l); } catch (e) {}
+      });
+    });
+  })();
+</script>
+</body>
+</html>

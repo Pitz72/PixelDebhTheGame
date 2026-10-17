@@ -143,7 +143,9 @@ jobs:
             Windows: install with the file ending in `-setup.exe` (the game then updates itself), or use the portable `PixelDebh-${{ needs.check.outputs.version }}-portable.exe` (no installation; it only tells you when a new version is out).
             Linux: `.AppImage` (portable, updates itself), `.deb` or `.rpm`.
 
-            The unsigned installer may show a SmartScreen warning on Windows ("More info" -> "Run anyway").
+            The unsigned installer may show a SmartScreen warning on Windows ("More info" -> "Run anyway"; the page below explains it step by step).
+
+            Game page, screenshots and help: https://ecosystem.runtimeradio.com/en/multimedia/pixeldebh-retro-rescue/ (in Italian: https://ecosystem.runtimeradio.com/it/multimedia/pixeldebh-retro-rescue/)
           releaseDraft: ${{ inputs.mode == 'draft' }}
           prerelease: ${{ contains(needs.check.outputs.version, '-') }}
           includeUpdaterJson: true

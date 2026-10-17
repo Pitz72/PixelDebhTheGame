@@ -22,6 +22,7 @@ Per citare l'autore: «© 2026 Simone Pizzi — PixelDebh: Retro-Rescue!», con 
 - `components/` e `services/` (interfaccia, menu, impostazioni, salvataggi, aggiornamenti), tranne i file di grafica elencati sotto
 - `levels.ts`, `mazeGen.ts`, `trophies.ts`, `constants.ts`, `types.ts`, `App.tsx`, `GameScreen.tsx`, `index.tsx`, `index.html`, `index.css` e le impostazioni di build
 - `tests/`, `tools/`, `.github/` (compreso il flusso di rilascio)
+- `site/index.html`: il codice del sito del progetto (GitHub Pages); le sue immagini sono sotto, tra i diritti riservati
 - `src-tauri/` (l'app Tauri in Rust), tranne le icone
 - la documentazione tecnica: `README.md`, `docs/` (tranne `MUSIC_BRIEF.md`), `log/`
 
@@ -43,11 +44,12 @@ Il criterio, se un file non è nell'elenco: ciò che **disegna** un personaggio,
 - **I nomi**: PixelDebh, Pixel Debh, Debh, «PixelDebh: Retro-Rescue!», Runtime Multimedia e i nomi dei personaggi, dei nemici e dei boss del gioco (Globby, Hoppy, Flappy, Bomby, Ghosty, Cyclops Frog, LeGallineNellOcchi, CapocciaNelBuio).
 - **I loghi**: il logo del canale PixelDebh (`public/pixeldebh-logo.png`), le forme di Debh tracciate da quel logo (`characters/debh/traced/`), le icone dell'app (`src-tauri/icons/`) e il marchio di Runtime Multimedia (`intro/runtimeForme.ts` e `tools/branding/assets/`).
 - **Le immagini promozionali**: i banner per i social, l'immagine per GitHub e il poster in `branding/`, che portano nomi e loghi. Il codice che le compone (`tools/branding/`) è MIT, tranne il logo di Runtime Multimedia che contiene.
+- **Le immagini del sito del progetto**: le icone, il banner di condivisione e le schermate del gioco in `site/img/` portano nomi e loghi e seguono lo stesso regime di `branding/`. La grafica del gioco che si vede nelle schermate resta CC BY-NC-SA come nel gioco.
 - **Le animazioni d'apertura**: l'intro animata di PixelDebh (`public/intro/pixeldebh-intro.webm`) e l'animazione, con il suo suono, del logo di Runtime Multimedia (la cartella `intro/`). La stessa animazione resta MIT nel suo repository d'origine, *Il Relitto Silente*: qui è riservata.
 
 ## Che cosa non è coperto
 
-- **Le dipendenze di terzi** hanno le loro licenze: React, PixiJS, pixi-filters, Tauri, Vite, Tailwind CSS e Vitest (MIT o MIT/Apache-2.0); i caratteri **Orbitron** e **Press Start 2P** (SIL Open Font License 1.1).
+- **Le dipendenze di terzi** hanno le loro licenze: React, PixiJS, pixi-filters, Tauri, Vite, Tailwind CSS e Vitest (MIT o MIT/Apache-2.0); i caratteri **Orbitron** e **Press Start 2P** (SIL Open Font License 1.1; i due file copiati in `site/fonts/` sono gli stessi che il gioco incorpora).
 - **I marchi di terzi**: i nomi delle console e degli oggetti retro (Atari 2600, Amiga 500, NES, Sega Mega Drive, CD-ROM e simili) appartengono ai rispettivi titolari. Qui sono disegni originali, senza loghi e senza alcun legame con i titolari.
 
 ## Che cosa è stato fatto con l'intelligenza artificiale

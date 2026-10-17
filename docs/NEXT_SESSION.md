@@ -4,8 +4,8 @@ Il gioco e' finito e **pubblicato**: `v1.18.1` e' la release «Latest» su GitHu
 
 ## Per domani (sessione chiusa il 2026-10-18)
 
-1.  **Caricare l'anteprima social su GitHub, a mano** (Claude in Chrome non era collegato al tuo Edge): repository > Settings > General > Social preview > Edit > Upload an image, file `C:\Users\Utente\Documents\GitHub\PIXELDEBH\branding\social\github-social-preview-1280x640.png`.
-2.  **Il link alla landing nel testo delle release**: in `.github/workflows/release.yml`, nel `releaseBody`, oggi c'e' una riga in inglese sull'avviso SmartScreen; sostituirla con il rimando alla landing («Se Windows ti avvisa»). Si vedra' dalla prossima release (o si cambia a mano il testo della 1.18.1 su GitHub).
+1.  ~~Anteprima social su GitHub~~ **FATTA** (caricata dall'utente il 2026-10-18, verificata con GraphQL `usesCustomOpenGraphImage`).
+2.  ~~Link alla landing~~ **FATTI il 2026-10-18**: nel `releaseBody` di `release.yml` (si vedra' dalla prossima release; il testo della 1.18.1 gia' pubblicata si cambia a mano su GitHub o con `gh release edit`), nel README (elenco in cima: pagina del gioco IT/EN, sito, ultima release) e nel sito GitHub Pages. **Sito GitHub Pages**: cartella `site/` (una pagina bilingue IT/EN, senza richieste esterne, caratteri e immagini incorporati), pubblicata da `.github/workflows/pages.yml` a ogni modifica di `site/` su `main` (o a mano dalla scheda Actions) su https://pitz72.github.io/PixelDebhTheGame/. Il pulsante di download punta a `releases/latest`: non serve aggiornarlo a ogni release.
 3.  **D4, la classifica online**: decidere se e dove. Cloudflare come nella relazione, oppure PHP sul sito Ecosystem (idea dell'utente): vedi la riga D4 qui sotto e `docs/CLASSIFICA_ONLINE.md`.
 4.  **Prove a mano dell'utente**: bilanciamento (molle, ascensore, traghetto, catena, boss a fasi, difficolta', labirinto, caveau, trofei), audio, `PRESENTAZIONE.md`.
 5.  **Facoltativi**: `cargo audit` (A8), ripiego DOM `?dom` (A9), l'avviso della portable, e nel sito Ecosystem i dati strutturati della landing che dicono «licenza MIT» per tutto il gioco (vale solo per il codice).

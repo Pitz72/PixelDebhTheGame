@@ -5,6 +5,12 @@
 
 A 2D retro platformer adventure where you control PixelDebh to capture and launch enemies, collect retro items, and clear challenging levels. Built with React and TypeScript.
 
+**Free for Windows and Linux.**
+
+-   **Game page** (screenshots, download help, what to do if Windows shows a warning): [English](https://ecosystem.runtimeradio.com/en/multimedia/pixeldebh-retro-rescue/) · [Italiano](https://ecosystem.runtimeradio.com/it/multimedia/pixeldebh-retro-rescue/)
+-   **Website of the project:** [pitz72.github.io/PixelDebhTheGame](https://pitz72.github.io/PixelDebhTheGame/)
+-   **Download:** [latest release](https://github.com/Pitz72/PixelDebhTheGame/releases/latest)
+
 ## Gameplay
 
 The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enemies. Once an enemy is captured, you can launch it as a projectile to defeat other enemies.

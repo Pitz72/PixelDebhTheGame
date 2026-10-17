@@ -1,0 +1,38 @@
+# Publish the project website (the `site/` folder) with GitHub Pages: https://pitz72.github.io/PixelDebhTheGame/
+#
+# It runs when something under `site/` changes on `main`, or by hand from the "Actions" tab ("Website" -> "Run
+# workflow"). It only copies static files: nothing is built and nothing from the game is published.
+# The Pages setting of the repository must be "Source: GitHub Actions" (Settings -> Pages).
+name: Website
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4
