@@ -48,6 +48,6 @@ Da riga di comando: `gh workflow run release.yml -f mode=draft` e poi `gh run wa
 
 ## Cosa non e' ancora provato
 
--   La build su GitHub (Windows e Linux) e' scritta e controllata nella forma, ma **non e' mai partita**: la prima volta e' la prova vera. Se qualcosa si rompe si correggera' dai log della corsa.
--   L'aggiornamento automatico completo (scaricare e installare un `.exe` firmato) si puo' provare davvero solo con **due** release pubblicate, una dopo l'altra.
--   L'installatore non e' firmato da una certificazione di codice: **Windows SmartScreen** mostra un avviso la prima volta («Ulteriori informazioni» > «Esegui comunque»). Per toglierlo serve un certificato di firma del codice (a pagamento) o un servizio di firma gratuito per i progetti open source come SignPath Foundation: da valutare quando il gioco sara' pubblico.
+-   La build su GitHub (Windows e Linux) **e' collaudata**: la prima corsa vera e' stata il 2026-10-17 (servirono tre corse: un test che dipendeva dalla lingua del PC e un pacchetto di sistema di Ubuntu 22.04 in conflitto, vedi `docs/NEXT_SESSION.md`). Le release 1.18.0 e 1.18.1 sono state costruite e pubblicate cosi'.
+-   L'aggiornamento automatico e' **provato**: 1.18.0 installata con il setup si e' aggiornata da sola alla 1.18.1.
+-   L'installatore **non e' firmato con un certificato di firma del codice, ed e' una scelta** (2026-10-17): **Windows SmartScreen** mostra un avviso la prima volta («Ulteriori informazioni» > «Esegui comunque»), e smette da solo quando il file ha abbastanza scaricamenti. SignPath Foundation, il servizio gratuito per l'open source, non e' possibile: chiede una licenza approvata OSI per tutti i componenti, e il gioco ha contenuti CC BY-NC-SA e loghi a diritti riservati (vedi `LICENZE.md`). L'avviso va spiegato nella pagina di download.
