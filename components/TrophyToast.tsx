@@ -1,12 +1,14 @@
 import React from 'react';
 import type { TrophyDef } from '../trophies';
-import { TIER_LABEL } from '../trophies';
+import { trophyDescription, trophyName, tierLabel } from '../services/trophyText';
+import { t, useLanguage } from '../services/i18n';
 import TrophyIcon, { TIER_COLORS } from './TrophyIcon';
 
 export const TOAST_MS = 4600;
 
 /** "Trophy earned" banner at the bottom of the screen; the host shows one at a time. */
 const TrophyToast: React.FC<{ trophy: TrophyDef }> = ({ trophy }) => {
+  useLanguage();
   const c = TIER_COLORS[trophy.tier];
   return (
     <div
@@ -22,10 +24,10 @@ const TrophyToast: React.FC<{ trophy: TrophyDef }> = ({ trophy }) => {
       <TrophyIcon tier={trophy.tier} size={72} />
       <div className="text-left">
         <p className="text-xs font-black tracking-[0.3em]" style={{ color: c.text }}>
-          TROFEO SBLOCCATO • {TIER_LABEL[trophy.tier]}
+          {t('trophy.unlocked')} • {tierLabel(trophy.tier)}
         </p>
-        <p className="text-3xl font-black tracking-wider text-white">{trophy.name}</p>
-        <p className="text-base text-gray-300">{trophy.description}</p>
+        <p className="text-3xl font-black tracking-wider text-white">{trophyName(trophy)}</p>
+        <p className="text-base text-gray-300">{trophyDescription(trophy)}</p>
       </div>
     </div>
   );

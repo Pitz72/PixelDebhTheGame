@@ -6,7 +6,8 @@ import type { LevelData } from '../types';
 import { COLLECTIBLE_TYPES } from '../constants';
 import {
   TROPHIES,
-  TIER_LABEL,
+  TIERS,
+  TROPHY_NUMBER,
   TROPHY_BLAST_ENEMIES,
   TROPHY_BOWLING_KOS,
   TROPHY_HUNTER_ENEMIES,
@@ -20,6 +21,11 @@ import {
 } from '../trophies';
 import { createTrophyTracker, parseSave, trophyProgress, TROPHY_KEY } from '../services/trophyService';
 import * as storage from '../services/storage';
+import { trophyDescription, trophyName } from '../services/trophyText';
+import { setLanguage } from '../services/i18n';
+import { it as italian } from '../locales/it';
+import { en } from '../locales/en';
+import type { TextKey } from '../locales/it';
 
 // the tests run without a browser: a plain in-memory localStorage for the save
 const memory = new Map<string, string>();
@@ -51,19 +57,46 @@ const earned = (c: ReturnType<typeof ctx>, have: string[] = []) => earnedNow(new
 const clear = (hits = 0, livesLost = 0, livesLostSoFar = livesLost, timeLeft: number | null = null) => ({ hits, livesLost, livesLostSoFar, timeLeft });
 
 describe('the list of trophies', () => {
-  it('has at least fifteen, with a different id, name and description each', () => {
+  it('has at least fifteen, each with its own name and description in both languages', () => {
     expect(TROPHIES.length).toBeGreaterThanOrEqual(15);
     expect(new Set(TROPHIES.map(t => t.id)).size).toBe(TROPHIES.length);
-    expect(new Set(TROPHIES.map(t => t.name)).size).toBe(TROPHIES.length);
-    for (const t of TROPHIES) {
-      expect(t.name.length, t.id).toBeGreaterThan(2);
-      expect(t.description.length, t.id).toBeGreaterThan(8);
+    for (const [language, table] of [['it', italian], ['en', en]] as const) {
+      const text = (id: string, part: 'name' | 'desc') => (table as Record<string, string>)[`trophy.${id}.${part}`];
+      expect(new Set(TROPHIES.map(t => text(t.id, 'name'))).size, language).toBe(TROPHIES.length);
+      for (const t of TROPHIES) {
+        expect(text(t.id, 'name')?.length, `${language} ${t.id} name`).toBeGreaterThan(2);
+        expect(text(t.id, 'desc')?.length, `${language} ${t.id} description`).toBeGreaterThan(8);
+      }
     }
+  });
+
+  it('mentions in a text only the numbers the condition has (the {n} holes match TROPHY_NUMBER)', () => {
+    for (const table of [italian, en] as Record<string, string>[]) {
+      for (const t of TROPHIES) {
+        const hole = table[`trophy.${t.id}.desc`].includes('{n}');
+        expect(hole, t.id).toBe(TROPHY_NUMBER[t.id] !== undefined);
+      }
+    }
+  });
+
+  it('writes the names and descriptions in the language chosen', () => {
+    const shelf = TROPHIES.find(t => t.id === 'shelf')!;
+    setLanguage('it');
+    expect(trophyName(shelf)).toBe('Primo Scaffale');
+    expect(trophyDescription(shelf)).toBe('Raccogli 100 oggetti da collezione.');
+    setLanguage('en');
+    expect(trophyName(shelf)).toBe('First Shelf');
+    expect(trophyDescription(shelf)).toBe('Collect 100 items.');
+    expect(trophyDescription(TROPHIES.find(t => t.id === 'high-score')!)).toBe('Reach 100,000 points in one game.');
+    setLanguage('it');
+    expect(trophyDescription(TROPHIES.find(t => t.id === 'high-score')!)).toContain('100.000');
+    const check: TextKey = 'trophy.title';
+    expect(italian[check]).toBe('TROFEI');
   });
 
   it('has normal, rare, hard and completion ones', () => {
     const tiers = new Set<TrophyTier>(TROPHIES.map(t => t.tier));
-    expect([...tiers].sort()).toEqual((Object.keys(TIER_LABEL) as TrophyTier[]).sort());
+    expect([...tiers].sort()).toEqual([...TIERS].sort());
     expect(TROPHIES.filter(t => t.tier === 'normal').length).toBeGreaterThanOrEqual(3);
     expect(TROPHIES.filter(t => t.tier === 'hard').length).toBeGreaterThanOrEqual(3);
   });

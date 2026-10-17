@@ -10,6 +10,7 @@ import { padControls, padStart } from './engine/gamepad';
 import { readPad, suppressMenuPad } from './services/gamepadService';
 import { t, useLanguage } from './services/i18n';
 import { createTrophyTracker, TrophyTracker } from './services/trophyService';
+import { clearRun, saveRun } from './services/progress';
 import type { TrophyDef } from './trophies';
 import { levels } from './levels';
 import { GAME_WIDTH, GAME_HEIGHT } from './constants';
@@ -24,13 +25,21 @@ import {
   STEP_MS,
 } from './engine';
 import { GameRenderer, Quality } from './renderer/GameRenderer';
-import { Boss, ItemType } from './types';
+import { Boss, Difficulty, ItemType } from './types';
+import type { RunStats } from './engine/stats';
 
 interface GameScreenProps {
   onGameOver: (score: number) => void;
   onCompleted: (score: number, lives: number) => void;
   /** The player leaves the game from the pause menu. */
   onQuit: (score: number) => void;
+  /** The level the game begins at (0 for a new game; the saved level for a continued one). */
+  startLevel?: number;
+  difficulty?: Difficulty;
+  /** A game from the level select: no leaderboard, no trophies, nothing saved. */
+  practice?: boolean;
+  /** What a continued game has counted so far (for the trophies). */
+  initialStats?: RunStats;
   loopCount: number;
   /** Score / lives carried over from the previous loop (New Game+). */
   initialScore?: number;
@@ -104,13 +113,25 @@ const GameScreen: React.FC<GameScreenProps> = ({
   onGameOver,
   onCompleted,
   onQuit,
+  startLevel = 0,
+  difficulty = 'normal',
+  practice = false,
+  initialStats,
   loopCount,
   initialScore = 0,
   initialLives,
 }) => {
   const worldRef = useRef<World | null>(null);
   if (worldRef.current === null) {
-    worldRef.current = createWorld({ loopCount, score: initialScore, lives: initialLives });
+    worldRef.current = createWorld({
+      loopCount,
+      score: initialScore,
+      lives: initialLives,
+      levelIndex: startLevel,
+      difficulty,
+      practice,
+      stats: initialStats,
+    });
   }
   const inputRef = useRef<InputController | null>(null);
   if (inputRef.current === null) {
@@ -453,10 +474,25 @@ const GameScreen: React.FC<GameScreenProps> = ({
           case 'music':
             soundService.playMusicLoop(e.theme);
             break;
+          case 'level':
+            // the game as it stands at the start of a level is what "continue" takes up (not in practice)
+            if (!w.practice) {
+              saveRun({
+                levelIndex: e.index,
+                score: w.score,
+                lives: w.livesBeforeBoss ?? w.lives, // lives lent for a boss fight are not hers to keep
+                loopCount: w.loopCount,
+                difficulty: w.difficulty,
+                stats: w.stats,
+              });
+            }
+            break;
           case 'gameOver':
+            clearRun();
             callbacksRef.current.onGameOver(e.score);
             break;
           case 'completed':
+            clearRun();
             callbacksRef.current.onCompleted(e.score, e.lives);
             break;
         }
@@ -542,7 +578,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
       {mode === 'dom' && showCompat && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 pointer-events-none text-center">
           <p className="text-lg font-black text-yellow-300 tracking-wider bg-black/70 px-6 py-2 rounded-xl border border-yellow-400/60">
-            MODALITÀ COMPATIBILITÀ: WebGL NON DISPONIBILE (niente luci dinamiche)
+            {t('game.compat')}
           </p>
           {renderError && (
             <p className="mt-2 text-xs font-mono text-gray-300 bg-black/70 px-3 py-1 rounded max-w-[1200px] mx-auto">{renderError.slice(0, 300)}</p>
@@ -552,7 +588,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
 
       {mode === 'loading' && (
         <div className="absolute inset-0 flex justify-center items-center z-40 pointer-events-none">
-          <p className="text-3xl font-black text-cyan-300 tracking-widest animate-pulse">CARICAMENTO…</p>
+          <p className="text-3xl font-black text-cyan-300 tracking-widest animate-pulse">{t('game.loading')}</p>
         </div>
       )}
 

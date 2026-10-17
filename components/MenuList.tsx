@@ -16,7 +16,7 @@ interface MenuListProps {
   active?: boolean;
   /** Which item starts with the focus (the first one that is not disabled by default). */
   initialId?: string;
-  size?: 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg';
   width?: number;
 }
 
@@ -90,8 +90,9 @@ const MenuList: React.FC<MenuListProps> = ({ items, onSelect, onBack, active = t
   }, [active, move]);
 
   const big = size === 'lg';
+  const small = size === 'sm';
   return (
-    <div className="flex flex-col gap-2" style={{ width }} role="menu">
+    <div className={`flex flex-col ${small ? 'gap-1' : 'gap-2'}`} style={{ width }} role="menu">
       {items.map((item, i) => {
         const focused = i === focus && active;
         return (
@@ -107,7 +108,7 @@ const MenuList: React.FC<MenuListProps> = ({ items, onSelect, onBack, active = t
               soundService.playSound('start');
               select.current(item.id);
             }}
-            className={`rounded-xl border-2 px-6 ${big ? 'py-3 text-3xl' : 'py-2 text-2xl'} font-black tracking-[0.18em] transition-colors ${
+            className={`rounded-xl border-2 px-6 ${big ? 'py-3 text-3xl' : small ? 'py-1 text-xl' : 'py-2 text-2xl'} font-black tracking-[0.18em] transition-colors ${
               item.disabled
                 ? 'border-white/10 text-gray-600 cursor-not-allowed'
                 : focused

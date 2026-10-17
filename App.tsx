@@ -11,13 +11,16 @@ import HighscoreScreen from './components/HighscoreScreen';
 import EnterHighscoreScreen from './components/EnterHighscoreScreen';
 import ScreenOverlay, { type OverlayKind } from './components/ScreenOverlay';
 import UpdateBanner, { UpdateStatus } from './components/UpdateBanner';
-import { GameState } from './types';
+import { Difficulty, GameState } from './types';
+import type { RunStats } from './engine/stats';
 import { GAME_WIDTH, GAME_HEIGHT } from './constants';
 import * as highscoreService from './services/highscoreService';
 import * as soundService from './services/soundService';
 import { checkForUpdate, openPage, UpdateInfo } from './services/updateService';
 import { isTauri, quitApp, setFullscreen, toggleFullscreen } from './services/platform';
 import { startMenuPad } from './services/gamepadService';
+import { getSettings } from './services/settings';
+import { loadProgress } from './services/progress';
 
 interface Carry {
   score: number;
@@ -32,6 +35,13 @@ function App() {
   const [loopCount, setLoopCount] = useState(1);
   // Score and lives travel with the player from one loop (New Game+) to the next.
   const [carry, setCarry] = useState<Carry>({ score: 0 });
+  // The game that is starting, or in progress: where it begins, how hard it is, whether it is practice (a game
+  // from the level select: no leaderboard, no trophies) and what a continued game has counted so far.
+  const [run, setRun] = useState<{ levelIndex: number; difficulty: Difficulty; practice: boolean; stats?: RunStats }>({
+    levelIndex: 0,
+    difficulty: 'normal',
+    practice: false,
+  });
   // The page open over the title (options, trophies, credits, how to play, the leaderboard), if any
   const [overlay, setOverlay] = useState<OverlayKind | null>(null);
   // A newer version on GitHub (looked for once, when the title screen first appears)
@@ -119,6 +129,7 @@ function App() {
 
   const startFresh = useCallback(() => {
     setCarry({ score: 0 });
+    setRun({ levelIndex: 0, difficulty: getSettings().difficulty, practice: false });
     setGameState('playing');
     setGameId(id => id + 1);
     setLoopCount(1);
@@ -129,7 +140,34 @@ function App() {
     startFresh();
   }, [requestAppFullscreen, startFresh]);
 
+  /** "Continue" in the title menu: the saved game, from the start of the level she was in. */
+  const handleContinue = useCallback(() => {
+    const saved = loadProgress().run;
+    if (!saved) return handleStart();
+    requestAppFullscreen();
+    setCarry({ score: saved.score, lives: saved.lives });
+    setRun({ levelIndex: saved.levelIndex, difficulty: saved.difficulty, practice: false, stats: saved.stats });
+    setLoopCount(saved.loopCount);
+    setGameState('playing');
+    setGameId(id => id + 1);
+  }, [handleStart, requestAppFullscreen]);
+
+  /** The level select: a practice game from that level. */
+  const handlePlayLevel = useCallback(
+    (levelIndex: number) => {
+      requestAppFullscreen();
+      setOverlay(null);
+      setCarry({ score: 0 });
+      setRun({ levelIndex, difficulty: getSettings().difficulty, practice: true });
+      setLoopCount(1);
+      setGameState('playing');
+      setGameId(id => id + 1);
+    },
+    [requestAppFullscreen]
+  );
+
   const handleLoopContinue = useCallback(() => {
+    setRun(r => ({ ...r, levelIndex: 0, stats: undefined }));
     setLoopCount(prev => prev + 1);
     setGameState('playing');
     setGameId(id => id + 1);
@@ -138,13 +176,13 @@ function App() {
   /** Ends a run: the score goes to the leaderboard if it qualifies. */
   const finishRun = useCallback((score: number, fallback: GameState) => {
     soundService.stopMusic();
-    if (highscoreService.isHighscore(score)) {
+    if (!run.practice && highscoreService.isHighscore(score)) {
       setFinalScore(score);
       setGameState('enter-highscore');
     } else {
       setGameState(fallback);
     }
-  }, []);
+  }, [run.practice]);
 
   const handleGameOver = useCallback(
     (score: number) => finishRun(score, 'gameover'),
@@ -214,6 +252,9 @@ function App() {
         case 'new':
           handleStart();
           break;
+        case 'continue':
+          handleContinue();
+          break;
         case 'quit':
           void quitApp();
           break;
@@ -221,7 +262,7 @@ function App() {
           setOverlay(choice);
       }
     },
-    [handleStart]
+    [handleStart, handleContinue]
   ),
   handleLeaveGame = useCallback(
     (score: number) => {
@@ -268,6 +309,10 @@ function App() {
             onGameOver={handleGameOver}
             onCompleted={handleGameCompleted}
             onQuit={handleLeaveGame}
+            startLevel={run.levelIndex}
+            difficulty={run.difficulty}
+            practice={run.practice}
+            initialStats={run.stats}
             loopCount={loopCount}
             initialScore={carry.score}
             initialLives={carry.lives}
@@ -290,6 +335,7 @@ function App() {
         return (
           <EnterHighscoreScreen
             score={finalScore}
+            difficulty={run.difficulty}
             onHighscoreEntered={handleHighscoreEntered}
           />
         );
@@ -324,7 +370,7 @@ function App() {
           }}
         >
           {renderContent()}
-          {overlay && <ScreenOverlay kind={overlay} onClose={() => setOverlay(null)} />}
+          {overlay && <ScreenOverlay kind={overlay} onClose={() => setOverlay(null)} onPlayLevel={handlePlayLevel} />}
           {update && (gameState === 'start' || gameState === 'highscore') && (
             <UpdateBanner update={update} status={updateStatus} error={updateError} />
           )}

@@ -1,4 +1,4 @@
-import type { CollectibleType } from './types';
+import type { CollectibleType, Difficulty } from './types';
 
 // Game dimensions (Viewport)
 export const GAME_WIDTH = 1920;
@@ -107,6 +107,13 @@ export const EXTRA_LIFE_SCORE_MULTIPLIER = 2;
 // Game settings
 export const INITIAL_LIVES = 3;
 export const MAX_PARTICLES = 360;
+
+// Difficulty: the lives she starts with, a factor on the speed of enemies and bosses, a factor on the life of the bosses
+export const DIFFICULTY: Record<Difficulty, { lives: number; speed: number; boss: number }> = {
+  easy: { lives: 5, speed: 0.8, boss: 0.75 },
+  normal: { lives: INITIAL_LIVES, speed: 1, boss: 1 },
+  hard: { lives: 2, speed: 1.2, boss: 1.25 },
+};
 
 // Highscore settings
 export const HIGHSCORE_KEY = 'pixelDebhHighscores';

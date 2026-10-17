@@ -10,8 +10,8 @@ interface OptionsScreenProps {
   onClose: () => void;
 }
 
-type Tab = 'audio' | 'graphics' | 'controls' | 'language' | 'access';
-const TABS: Tab[] = ['audio', 'graphics', 'controls', 'language', 'access'];
+type Tab = 'audio' | 'graphics' | 'controls' | 'game' | 'language' | 'access';
+const TABS: Tab[] = ['audio', 'graphics', 'controls', 'game', 'language', 'access'];
 
 interface RowBase {
   id: string;
@@ -71,6 +71,22 @@ function rowsFor(tab: Tab, s: Settings, lang: Language, refresh: () => void): Ro
       return [
         ...CONTROLS.map(c => ({ kind: 'key' as const, id: `key-${c}`, label: t(CONTROL_LABEL[c]), control: c })),
         { kind: 'action', id: 'resetKeys', label: t('options.ctrl.reset'), run: () => { resetBindings(); refresh(); } },
+      ];
+    case 'game':
+      return [
+        {
+          kind: 'choice',
+          id: 'difficulty',
+          label: t('options.game.difficulty'),
+          help: t('options.game.help'),
+          value: s.difficulty,
+          options: [
+            { value: 'easy', label: t('options.game.easy') },
+            { value: 'normal', label: t('options.game.normal') },
+            { value: 'hard', label: t('options.game.hard') },
+          ],
+          set: v => updateSettings({ difficulty: v === 'easy' ? 'easy' : v === 'hard' ? 'hard' : 'normal' }),
+        },
       ];
     case 'language':
       return [

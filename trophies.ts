@@ -34,19 +34,11 @@ export interface TrophyContext {
 }
 
 export interface TrophyDef {
+  /** The id also names its texts in locales/: `trophy.<id>.name` and `trophy.<id>.desc`. */
   id: string;
   tier: TrophyTier;
-  name: string;
-  description: string;
   check: (c: TrophyContext) => boolean;
 }
-
-export const TIER_LABEL: Record<TrophyTier, string> = {
-  normal: 'NORMALI',
-  rare: 'RARI',
-  hard: 'DIFFICILI',
-  complete: 'COMPLETAMENTO',
-};
 
 /** Where the numbers of the trophies come from: each is a plain constant, to be tuned by playing. */
 export const TROPHY_SHELF_ITEMS = 100;
@@ -56,6 +48,20 @@ export const TROPHY_BOWLING_KOS = 5;
 export const TROPHY_SCORE = 100_000;
 export const TROPHY_MAZE_SECONDS_LEFT = 360;
 export const TROPHY_LOOP = 3;
+
+export const TIERS: readonly TrophyTier[] = ['normal', 'rare', 'hard', 'complete'];
+
+/** The numbers that the texts of some trophies mention (`{n}`), so text and condition cannot drift apart. */
+export const TROPHY_NUMBER: Record<string, number> = {
+  shelf: TROPHY_SHELF_ITEMS,
+  hunter: TROPHY_HUNTER_ENEMIES,
+  'super-blast': TROPHY_BLAST_ENEMIES,
+  'full-set': COLLECTIBLE_TYPES.length,
+  bowling: TROPHY_BOWLING_KOS,
+  'high-score': TROPHY_SCORE,
+  'maze-sprint': TROPHY_MAZE_SECONDS_LEFT / 60,
+  'third-loop': TROPHY_LOOP,
+};
 
 const bossLevel = (levels: LevelData[], type: BossType): number => levels.findIndex(l => l.boss?.type === type);
 const mazeLevel = (levels: LevelData[]): number => levels.findIndex(l => Boolean(l.maze));
@@ -69,43 +75,31 @@ export const TROPHIES: TrophyDef[] = [
   {
     id: 'first-steps',
     tier: 'normal',
-    name: 'Primi Passi',
-    description: 'Completa il Livello 1.',
     check: c => c.stats.clears[0] !== undefined,
   },
   {
     id: 'shelf',
     tier: 'normal',
-    name: 'Primo Scaffale',
-    description: `Raccogli ${TROPHY_SHELF_ITEMS} oggetti da collezione.`,
     check: c => c.totals.collected >= TROPHY_SHELF_ITEMS,
   },
   {
     id: 'hunter',
     tier: 'normal',
-    name: 'Cacciatrice di Nemici',
-    description: `Sconfiggi ${TROPHY_HUNTER_ENEMIES} nemici.`,
     check: c => c.totals.enemies >= TROPHY_HUNTER_ENEMIES,
   },
   {
     id: 'double-ko',
     tier: 'normal',
-    name: 'Doppio K.O.',
-    description: 'Lancia un nemico contro un altro e abbattili entrambi.',
     check: c => c.stats.doubleKos >= 1,
   },
   {
     id: 'shield-up',
     tier: 'normal',
-    name: 'Scudo Alzato',
-    description: 'Fai assorbire un colpo allo scudo.',
     check: c => c.stats.shieldBlocks >= 1,
   },
   {
     id: 'frog-down',
     tier: 'normal',
-    name: 'Rana a Lesso',
-    description: 'Sconfiggi la Rana Ciclope.',
     check: c => beat(c, 'frog'),
   },
 
@@ -113,50 +107,36 @@ export const TROPHIES: TrophyDef[] = [
   {
     id: 'egg-hunt',
     tier: 'rare',
-    name: "Frittata d'Occhio",
-    description: 'Sconfiggi LeGallineNellOcchi.',
     check: c => beat(c, 'chickenEye'),
   },
   {
     id: 'lights-on',
     tier: 'rare',
-    name: 'Luce nel Buio',
-    description: 'Sconfiggi CapocciaNelBuio.',
     check: c => beat(c, 'shadowHead'),
   },
   {
     id: 'super-blast',
     tier: 'rare',
-    name: 'Botto Grosso',
-    description: `Abbatti ${TROPHY_BLAST_ENEMIES} nemici con un solo lancio super.`,
     check: c => c.stats.bestBlast >= TROPHY_BLAST_ENEMIES,
   },
   {
     id: 'full-set',
     tier: 'rare',
-    name: 'Collezione Completa',
-    description: `Raccogli tutti gli ${COLLECTIBLE_TYPES.length} tipi di oggetti retro in una partita.`,
     check: c => COLLECTIBLE_TYPES.every(t => c.stats.itemTypes.includes(t)),
   },
   {
     id: 'bowling',
     tier: 'rare',
-    name: 'Re del Bowling',
-    description: `Fai ${TROPHY_BOWLING_KOS} doppi K.O. in una partita.`,
     check: c => c.stats.doubleKos >= TROPHY_BOWLING_KOS,
   },
   {
     id: 'high-score',
     tier: 'rare',
-    name: 'Centomila',
-    description: `Raggiungi ${TROPHY_SCORE.toLocaleString('it-IT')} punti in una partita.`,
     check: c => c.score >= TROPHY_SCORE,
   },
   {
     id: 'maze-out',
     tier: 'rare',
-    name: 'Fuori dal Labirinto',
-    description: "Trova l'uscita del labirinto.",
     check: c => c.stats.clears[mazeLevel(c.levels)] !== undefined,
   },
 
@@ -164,36 +144,26 @@ export const TROPHIES: TrophyDef[] = [
   {
     id: 'untouchable',
     tier: 'hard',
-    name: 'Intoccabile',
-    description: 'Sconfiggi un boss senza essere mai colpita.',
     check: c => c.levels.some((l, i) => isBossLevel(l) && c.stats.clears[i]?.hits === 0),
   },
   {
     id: 'clean-world',
     tier: 'hard',
-    name: 'Mondo Pulito',
-    description: 'Arriva in fondo al primo mondo (fino alla Rana) senza perdere una vita.',
     check: c => c.stats.clears[bossLevel(c.levels, 'frog')]?.livesLostSoFar === 0,
   },
   {
     id: 'maze-sprint',
     tier: 'hard',
-    name: 'Corsa nel Labirinto',
-    description: `Esci dal labirinto con almeno ${TROPHY_MAZE_SECONDS_LEFT / 60} minuti ancora sul timer.`,
     check: c => (c.stats.clears[mazeLevel(c.levels)]?.timeLeft ?? -1) >= TROPHY_MAZE_SECONDS_LEFT,
   },
   {
     id: 'vault-flawless',
     tier: 'hard',
-    name: 'Caveau Intatto',
-    description: 'Vinci lo scontro finale senza perdere una vita.',
     check: c => c.stats.clears[lastLevel(c.levels)]?.livesLost === 0,
   },
   {
     id: 'third-loop',
     tier: 'hard',
-    name: 'Terzo Giro',
-    description: `Arriva al LOOP ${TROPHY_LOOP}.`,
     check: c => c.loopCount >= TROPHY_LOOP,
   },
 
@@ -201,22 +171,16 @@ export const TROPHIES: TrophyDef[] = [
   {
     id: 'the-end',
     tier: 'complete',
-    name: 'Fine della Corsa',
-    description: 'Completa il gioco: sconfiggi i tre boss nel Caveau del Collezionista.',
     check: c => c.stats.clears[lastLevel(c.levels)] !== undefined,
   },
   {
     id: 'again',
     tier: 'complete',
-    name: 'Ancora!',
-    description: 'Inizia il LOOP 2.',
     check: c => c.loopCount >= 2,
   },
   {
     id: 'all-trophies',
     tier: 'complete',
-    name: 'Il Collezionista',
-    description: 'Sblocca tutti gli altri trofei.',
     check: c => TROPHIES.every(t => t.id === 'all-trophies' || c.unlocked.has(t.id)),
   },
 ];

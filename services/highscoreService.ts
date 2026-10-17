@@ -1,4 +1,4 @@
-import { HighscoreEntry } from '../types';
+import { Difficulty, HighscoreEntry } from '../types';
 import { HIGHSCORE_KEY } from '../constants';
 import * as storage from './storage';
 
@@ -47,13 +47,13 @@ function saveHighscores(scores: HighscoreEntry[]): void {
   }
 }
 
-export function addHighscore(name: string, score: number): void {
+export function addHighscore(name: string, score: number, difficulty: Difficulty = 'normal'): void {
   const scores = getHighscores();
   // Filter out the default placeholder entries before adding the new score.
   // A score of 0 is valid, but not from the default 'AAA'.
   const currentRealScores = scores.filter(s => !(s.name === 'AAA' && s.score === 0));
 
-  currentRealScores.push({ name, score });
+  currentRealScores.push({ name, score, difficulty });
   saveHighscores(currentRealScores);
 }
 

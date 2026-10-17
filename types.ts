@@ -209,9 +209,14 @@ export interface LevelData {
   enemySpawns?: Omit<EnemySpawnPoint, 'timer'>[];
 }
 
+/** How hard a game is: the lives she starts with, how fast the enemies move and how much life the bosses have. */
+export type Difficulty = 'easy' | 'normal' | 'hard';
+
 export type GameState = 'boot' | 'notice' | 'intro' | 'start' | 'playing' | 'level-cleared' | 'completed' | 'gameover' | 'highscore' | 'enter-highscore';
 
 export interface HighscoreEntry {
   name: string;
   score: number;
+  /** The difficulty of the game (missing on old entries: normal). */
+  difficulty?: Difficulty;
 }

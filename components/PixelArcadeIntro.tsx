@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import * as soundService from '../services/soundService';
 import CreditLine from './CreditLine';
+import { t, useLanguage } from '../services/i18n';
 
 interface PixelArcadeIntroProps {
   onIntroComplete: () => void;
 }
 
 const PixelArcadeIntro: React.FC<PixelArcadeIntroProps> = ({ onIntroComplete }) => {
+  useLanguage();
   const [animationComplete, setAnimationComplete] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
 
@@ -112,7 +114,7 @@ const PixelArcadeIntro: React.FC<PixelArcadeIntroProps> = ({ onIntroComplete }) 
       {/* Top Banner */}
       <div className="z-10 text-center flex flex-col items-center w-full mt-2">
         <span className="px-5 py-1.5 rounded-full bg-orange-500/20 border border-orange-400/60 text-orange-300 text-xs font-extrabold tracking-[0.3em] uppercase mb-2 shadow-[0_0_20px_rgba(255,109,0,0.35)]">
-          IL VIDEOGIOCO UFFICIALE DEL CANALE YOUTUBE
+          {t('intro.chip')}
         </span>
         <h1
           className="text-7xl font-black tracking-wider text-white mb-1"
@@ -192,7 +194,7 @@ const PixelArcadeIntro: React.FC<PixelArcadeIntroProps> = ({ onIntroComplete }) 
       {/* Prompt */}
       <div className={`mt-1 z-50 transition-opacity duration-500 ${animationComplete ? 'opacity-100' : 'opacity-0'}`}>
         <p className="text-2xl font-black tracking-widest text-cyan-300 bg-[#0d0628]/90 px-9 py-3.5 rounded-2xl border-2 border-cyan-400 shadow-[0_0_28px_rgba(0,229,255,0.5)] animate-pulse">
-          PREMI UN TASTO O CLICCA PER INIZIARE
+          {t('intro.press')}
         </p>
       </div>
 

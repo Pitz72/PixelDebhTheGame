@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { PlayerSprite, EnemySprite } from '../services/assetService';
 import { trophyProgress } from '../services/trophyService';
+import { loadProgress } from '../services/progress';
 import { usePadConnected } from '../services/gamepadService';
 import { isTauri } from '../services/platform';
 import { t, useLanguage } from '../services/i18n';
@@ -9,7 +10,7 @@ import MenuList, { type MenuItem } from './MenuList';
 import { EnemyType } from '../types';
 
 /** What the title menu can ask for. */
-export type StartChoice = 'new' | 'leaderboard' | 'trophies' | 'options' | 'howto' | 'credits' | 'quit';
+export type StartChoice = 'continue' | 'levels' | 'new' | 'leaderboard' | 'trophies' | 'options' | 'howto' | 'credits' | 'quit';
 
 interface StartScreenProps {
   onSelect: (choice: StartChoice) => void;
@@ -48,8 +49,11 @@ const StartScreen: React.FC<StartScreenProps> = ({ onSelect, active = true }) =>
     return () => clearInterval(interval);
   }, [paradeCharacters.length]);
 
+  const progress = loadProgress();
   const items: MenuItem[] = [
+    ...(progress.run ? [{ id: 'continue', label: t('menu.continueAt', { n: progress.run.levelIndex + 1 }) }] : []),
     { id: 'new', label: t('menu.newGame') },
+    ...(progress.highestLevel >= 1 ? [{ id: 'levels', label: t('menu.levels') }] : []),
     { id: 'leaderboard', label: t('menu.leaderboard') },
     { id: 'trophies', label: `${t('menu.trophies')} (${earned}/${total})` },
     { id: 'options', label: t('menu.options') },
@@ -89,7 +93,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onSelect, active = true }) =>
           />
           <div className="text-left">
             <span className="inline-block px-3.5 py-1 rounded-full bg-orange-500/20 border border-orange-400/50 text-orange-300 text-xs font-bold tracking-[0.25em] mb-1">
-              CANALE YOUTUBE UFFICIALE • VECTOR ARCADE EDITION
+              {t('title.chip')}
             </span>
             <h1
               className="text-7xl font-black text-white tracking-wider leading-none"
@@ -125,7 +129,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onSelect, active = true }) =>
         </div>
 
         <div className="mt-3 flex flex-col items-center" style={{ minHeight: 440, opacity: showMenu ? 1 : 0, transition: 'opacity 300ms' }}>
-          {showMenu && <MenuList items={items} onSelect={id => onSelect(id as StartChoice)} active={active} size="md" width={520} />}
+          {showMenu && <MenuList items={items} onSelect={id => onSelect(id as StartChoice)} active={active} size={items.length > 7 ? 'sm' : 'md'} width={560} initialId={progress.run ? 'continue' : 'new'} />}
           <p className="mt-4 text-sm font-bold tracking-[0.25em] text-gray-400">
             {t('menu.hint')}
             {padConnected && <span className="ml-4 text-emerald-300">● GAMEPAD</span>}

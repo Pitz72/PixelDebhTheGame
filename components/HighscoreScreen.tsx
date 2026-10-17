@@ -67,6 +67,11 @@ const HighscoreScreen: React.FC<HighscoreScreenProps> = ({ onStart, closing = fa
             >
               <span className={index === 0 ? 'text-yellow-300' : 'text-cyan-400'}>
                 #{index + 1} &nbsp; {entry.name}
+                {entry.score > 0 && entry.difficulty && entry.difficulty !== 'normal' && (
+                  <span className="ml-4 align-middle rounded-md border border-white/30 px-2 py-0.5 text-sm tracking-widest text-gray-300">
+                    {t(entry.difficulty === 'easy' ? 'options.game.easy' : 'options.game.hard')}
+                  </span>
+                )}
               </span>
               <span className="text-white font-mono">{entry.score.toString().padStart(8, '0')}</span>
             </div>

@@ -1,15 +1,19 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import * as highscoreService from '../services/highscoreService';
+import type { Difficulty } from '../types';
 import * as soundService from '../services/soundService';
+import { t, useLanguage } from '../services/i18n';
 
 interface EnterHighscoreScreenProps {
   score: number;
+  difficulty?: Difficulty;
   onHighscoreEntered: () => void;
 }
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-const EnterHighscoreScreen: React.FC<EnterHighscoreScreenProps> = ({ score, onHighscoreEntered }) => {
+const EnterHighscoreScreen: React.FC<EnterHighscoreScreenProps> = ({ score, difficulty = 'normal' as Difficulty, onHighscoreEntered }) => {
+  useLanguage();
   const [initials, setInitials] = useState<string[]>(['A', 'A', 'A']);
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -34,10 +38,10 @@ const EnterHighscoreScreen: React.FC<EnterHighscoreScreenProps> = ({ score, onHi
       setActiveIndex(activeIndex + 1);
     } else {
       const finalName = initials.join('');
-      highscoreService.addHighscore(finalName, score);
+      highscoreService.addHighscore(finalName, score, difficulty);
       onHighscoreEntered();
     }
-  }, [activeIndex, initials, score, onHighscoreEntered]);
+  }, [activeIndex, initials, score, difficulty, onHighscoreEntered]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -81,7 +85,7 @@ const EnterHighscoreScreen: React.FC<EnterHighscoreScreenProps> = ({ score, onHi
 
       <div className="flex flex-col items-center bg-[#0c0524]/90 px-12 py-10 rounded-3xl border-2 border-cyan-400/50 shadow-[0_0_40px_rgba(0,229,255,0.2)]">
         <p className="text-3xl font-bold text-yellow-300 mb-8 tracking-widest uppercase">
-          Inserisci le tue Iniziali
+          {t('highscore.enterInitials')}
         </p>
 
         <div className="flex space-x-6">
@@ -100,8 +104,8 @@ const EnterHighscoreScreen: React.FC<EnterHighscoreScreenProps> = ({ score, onHi
         </div>
 
         <div className="text-xl text-cyan-200/80 mt-10 space-y-2 font-bold">
-          <p>[W / S] o [↑ / ↓] per cambiare lettera</p>
-          <p>[INVIO] per confermare</p>
+          <p>{t('highscore.enterKeys1')}</p>
+          <p>{t('highscore.enterKeys2')}</p>
         </div>
       </div>
     </div>

@@ -10,6 +10,7 @@
 import { useSyncExternalStore } from 'react';
 import * as storage from './storage';
 import { t } from './i18n';
+import type { Difficulty } from '../types';
 import { CONTROLS, DEFAULT_BINDINGS, RESERVED_KEYS, defaultBindings, type Bindings, type Control } from '../engine/input';
 
 export type ShakeLevel = 0 | 50 | 100;
@@ -18,6 +19,8 @@ export const SHAKE_LEVELS: readonly ShakeLevel[] = [0, 50, 100];
 export type Quality = 'high' | 'low';
 
 export interface Settings {
+  /** The difficulty of the next game (a game in progress keeps its own). */
+  difficulty: Difficulty;
   /** High: dynamic lights and bloom. Low: the light version. */
   quality: Quality;
   /** Let the game drop to Low quality by itself when it cannot hold the frame rate. */
@@ -38,6 +41,7 @@ export const SETTINGS_KEY = 'pixelDebhSettings';
 export const LEGACY_QUALITY_KEY = 'pixelDebhQuality';
 
 export const defaultSettings = (): Settings => ({
+  difficulty: 'normal',
   quality: 'high',
   autoQuality: true,
   shake: 100,
@@ -55,6 +59,7 @@ export function parseSettings(json: string | null, legacyQuality: string | null 
   try {
     const raw = JSON.parse(json) as Partial<Record<keyof Settings, unknown>>;
     if (raw.quality === 'low' || raw.quality === 'high') out.quality = raw.quality;
+    if (raw.difficulty === 'easy' || raw.difficulty === 'normal' || raw.difficulty === 'hard') out.difficulty = raw.difficulty;
     if (typeof raw.autoQuality === 'boolean') out.autoQuality = raw.autoQuality;
     if (raw.shake === 0 || raw.shake === 50 || raw.shake === 100) out.shake = raw.shake;
     if (typeof raw.flashes === 'boolean') out.flashes = raw.flashes;

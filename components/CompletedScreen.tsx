@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { t, useLanguage } from '../services/i18n';
 
 interface CompletedScreenProps {
   score: number;
@@ -8,6 +9,7 @@ interface CompletedScreenProps {
 }
 
 const CompletedScreen: React.FC<CompletedScreenProps> = ({ score, loopCount, onNextLoop, onBank }) => {
+  useLanguage();
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.repeat) return;
@@ -30,22 +32,22 @@ const CompletedScreen: React.FC<CompletedScreenProps> = ({ score, loopCount, onN
         VICTORY!
       </h1>
       <h2 className="text-5xl font-extrabold text-yellow-300 mb-4 tracking-widest">
-        LOOP {loopCount} COMPLETATO!
+        {t('completed.loop', { n: loopCount })}
       </h2>
       <p className="text-4xl font-mono font-black text-white mb-8">
         {score.toString().padStart(8, '0')}
       </p>
       <p className="text-2xl font-bold text-pink-400 mb-3 tracking-wider">
-        NEL LOOP {loopCount + 1} I NEMICI SARANNO PIÙ VELOCI DEL 20%!
+        {t('completed.faster', { n: loopCount + 1 })}
       </p>
       <p className="text-xl font-bold text-pink-300/90 mb-12 tracking-wider">
-        NEL LABIRINTO: PIÙ NEMICI E UN MINUTO IN MENO!
+        {t('completed.maze')}
       </p>
       <p className="text-3xl font-black text-white bg-emerald-600/80 px-10 py-4 rounded-2xl border-2 border-emerald-300 animate-pulse">
-        PREMI INVIO PER INIZIARE IL LOOP {loopCount + 1}
+        {t('completed.next', { n: loopCount + 1 })}
       </p>
       <p className="text-xl font-bold text-cyan-200/80 mt-8 tracking-wider">
-        [ESC] SALVA IL PUNTEGGIO ED ESCI
+        {t('completed.bank')}
       </p>
     </div>
   );

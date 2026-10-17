@@ -11,11 +11,13 @@ import {
   Checkpoint,
   LevelData,
   MazeData,
+  Difficulty,
 } from '../types';
 import {
   GAME_WIDTH,
   GAME_HEIGHT,
   INITIAL_LIVES,
+  DIFFICULTY,
   EXTRA_LIFE_SCORE_START,
   PLAYER_WIDTH,
   PLAYER_HEIGHT,
@@ -68,6 +70,7 @@ export type EngineEvent =
   | { type: 'sound'; name: string }
   | { type: 'jingle'; name: 'levelStart' | 'respawn' | 'extraLife' }
   | { type: 'music'; theme: string }
+  | { type: 'level'; index: number }
   | { type: 'gameOver'; score: number }
   | { type: 'completed'; score: number; lives: number };
 
@@ -76,7 +79,11 @@ export interface World {
   status: WorldStatus;
   currentLevelIndex: number;
   loopCount: number;
+  /** How fast the enemies and bosses are: the LOOP and the chosen difficulty together. */
   difficultyMultiplier: number;
+  difficulty: Difficulty;
+  /** A game started from the level select: no leaderboard, no trophies. */
+  practice: boolean;
 
   score: number;
   lives: number;
@@ -140,6 +147,10 @@ export interface World {
 
 export interface CreateWorldOptions {
   loopCount?: number;
+  difficulty?: Difficulty;
+  practice?: boolean;
+  /** What the run has counted so far (a game that continues a saved one). */
+  stats?: RunStats;
   score?: number;
   lives?: number;
   levelIndex?: number;
@@ -182,14 +193,19 @@ export const nextExtraLifeFor = (score: number): number => {
 export function createWorld(opts: CreateWorldOptions = {}): World {
   const loopCount = opts.loopCount ?? 1;
   const score = opts.score ?? 0;
+  const difficulty = opts.difficulty ?? 'normal';
+  const stats = opts.stats ?? createStats();
+  if (opts.practice) stats.tainted = true; // practice earns no trophies
   const w: World = {
     levels: opts.levels ?? defaultLevels,
     status: 'playing',
     currentLevelIndex: 0,
     loopCount,
-    difficultyMultiplier: 1 + (loopCount - 1) * 0.2,
+    difficultyMultiplier: (1 + (loopCount - 1) * 0.2) * DIFFICULTY[difficulty].speed,
+    difficulty,
+    practice: Boolean(opts.practice),
     score,
-    lives: opts.lives ?? INITIAL_LIVES,
+    lives: opts.lives ?? DIFFICULTY[difficulty].lives,
     nextExtraLifeScore: nextExtraLifeFor(score),
     livesBeforeBoss: null,
     player: emptyPlayer(),
@@ -230,7 +246,7 @@ export function createWorld(opts: CreateWorldOptions = {}): World {
     rng: opts.rng ?? Math.random,
     nextId: 1,
     elapsed: 0,
-    stats: createStats(),
+    stats,
   };
   loadLevel(w, opts.levelIndex ?? 0);
   return w;
@@ -460,9 +476,11 @@ export function loadLevel(w: World, levelIndex: number): void {
   const mult = w.difficultyMultiplier;
 
   if (specs.length > 0) {
+    const bossLife = (full: number) => Math.max(1, Math.round(full * DIFFICULTY[w.difficulty].boss));
     w.bosses = specs.map((spec, i) => ({
       ...spec,
-      hp: spec.maxHp,
+      maxHp: bossLife(spec.maxHp),
+      hp: bossLife(spec.maxHp),
       vx: BOSS_INITIAL_VX * mult,
       vy: BOSS_INITIAL_VY * mult,
       // bosses that share an arena do not all start in the same breath
@@ -481,7 +499,7 @@ export function loadLevel(w: World, levelIndex: number): void {
     if (levelData.boss?.type === 'chickenEye') {
       // Endurance fight: temporary extra lives, handed back when the boss falls (see advanceLevel).
       w.livesBeforeBoss = w.livesBeforeBoss ?? w.lives;
-      w.lives = Math.max(w.lives, Math.ceil(levelData.boss.maxHp / 2));
+      w.lives = Math.max(w.lives, Math.ceil(bossLife(levelData.boss.maxHp) / 2));
     }
   } else {
     w.bosses = [];
@@ -510,6 +528,7 @@ export function loadLevel(w: World, levelIndex: number): void {
   w.status = 'playing';
   emit(w, { type: 'music', theme: levelData.musicTrack || levelData.musicTheme || (specs.length > 0 ? 'boss' : 'adventure') });
   emit(w, { type: 'jingle', name: 'levelStart' });
+  emit(w, { type: 'level', index: levelIndex });
 }
 
 /** Called when the level-cleared banner has run its course. */
