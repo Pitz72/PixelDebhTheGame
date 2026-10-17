@@ -1,6 +1,6 @@
 # Decisioni e cose da fare per arrivare al 100% (stato al 2026-10-17, v1.18.0)
 
-Il gioco e' finito: tutte le 7 fasi della roadmap e tutto l'audit sono chiusi (`docs/AUDIT.md`), `npm audit` e' a zero, 582 test verdi, tutto pubblicato su `main`. Quello che manca e' la **pubblicazione**, qualche **decisione** e le **prove che solo l'utente puo' fare**. Verificato su GitHub il 2026-10-17: repo `Pitz72/PixelDebhTheGame` **pubblico**, **nessun segreto** impostato, **nessuna esecuzione** del workflow, **nessuna release**. La licenza e' stata scelta e scritta lo stesso giorno (D1 e A1 qui sotto).
+Il gioco e' finito: tutte le 7 fasi della roadmap e tutto l'audit sono chiusi (`docs/AUDIT.md`), `npm audit` e' a zero, 582 test verdi, tutto pubblicato su `main`. Quello che manca e' la **pubblicazione**, qualche **decisione** e le **prove che solo l'utente puo' fare**. Aggiornamento del 2026-10-17, sera: la **licenza** e' scritta (D1, A1), i **due segreti** sono impostati e le chiavi hanno una copia su `F:\Backup` (D2, A2), il workflow ha girato e **`v1.18.0` e' pubblicata** (A3, A4: Windows e Linux, `latest.json` pubblico). Restano la prova dell'aggiornamento automatico (A5), D3, D4, D5 e le prove a mano.
 
 ## Decisioni dell'utente (da prendere per prime)
 
@@ -18,9 +18,9 @@ Il gioco e' finito: tutte le 7 fasi della roadmap e tutto l'audit sono chiusi (`
 |---|---|---|
 | A1 | `LICENSE`, `LICENZE.md`, sezione License nel README, campo `license` in `package.json` e `Cargo.toml` | **Fatta** (dopo D1) |
 | A2 | Impostare i segreti con `gh secret set` (comandi in `docs/RILASCIO.md`) | **Fatta** (dopo D2) |
-| A3 | Prima build di prova `build-only` (Windows e Linux) con `gh workflow run release.yml -f mode=build-only`, guardare i log e correggere | Dopo A2 (mai partita: e' la prova vera) |
-| A4 | Bozza di release `mode=draft` con `latest.json` e `log/<versione>.md`; **l'utente preme "Publish release"** | Dopo A3 |
-| A5 | **Prova dell'aggiornamento automatico**: servono due release pubblicate in fila (per esempio 1.18.0 e 1.18.1) e un installatore vero. Provare anche l'avviso della portable | Dopo A4 |
+| A3 | Prima build di prova (Windows e Linux) | **Fatta il 2026-10-17** (si e' passati direttamente da `mode=draft`, a richiesta dell'utente). Servirono 3 corse, vedi sotto |
+| A4 | Bozza di release con `latest.json` e `log/<versione>.md`, poi pubblicazione | **Fatta il 2026-10-17**: `v1.18.0` e' pubblicata ed e' la «Latest» ([release](https://github.com/Pitz72/PixelDebhTheGame/releases/tag/v1.18.0)), tag su `54dcb0f`. Pubblicata da Claude su richiesta esplicita dell'utente |
+| A5 | **Prova dell'aggiornamento automatico**: serve un installatore 1.18.0 installato sul serio e poi una seconda release (per esempio 1.18.1) che l'aggiorni. Provare anche l'avviso della portable. Gia' verificato: `latest.json` pubblico risponde (versione 1.18.0, sei piattaforme) e la firma dell'installatore ha lo stesso identificativo di chiave (`3E180F3F6F7C8052`) di quella pubblica nel gioco | Ora: l'utente installa 1.18.0 |
 | A6 | Domanda a SignPath e firma nella build | Dopo D3 |
 | A7 | Classifica online (fase 1) | Dopo D4 |
 | A8 | `cargo audit` (installare lo strumento, circa 5 minuti) | Quando si vuole |
@@ -34,9 +34,19 @@ Il gioco e' finito: tutte le 7 fasi della roadmap e tutto l'audit sono chiusi (`
 -   Dove possibile: provare su un **Linux vero** con GPU e audio, e su un monitor a **144 Hz o 4K** (qui il monitor e' a 60 Hz e il 4K e' emulato).
 -   A gusto: gli archi del mondo boss sembrano ganci, l'astro del mondo industriale ricorda un pianeta a bande.
 
+## Cosa ha insegnato la prima corsa del workflow (2026-10-17)
+
+La build vera non era mai partita: ci sono volute tre corse, e i due difetti erano nel server, non nel gioco.
+
+-   **Un test dipendeva dalla lingua del PC** (`tests/controls.test.ts`: `keyLabel(' ')` da `SPAZIO` sul PC italiano e `SPACE` sul server inglese). Ora il test fissa la lingua da se'. Per riprodurre un sistema inglese in locale basta una configurazione di Vitest con `navigator.language = 'en-US'` in un file di setup (`LANG` non basta su Windows).
+-   **Linux: `libgstreamer1.0-dev` non si installava** su `ubuntu-22.04` (dipende da `libunwind-dev`, che il pacchetto `libunwind-14-dev` dell'immagine blocca). Il passo del workflow lo toglie prima. I pacchetti di sviluppo di GStreamer servono davvero: l'AppImage include il supporto audio (`bundleMediaFramework`).
+-   **Il rifiuto «Resource not accessible by integration»** alla creazione della release (corsa 2, solo Windows) **non si e' ripresentato** nella corsa 3 e non e' spiegato: con lo stesso token e gli stessi campi di `tauri-action`, due prove isolate hanno creato la bozza senza errori. Se tornasse: guardare i log completi di quel passo, `X-Accepted-Github-Permissions` e se i due lavori (Windows e Linux) creano la bozza nello stesso istante.
+-   **Una bozza non si vede**: la release in bozza non compare nell'elenco pubblico ne' come «Latest» (la vede solo chi ha i permessi, nella pagina Release con l'etichetta Draft). Finche' non si preme Publish, i giochi non vedono l'aggiornamento.
+-   Le impostazioni di GitHub (permessi predefiniti dei workflow «read») non sono state toccate: `permissions: contents: write` nel workflow basta.
+
 ## Il percorso piu' corto
 
-D1 + D2 -> A1 + A2 -> A3 (build di prova) -> A4 (bozza, l'utente pubblica) -> A5 (due release, prova dell'aggiornamento). D3, D4, D5 e le prove a mano corrono in parallelo.
+D1 + D2 -> A1 + A2 -> A3 (build di prova) -> A4 (bozza, pubblicazione) -> **A5 (installare 1.18.0 e provare l'aggiornamento con una seconda release)**. D3, D4, D5 e le prove a mano corrono in parallelo. Fatti: D1, D2, A1-A4.
 
 ---
 
