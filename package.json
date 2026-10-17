@@ -1,6 +1,7 @@
 {
   "name": "pixeldebh-retro-rescue",
   "private": true,
+  "license": "SEE LICENSE IN LICENZE.md",
   "version": "1.18.0",
   "type": "module",
   "scripts": {

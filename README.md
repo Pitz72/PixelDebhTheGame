@@ -134,5 +134,15 @@ The game simulation lives in `engine/` as plain TypeScript with a fixed 60 Hz ti
 -   **TailwindCSS (v4, compiled locally):** For styling the UI components. The palette of Tailwind 3 is kept in `theme-v3-colors.css` so the look did not change.
 -   **Vitest:** For the engine tests.
 
+## License
+
+The game is free to play. The repository has three regimes, chosen by the author (the full split of the folders, third-party notices and the note on AI are in [`LICENZE.md`](LICENZE.md)):
+
+-   **Code:** [MIT](LICENSE).
+-   **Music, vector artwork and presentation texts:** [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/): use and adapt them with credit to the author, not for commercial purposes, under the same terms.
+-   **Names, logos, app icons and the intro animations** (PixelDebh, Debh, Runtime Multimedia, the channel logo, the PixelDebh intro video and the Runtime logo animation in `intro/`): **all rights reserved**. A derivative work must remove or replace them and must not present itself as the official game of the PixelDebh channel.
+
+The music was generated with Lyria (Google) and the code, the vector artwork and the animated intro were written with the help of Claude (Anthropic), under the author's direction.
+
 ---
 *This project is a demonstration of building a simple game using web technologies.*
