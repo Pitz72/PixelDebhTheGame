@@ -10,6 +10,7 @@ import {
   Particle,
   Checkpoint,
   LevelData,
+  MazeData,
 } from '../types';
 import {
   GAME_WIDTH,
@@ -99,6 +100,10 @@ export interface World {
   prevCameraY: number;
   levelWidth: number;
   levelHeight: number;
+  /** The grid of a labyrinth level, null in every other level. */
+  maze: MazeData | null;
+  /** Camera zoom on the player: 1 shows the whole screen, more shows less of the map. */
+  zoom: number;
   /** Increments every time a level is (re)loaded, so renderers know when to rebuild static content. */
   levelSerial: number;
 
@@ -195,6 +200,8 @@ export function createWorld(opts: CreateWorldOptions = {}): World {
     prevCameraY: 0,
     levelWidth: GAME_WIDTH,
     levelHeight: GAME_HEIGHT,
+    maze: null,
+    zoom: 1,
     levelSerial: 0,
     isGodMode: false,
     timeRemaining: null,
@@ -218,6 +225,19 @@ export const getNextId = (w: World): number => ++w.nextId;
 export const emit = (w: World, e: EngineEvent): void => {
   w.events.push(e);
 };
+
+/**
+ * Where the camera goes to keep the point (cx, cy) in the middle of the view. The result is the
+ * top-left corner of the screen-sized area the renderer draws; with a zoom the renderer then
+ * magnifies the middle of that area, so the corner can lie outside the level.
+ */
+export function cameraFor(w: World, cx: number, cy: number): { x: number; y: number } {
+  const viewW = GAME_WIDTH / w.zoom;
+  const viewH = GAME_HEIGHT / w.zoom;
+  const x = Math.max(0, Math.min(cx - viewW / 2, w.levelWidth - viewW));
+  const y = Math.max(0, Math.min(cy - viewH / 2, w.levelHeight - viewH));
+  return { x: x - (GAME_WIDTH - viewW) / 2, y: y - (GAME_HEIGHT - viewH) / 2 };
+}
 
 export const isZeroG = (w: World): boolean =>
   Boolean(w.boss && w.boss.type === 'shadowHead') || Boolean(w.levels[w.currentLevelIndex]?.isZeroG);
@@ -349,10 +369,13 @@ export function loadLevel(w: World, levelIndex: number): void {
   w.levelSerial += 1;
   w.levelWidth = width;
   w.levelHeight = height;
+  w.maze = levelData.maze ?? null;
+  w.zoom = levelData.zoom ?? 1;
   const startY = levelData.playerStart.y - (PLAYER_HEIGHT - PLAYER_LEGACY_HEIGHT);
   w.respawnPoint = { x: levelData.playerStart.x, y: startY };
-  w.cameraX = Math.max(0, Math.min(levelData.playerStart.x - GAME_WIDTH / 2, width - GAME_WIDTH));
-  w.cameraY = Math.max(0, Math.min(levelData.playerStart.y - GAME_HEIGHT / 2, height - GAME_HEIGHT));
+  const cam = cameraFor(w, levelData.playerStart.x, levelData.playerStart.y);
+  w.cameraX = cam.x;
+  w.cameraY = cam.y;
   w.prevCameraX = w.cameraX;
   w.prevCameraY = w.cameraY;
 

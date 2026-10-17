@@ -12,3 +12,7 @@ Scritti per Windows 11 + PowerShell + WSL2 Ubuntu. Alcuni script contengono anco
 - `prepare_music.py`: prepara i brani generati (loop, loudness, OGG, manifest). Vedi `docs/MUSIC_BRIEF.md`.
 - Nell'app avviata con `--remote-debugging-port` la sonda `window.__pdAudio` (`state()`, `time()`, `voices()`, `music()`, `level()`) mostra cosa fa il motore audio. Con `--autoplay-policy=no-user-gesture-required` in `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS` il contesto parte anche senza un clic vero. I tasti sintetici vanno inviati a `document.body`, non a `window` (altrimenti non passano dalla fase di cattura come quelli reali).
 
+## Labirinto
+
+- `maze_walk.ts`: guida Debh nel labirinto dell'app in esecuzione (build di release con porta di debug): salta al livello 13 con `window.__pdGame.load(12)`, segue il percorso migliore con eventi di tastiera, raccoglie tutto ed esce, e stampa fps e CPU da `window.__pdPerf`. Si compila con esbuild come `export-sfx.ts` (vedi il commento in testa al file). `window.__pdGame` offre anche `god(true)` e `state()` (livello, vite, oggetti, tempo, posizione, zoom).
+

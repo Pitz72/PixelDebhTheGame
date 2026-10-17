@@ -1,9 +1,12 @@
-import { Enemy, Projectile } from '../types';
+import { Enemy, MazeData, Projectile } from '../types';
 import {
   GRAVITY,
   MAX_FALL_SPEED,
   PLAYER_SPEED,
   PLAYER_FAST_SPEED,
+  MAZE_PLAYER_SPEED,
+  MAZE_PLAYER_FAST_SPEED,
+  FLYER_SPEED,
   PLAYER_ACCEL,
   PLAYER_FRICTION,
   JUMP_FORCE,
@@ -59,7 +62,9 @@ import {
   triggerShake,
   addScore,
   advanceLevel,
+  cameraFor,
 } from './world';
+import { HEADINGS, cellAt, cellCenter, isOpen } from './mazeGrid';
 
 /** The simulation advances in fixed 60 Hz steps, independent of the display refresh rate. */
 export const STEP_MS = 1000 / 60;
@@ -351,7 +356,57 @@ function updatePlayerShooting(w: World): void {
   });
 }
 
+/** Labyrinth movement: the player goes exactly where the keys point, at a constant speed. */
+function updateMazeMovement(w: World): void {
+  const p = w.player;
+  const { left, right, up, down } = w.input;
+  const speed = p.activePowerUp === 'speed-boost' ? MAZE_PLAYER_FAST_SPEED : MAZE_PLAYER_SPEED;
+  let dx = (right ? 1 : 0) - (left ? 1 : 0);
+  let dy = (down ? 1 : 0) - (up ? 1 : 0);
+  if (dx !== 0 && dy !== 0) {
+    dx *= Math.SQRT1_2;
+    dy *= Math.SQRT1_2;
+  }
+  p.vx = dx * speed;
+  p.vy = dy * speed;
+  if (dx < 0) p.direction = 'left';
+  else if (dx > 0) p.direction = 'right';
+  moveInZeroG(w);
+}
+
+/** Axis-separated AABB collision for the zero-G levels (no sticky walls). */
+function moveInZeroG(w: World): void {
+  const p = w.player;
+  p.x += p.vx * DT;
+  if (p.x < 0) p.x = 0;
+  if (p.x + p.width > w.levelWidth) p.x = w.levelWidth - p.width;
+
+  for (const plat of w.platforms) {
+    if (areRectsColliding(p, plat)) {
+      if (p.vx > 0) p.x = plat.x - p.width;
+      else if (p.vx < 0) p.x = plat.x + plat.width;
+      p.vx = 0;
+    }
+  }
+
+  p.y += p.vy * DT;
+  if (p.y < 0) p.y = 0;
+  if (p.y + p.height > w.levelHeight) p.y = w.levelHeight - p.height;
+
+  for (const plat of w.platforms) {
+    if (areRectsColliding(p, plat)) {
+      if (p.vy > 0) p.y = plat.y - p.height;
+      else if (p.vy < 0) p.y = plat.y + plat.height;
+      p.vy = 0;
+    }
+  }
+}
+
 function updatePlayerMovement(w: World, zeroG: boolean): void {
+  if (w.maze) {
+    updateMazeMovement(w);
+    return;
+  }
   const p = w.player;
   const { left, right, up, down } = w.input;
   const maxSpeed = p.activePowerUp === 'speed-boost' ? PLAYER_FAST_SPEED : PLAYER_SPEED;
@@ -379,30 +434,7 @@ function updatePlayerMovement(w: World, zeroG: boolean): void {
   }
 
   if (zeroG) {
-    // Axis-separated AABB collision for the Zero-G maze (no sticky walls)
-    p.x += p.vx * DT;
-    if (p.x < 0) p.x = 0;
-    if (p.x + p.width > w.levelWidth) p.x = w.levelWidth - p.width;
-
-    for (const plat of w.platforms) {
-      if (areRectsColliding(p, plat)) {
-        if (p.vx > 0) p.x = plat.x - p.width;
-        else if (p.vx < 0) p.x = plat.x + plat.width;
-        p.vx = 0;
-      }
-    }
-
-    p.y += p.vy * DT;
-    if (p.y < 0) p.y = 0;
-    if (p.y + p.height > w.levelHeight) p.y = w.levelHeight - p.height;
-
-    for (const plat of w.platforms) {
-      if (areRectsColliding(p, plat)) {
-        if (p.vy > 0) p.y = plat.y - p.height;
-        else if (p.vy < 0) p.y = plat.y + plat.height;
-        p.vy = 0;
-      }
-    }
+    moveInZeroG(w);
     return;
   }
 
@@ -624,13 +656,9 @@ function checkPlayerDamage(w: World): void {
 
 function updateCamera(w: World): void {
   const p = w.player;
-  const targetX = p.x + p.width / 2 - GAME_WIDTH / 2;
-  const clampedX = Math.max(0, Math.min(targetX, w.levelWidth - GAME_WIDTH));
-  w.cameraX += (clampedX - w.cameraX) * Math.min(1, 0.14 * DT);
-
-  const targetY = p.y + p.height / 2 - GAME_HEIGHT / 2;
-  const clampedY = Math.max(0, Math.min(targetY, w.levelHeight - GAME_HEIGHT));
-  w.cameraY += (clampedY - w.cameraY) * Math.min(1, 0.14 * DT);
+  const target = cameraFor(w, p.x + p.width / 2, p.y + p.height / 2);
+  w.cameraX += (target.x - w.cameraX) * Math.min(1, 0.14 * DT);
+  w.cameraY += (target.y - w.cameraY) * Math.min(1, 0.14 * DT);
 }
 
 function updateFx(w: World, zeroG: boolean): void {
@@ -908,6 +936,37 @@ function updateProjectiles(w: World, zeroG: boolean): void {
 
 const isWalker = (e: Enemy) => e.type === 'base' || e.type === 'jumper';
 
+/**
+ * Labyrinth walkers follow the corridors: at the middle of every cell they carry on straight
+ * most of the time, otherwise turn into a side corridor, and they turn back only at a dead end.
+ */
+function steerInMaze(w: World, e: Enemy, speed: number): void {
+  const m = w.maze as MazeData;
+  const cx = e.x + e.width / 2;
+  const cy = e.y + e.height / 2;
+  const { c, r } = cellAt(m, cx, cy);
+  const idx = r * m.cols + c;
+  const mid = cellCenter(m, c, r);
+  let dir = e.mazeDir ?? -1;
+
+  const atMiddle = Math.abs(cx - mid.x) <= speed && Math.abs(cy - mid.y) <= speed;
+  if (dir < 0 || (atMiddle && e.mazeCell !== idx)) {
+    e.x = mid.x - e.width / 2; // line up with the corridor again
+    e.y = mid.y - e.height / 2;
+    e.mazeCell = idx;
+    const back = dir < 0 ? -1 : (dir + 2) % 4;
+    const ways: number[] = [];
+    for (let d = 0; d < 4; d++) if (d !== back && isOpen(m, c, r, d)) ways.push(d);
+    if (ways.length === 0) dir = back >= 0 ? back : 0; // dead end: turn round
+    else if (dir >= 0 && ways.includes(dir) && w.rng() < 0.65) dir = e.mazeDir as number; // carry on
+    else dir = ways[Math.floor(w.rng() * ways.length)];
+    e.mazeDir = dir;
+  }
+  e.vx = HEADINGS[dir].dx * speed;
+  e.vy = HEADINGS[dir].dy * speed;
+  if (e.vx !== 0) e.direction = e.vx > 0 ? 'right' : 'left';
+}
+
 function walkingVx(e: Enemy, mult: number): number {
   return (e.direction === 'left' ? -1 : 1) * ENEMY_SPEED * mult;
 }
@@ -947,7 +1006,9 @@ function updateEnemies(w: World, zeroG: boolean): void {
       const distY = Math.abs(enemy.y - p.y);
       if (distX > 2200 || distY > 1800) continue;
 
-      if (enemy.type === 'phaser') {
+      if (w.maze && (enemy.type === 'base' || enemy.type === 'jumper' || enemy.type === 'flyer')) {
+        steerInMaze(w, enemy, (enemy.type === 'flyer' ? FLYER_SPEED : ENEMY_SPEED) * mult);
+      } else if (enemy.type === 'phaser') {
         const dx = p.x - enemy.x;
         const dy = p.y - enemy.y;
         const dist = Math.sqrt(dx * dx + dy * dy) || 1;
@@ -1114,6 +1175,12 @@ function stepLaunchedEnemy(w: World, enemy: Enemy, index: number): boolean {
     enemy.x += dx;
     enemy.y += dy;
     enemy.launchTravel = (enemy.launchTravel ?? 0) + Math.abs(dx);
+    if (w.maze && w.platforms.some(plat => areRectsColliding(enemy, plat))) {
+      enemy.state = 'defeated';
+      spawnParticles(w, enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, '#00e5ff', 10);
+      spawnShockwave(w, enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, '#00e5ff', 50, 2.5);
+      return true;
+    }
     if (resolveLaunchedHit(w, enemy, index)) return true;
   }
 
@@ -1301,6 +1368,7 @@ function updateItems(w: World): void {
 export const COLLECTIBLE_TYPES = ['joystick', 'floppy', 'cartridge'];
 
 export function collectiblesLeft(w: World): number {
+  if (w.maze) return w.items.length; // in the labyrinth every item has to be picked up
   return w.items.filter(item => COLLECTIBLE_TYPES.includes(item.type)).length;
 }
 

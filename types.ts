@@ -52,6 +52,10 @@ export interface Enemy extends DynamicObject {
   onGround?: boolean;
   /** Distance covered since being launched (px). */
   launchTravel?: number;
+  /** Labyrinth only: heading along the corridors (0 east, 1 south, 2 west, 3 north). */
+  mazeDir?: number;
+  /** Labyrinth only: index of the cell where this enemy last chose a heading. */
+  mazeCell?: number;
 }
 
 export type ItemType = 'joystick' | 'floppy' | 'cartridge' | 'speed-boost' | 'shield' | 'super-throw';
@@ -60,7 +64,10 @@ export interface Item extends GameObject {
   type: ItemType;
 }
 
-export interface Platform extends GameObject {}
+export interface Platform extends GameObject {
+  /** A wall of the labyrinth: drawn as a neon wall instead of a platform. */
+  wall?: boolean;
+}
 
 export interface Goal extends GameObject {
   id: number;
@@ -120,6 +127,21 @@ export interface Particle {
   size: number;
 }
 
+/**
+ * The grid behind a labyrinth level. Cells are corridors `pitch - wall` wide separated by walls
+ * `wall` thick; the outer wall is `wall` thick too, so the level is `wall + cols * pitch` wide.
+ */
+export interface MazeData {
+  cols: number;
+  rows: number;
+  pitch: number;
+  wall: number;
+  /** openRight[r * cols + c]: no wall between cell (c, r) and (c + 1, r). */
+  openRight: boolean[];
+  /** openDown[r * cols + c]: no wall between cell (c, r) and (c, r + 1). */
+  openDown: boolean[];
+}
+
 export type MusicTheme = 'adventure' | 'industrial' | 'ethereal' | 'boss';
 
 export interface LevelData {
@@ -129,6 +151,13 @@ export interface LevelData {
   /** Name of the music track when it should differ from the theme (one per boss). */
   musicTrack?: string;
   isZeroG?: boolean;
+  /**
+   * A labyrinth: four-way movement without inertia, enemies that follow the corridors and
+   * every item on the map has to be collected before the exit opens.
+   */
+  maze?: MazeData;
+  /** Camera zoom on the player; 1 shows the whole screen, more shows less of the map. */
+  zoom?: number;
   timeLimit?: number;
   levelWidth?: number;
   levelHeight?: number;

@@ -1,5 +1,6 @@
 import { LevelData, EnemyType, ItemType } from './types';
-import { GAME_WIDTH, GAME_HEIGHT, BOSS_INITIAL_HP, BOSS_2_HP, BOSS_3_HP } from './constants';
+import { GAME_WIDTH, GAME_HEIGHT, BOSS_INITIAL_HP, BOSS_2_HP, BOSS_3_HP, MAZE_PLAYER_SPEED, MAZE_ZOOM } from './constants';
+import { generateMaze } from './mazeGen';
 
 const GOAL_WIDTH = 90;
 const GOAL_HEIGHT = 150;
@@ -828,132 +829,38 @@ const bossLevel3: LevelData = {
   },
 };
 
-// --- LEVEL 13: The Labyrinth (ZERO-G MAZE — EXPANDED EXPONENTIALLY TO 14,000 x 8,400 px) ---
-const MAZE_WIDTH = 14000;
-const MAZE_HEIGHT = 8400;
+// --- LEVEL 13: The Labyrinth ---
+// A real labyrinth built from a seed (see mazeGen.ts): corridors on a grid with dead ends and loops,
+// the exit in the farthest cell, every item on the map to collect, and a camera zoomed in on the
+// player so the map stays hidden.
+const labyrinth = generateMaze({
+  seed: 32,
+  cols: 36,
+  rows: 22,
+  pitch: 256,
+  wall: 56,
+  items: { joystick: 6, floppy: 6, cartridge: 6, 'speed-boost': 2, shield: 2, 'super-throw': 2 },
+  enemies: { phaser: 4, flyer: 7, base: 7, jumper: 5, bomber: 4 },
+  braid: 0.35,
+  straight: 0.55,
+  playerSpeed: MAZE_PLAYER_SPEED,
+});
 
 const finalLevel: LevelData = {
   name: "Level 13: The Labyrinth",
   musicTheme: 'ethereal',
   isZeroG: true,
-  timeLimit: 600, // 10 Minutes for the expanded 6-sector Mega-Labyrinth
-  levelWidth: MAZE_WIDTH,
-  levelHeight: MAZE_HEIGHT,
-  playerStart: { x: 250, y: 250 },
-  platforms: [
-    // --- OUTER BOUNDARIES ---
-    { x: 0, y: 0, width: MAZE_WIDTH, height: 48 },
-    { x: 0, y: MAZE_HEIGHT - 48, width: MAZE_WIDTH, height: 48 },
-    { x: 0, y: 0, width: 48, height: MAZE_HEIGHT },
-    { x: MAZE_WIDTH - 48, y: 0, width: 48, height: MAZE_HEIGHT },
-
-    // --- SECTOR 1 (Y: 0 -> 1400) ---
-    { x: 0, y: 1400, width: 12600, height: 44 }, // Passage on Far Right (12600..14000)
-    { x: 2200, y: 0, width: 44, height: 950 },
-    { x: 4500, y: 450, width: 44, height: 950 },
-    { x: 6800, y: 0, width: 44, height: 900 },
-    { x: 9200, y: 400, width: 1600, height: 44 },
-    { x: 11400, y: 0, width: 44, height: 900 },
-
-    // --- SECTOR 2 (Y: 1400 -> 2800) ---
-    { x: 1400, y: 2800, width: 12600, height: 44 }, // Passage on Far Left (0..1400)
-    { x: 11200, y: 1400, width: 44, height: 950 },
-    { x: 8600, y: 1850, width: 44, height: 950 },
-    { x: 5800, y: 1400, width: 44, height: 950 },
-    { x: 3200, y: 1950, width: 1800, height: 44 },
-
-    // --- SECTOR 3 (Y: 2800 -> 4200) ---
-    { x: 0, y: 4200, width: 12600, height: 44 }, // Passage on Far Right (12600..14000)
-    { x: 2600, y: 2800, width: 44, height: 950 },
-    { x: 5400, y: 3250, width: 44, height: 950 },
-    { x: 8200, y: 2800, width: 44, height: 900 },
-    { x: 10200, y: 3450, width: 1600, height: 44 },
-
-    // --- SECTOR 4 (Y: 4200 -> 5600) ---
-    { x: 1400, y: 5600, width: 12600, height: 44 }, // Passage on Far Left (0..1400)
-    { x: 11000, y: 4200, width: 44, height: 950 },
-    { x: 8000, y: 4650, width: 44, height: 950 },
-    { x: 5000, y: 4200, width: 44, height: 950 },
-    { x: 2200, y: 4850, width: 1800, height: 44 },
-
-    // --- SECTOR 5 (Y: 5600 -> 7000) ---
-    { x: 0, y: 7000, width: 12600, height: 44 }, // Passage on Far Right (12600..14000)
-    { x: 3000, y: 5600, width: 44, height: 950 },
-    { x: 6400, y: 6050, width: 44, height: 950 },
-    { x: 9600, y: 5600, width: 44, height: 950 },
-
-    // --- SECTOR 6: THE CORE SANCTUARY (Y: 7000 -> 8400) ---
-    { x: 10800, y: 7000, width: 44, height: 900 },
-    { x: 7600, y: 7500, width: 44, height: 900 },
-    { x: 4400, y: 7000, width: 44, height: 900 },
-    { x: 1800, y: 7500, width: 44, height: 900 },
-    // Goal Portal Alcove
-    { x: 0, y: 7600, width: 700, height: 44 },
-  ],
-  checkpoints: [
-    { x: 13200, y: 1250, width: 48, height: 96 },
-    { x: 700, y: 2650, width: 48, height: 96 },
-    { x: 13200, y: 4050, width: 48, height: 96 },
-    { x: 700, y: 5450, width: 48, height: 96 },
-    { x: 13200, y: 6850, width: 48, height: 96 },
-  ],
-  items: [
-    // Sector 1
-    { type: 'speed-boost', x: 900, y: 400, width: 55, height: 55 },
-    { type: 'joystick', x: 3200, y: 700, width: 55, height: 55 },
-    { type: 'floppy', x: 7800, y: 500, width: 55, height: 55 },
-    { type: 'shield', x: 12200, y: 650, width: 55, height: 55 },
-    // Sector 2
-    { type: 'speed-boost', x: 12800, y: 2000, width: 55, height: 55 },
-    { type: 'cartridge', x: 9800, y: 2100, width: 55, height: 55 },
-    { type: 'super-throw', x: 6400, y: 2300, width: 55, height: 55 },
-    { type: 'joystick', x: 1800, y: 2100, width: 55, height: 55 },
-    // Sector 3
-    { type: 'speed-boost', x: 1200, y: 3400, width: 55, height: 55 },
-    { type: 'floppy', x: 4000, y: 3500, width: 55, height: 55 },
-    { type: 'shield', x: 7200, y: 3600, width: 55, height: 55 },
-    { type: 'cartridge', x: 11600, y: 3300, width: 55, height: 55 },
-    // Sector 4
-    { type: 'speed-boost', x: 12500, y: 4900, width: 55, height: 55 },
-    { type: 'joystick', x: 9400, y: 4800, width: 55, height: 55 },
-    { type: 'floppy', x: 3400, y: 4500, width: 55, height: 55 },
-    // Sector 5
-    { type: 'speed-boost', x: 1400, y: 6200, width: 55, height: 55 },
-    { type: 'shield', x: 5000, y: 6300, width: 55, height: 55 },
-    { type: 'cartridge', x: 11200, y: 6300, width: 55, height: 55 },
-    // Sector 6
-    { type: 'speed-boost', x: 12200, y: 7700, width: 55, height: 55 },
-    { type: 'super-throw', x: 8800, y: 7700, width: 55, height: 55 },
-    { type: 'joystick', x: 2800, y: 7800, width: 55, height: 55 },
-  ],
-  enemies: [
-    // Sector 1
-    { type: 'phaser', x: 1800, y: 600, width: 54, height: 54, originalX: 1800, originalY: 600 },
-    { type: 'flyer', x: 5600, y: 500, width: 64, height: 46, originalX: 5600, originalY: 500 },
-    { type: 'bomber', x: 10000, y: 340, width: 54, height: 54, originalX: 10000, originalY: 340 },
-    // Sector 2
-    { type: 'phaser', x: 10200, y: 2100, width: 54, height: 54, originalX: 10200, originalY: 2100 },
-    { type: 'flyer', x: 7200, y: 2000, width: 64, height: 46, originalX: 7200, originalY: 2000 },
-    { type: 'bomber', x: 3800, y: 1890, width: 54, height: 54, originalX: 3800, originalY: 1890 },
-    // Sector 3
-    { type: 'phaser', x: 3800, y: 3500, width: 54, height: 54, originalX: 3800, originalY: 3500 },
-    { type: 'flyer', x: 6800, y: 3400, width: 64, height: 46, originalX: 6800, originalY: 3400 },
-    { type: 'phaser', x: 11800, y: 3600, width: 54, height: 54, originalX: 11800, originalY: 3600 },
-    // Sector 4
-    { type: 'flyer', x: 9600, y: 4900, width: 64, height: 46, originalX: 9600, originalY: 4900 },
-    { type: 'phaser', x: 6400, y: 4900, width: 54, height: 54, originalX: 6400, originalY: 4900 },
-    { type: 'bomber', x: 2800, y: 4790, width: 54, height: 54, originalX: 2800, originalY: 4790 },
-    // Sector 5
-    { type: 'phaser', x: 4600, y: 6300, width: 54, height: 54, originalX: 4600, originalY: 6300 },
-    { type: 'flyer', x: 8200, y: 6200, width: 64, height: 46, originalX: 8200, originalY: 6200 },
-    { type: 'phaser', x: 11600, y: 6400, width: 54, height: 54, originalX: 11600, originalY: 6400 },
-    // Sector 6
-    { type: 'phaser', x: 9200, y: 7800, width: 54, height: 54, originalX: 9200, originalY: 7800 },
-    { type: 'flyer', x: 6000, y: 7700, width: 64, height: 46, originalX: 6000, originalY: 7700 },
-    { type: 'phaser', x: 2600, y: 7800, width: 54, height: 54, originalX: 2600, originalY: 7800 },
-    { type: 'bomber', x: 500, y: 7540, width: 54, height: 54, originalX: 500, originalY: 7540 },
-  ],
-  goal: { x: 220, y: 8050, width: GOAL_WIDTH, height: GOAL_HEIGHT },
+  maze: labyrinth.data,
+  zoom: MAZE_ZOOM,
+  timeLimit: labyrinth.timeLimit,
+  levelWidth: labyrinth.levelWidth,
+  levelHeight: labyrinth.levelHeight,
+  playerStart: labyrinth.playerStart,
+  platforms: labyrinth.platforms,
+  checkpoints: labyrinth.checkpoints,
+  items: labyrinth.items,
+  enemies: labyrinth.enemies,
+  goal: labyrinth.goal,
 };
 
 export const levels: LevelData[] = [

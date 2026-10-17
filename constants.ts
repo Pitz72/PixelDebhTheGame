@@ -22,6 +22,11 @@ export const PLAYER_INVINCIBILITY_DURATION = 3000; // in ms
 export const PLAYER_SHOOT_COOLDOWN = 420; // in ms
 export const PLAYER_RAPID_SHOOT_COOLDOWN = 80; // in ms for Boss 3
 
+// Labyrinth (final level): crisp four-way movement, camera zoomed on the player
+export const MAZE_PLAYER_SPEED = 9;
+export const MAZE_PLAYER_FAST_SPEED = 14;
+export const MAZE_ZOOM = 1.6;
+
 // Player Projectile
 export const PLAYER_PROJECTILE_WIDTH = 24;
 export const PLAYER_PROJECTILE_HEIGHT = 24;

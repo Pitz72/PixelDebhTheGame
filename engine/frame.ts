@@ -32,6 +32,10 @@ export interface Frame {
   collectiblesLeft: number;
   /** Gravity-free level or arena: the character floats instead of running. */
   zeroG: boolean;
+  /** A labyrinth: crisp movement, walls drawn as neon walls, no progress bar. */
+  maze: boolean;
+  /** Camera zoom on the player. */
+  zoom: number;
 
   player: Player;
   enemies: Enemy[];
@@ -73,6 +77,8 @@ export function makeFrame(w: World): Frame {
     damageFlash: w.damageFlash > 0,
     collectiblesLeft: collectiblesLeft(w),
     zeroG: isZeroG(w),
+    maze: w.maze !== null,
+    zoom: w.zoom,
 
     player: { ...w.player },
     enemies: w.enemies.map(e => ({ ...e })),

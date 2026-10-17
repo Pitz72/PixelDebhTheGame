@@ -103,6 +103,42 @@ class PlatformView {
   }
 }
 
+/** A wall of the labyrinth: dark panel with a neon edge, no glow sprite (there are hundreds). */
+class WallView {
+  readonly root = new Container();
+  constructor(p: Platform, pal: ThemePalette, themeTex: TextureSet['themes']['adventure']) {
+    const { width: w, height: h } = p;
+    const body = new Sprite(themeTex.platformBody);
+    body.width = w;
+    body.height = h;
+    const truss = new TilingSprite({ texture: themeTex.platformTruss, width: w, height: h });
+    truss.alpha = 0.22;
+    const edge = new Graphics();
+    edge.rect(1.5, 1.5, w - 3, h - 3).stroke({ width: 3, color: parseInt(pal.border.slice(1), 16), alpha: 0.95 });
+    const core = new Graphics();
+    core.rect(7, 7, Math.max(1, w - 14), Math.max(1, h - 14)).stroke({ width: 1.5, color: pal.railHex, alpha: 0.5 });
+    this.root.addChild(body, truss, edge, core);
+    this.root.position.set(p.x, p.y);
+  }
+}
+
+/** The floor of the labyrinth: a dark tile with a faint grid, repeated over the whole level. */
+function makeFloorTexture(): Texture {
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const g = canvas.getContext('2d') as CanvasRenderingContext2D;
+  g.fillStyle = '#05031a';
+  g.fillRect(0, 0, size, size);
+  g.strokeStyle = 'rgba(0, 229, 255, 0.07)';
+  g.lineWidth = 2;
+  g.strokeRect(1, 1, size - 2, size - 2);
+  g.fillStyle = 'rgba(0, 229, 255, 0.13)';
+  g.fillRect(size / 2 - 2, size / 2 - 2, 4, 4);
+  return Texture.from(canvas);
+}
+
 class ItemView {
   readonly root = new Container();
   private halo: Sprite;
@@ -365,7 +401,9 @@ export class GameRenderer {
   private debugText: Text;
   private bloom: AdvancedBloomFilter;
 
-  private platformViews = new Map<number, PlatformView>();
+  private platformViews = new Map<number, { root: Container }>();
+  private floor: TilingSprite | null = null;
+  private zoomApplied = 1;
   private itemViews = new Map<number, ItemView>();
   private enemyViews = new Map<number, EnemyView>();
   private projViews = new Map<number, ShotView>();
@@ -512,6 +550,22 @@ export class GameRenderer {
     }
   }
 
+  /**
+   * The labyrinth zooms in on the player: the whole scene (world, lights, particles) is scaled around
+   * the middle of the screen, where the camera keeps the player. The bloom only needs the part of the
+   * scene that stays on screen.
+   */
+  private applyZoom(zoom: number): void {
+    if (zoom === this.zoomApplied) return;
+    this.zoomApplied = zoom;
+    this.scene.pivot.set(GAME_WIDTH / 2, GAME_HEIGHT / 2);
+    this.scene.position.set(GAME_WIDTH / 2, GAME_HEIGHT / 2);
+    this.scene.scale.set(zoom);
+    const w = GAME_WIDTH / zoom;
+    const h = GAME_HEIGHT / zoom;
+    this.scene.filterArea = new Rectangle((GAME_WIDTH - w) / 2, (GAME_HEIGHT - h) / 2, w, h);
+  }
+
   private applyQuality(): void {
     const high = this.quality === 'high';
     this.scene.filters = high ? [this.bloom] : [];
@@ -541,6 +595,7 @@ export class GameRenderer {
     const shake = frame.screenShake > 0.2 ? frame.screenShake * 1.8 : 0;
     const shx = shake ? (Math.random() - 0.5) * shake : 0;
     const shy = shake ? (Math.random() - 0.5) * shake : 0;
+    this.applyZoom(frame.zoom);
     this.world.position.set(-camX + shx, -camY + shy);
     this.overlay.position.set(-camX + shx, -camY + shy);
 
@@ -590,6 +645,8 @@ export class GameRenderer {
     this.themeTex = this.tex.themes[frame.theme];
     for (const v of this.platformViews.values()) v.root.destroy({ children: true });
     this.platformViews.clear();
+    this.floor?.destroy();
+    this.floor = null;
     for (const v of this.itemViews.values()) v.root.destroy({ children: true });
     this.itemViews.clear();
     for (const v of this.enemyViews.values()) v.root.destroy({ children: true });
@@ -608,7 +665,12 @@ export class GameRenderer {
     this.arena = frame.boss?.type === 'shadowHead';
     this.background.setTheme(frame.theme);
     this.background.setArena(this.arena);
-    this.lighting.setAmbient(this.arena ? 0x6a5870 : this.pal.ambient);
+    this.lighting.setAmbient(this.arena ? 0x6a5870 : frame.maze ? 0x4a4f86 : this.pal.ambient);
+
+    if (frame.maze) {
+      this.floor = new TilingSprite({ texture: makeFloorTexture(), width: frame.levelWidth, height: frame.levelHeight });
+      this.platformLayer.addChildAt(this.floor, 0);
+    }
 
     for (const cp of frame.checkpoints) {
       const s = sized(this.tex.checkpointOff, cp.width, cp.height);
@@ -665,13 +727,13 @@ export class GameRenderer {
       let v = this.platformViews.get(i);
       if (visible) {
         if (!v) {
-          v = new PlatformView(p, this.tex, this.pal, this.themeTex);
+          v = p.wall ? new WallView(p, this.pal, this.themeTex) : new PlatformView(p, this.tex, this.pal, this.themeTex);
           this.platformViews.set(i, v);
           this.platformLayer.addChild(v.root);
         }
         v.root.visible = true;
         // rail light: cheap strip lights along visible platforms (a few segments each)
-        if (p.width < 1400) {
+        if (!p.wall && p.width < 1400) {
           const lx = clamp(camX + GAME_WIDTH / 2, p.x, p.x + p.width);
           this.lighting.add(lx - camX, p.y - camY - 6, Math.min(240, 60 + p.width * 0.35), this.pal.railHex, 0.35);
         }

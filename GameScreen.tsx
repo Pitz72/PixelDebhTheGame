@@ -66,7 +66,8 @@ const deriveHud = (f: Frame): HudData => {
     timeRemaining: f.timeRemaining === null ? null : Math.ceil(f.timeRemaining),
     loopCount: f.loopCount,
     playerX: Math.round(f.player.x / bucket) * bucket,
-    levelWidth: f.levelWidth,
+    // the labyrinth has no left-to-right progress, so the map bar stays hidden there
+    levelWidth: f.maze ? 0 : f.levelWidth,
     status: f.status,
     bossDefeated: Boolean(f.boss && f.boss.hp <= 0),
     damageFlash: f.damageFlash,
@@ -129,6 +130,29 @@ const GameScreen: React.FC<GameScreenProps> = ({
 
   const callbacksRef = useRef({ onGameOver, onCompleted });
   callbacksRef.current = { onGameOver, onCompleted };
+
+  // Test probe, like window.__pdPerf: the scripts in tools/dev use it to jump to a level and read the
+  // state in the release build, where the developer keys do not exist.
+  useEffect(() => {
+    const w = worldRef.current as World;
+    (window as unknown as { __pdGame?: unknown }).__pdGame = {
+      load: (index: number) => loadLevel(w, index),
+      god: (on: boolean) => {
+        w.isGodMode = on;
+      },
+      state: () => ({
+        level: w.currentLevelIndex,
+        status: w.status,
+        lives: w.lives,
+        items: w.items.length,
+        enemies: w.enemies.length,
+        time: w.timeRemaining,
+        x: Math.round(w.player.x),
+        y: Math.round(w.player.y),
+        zoom: w.zoom,
+      }),
+    };
+  }, []);
 
   const changeMode = (m: RenderMode) => {
     modeRef.current = m;

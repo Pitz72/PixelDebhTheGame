@@ -135,9 +135,9 @@ const Hud: React.FC<HudProps> = React.memo(({
           </div>
         </div>
 
-        {/* Center Countdown Timer (Labyrinth) */}
+        {/* Countdown timer (Labyrinth): under the bar, on the right, clear of the counters */}
         {timeRemaining !== null && timeRemaining !== undefined && (
-          <div className="absolute left-1/2 -translate-x-1/2 top-3 flex flex-col items-center bg-[#0c0726]/90 px-6 py-2 rounded-2xl border-2 border-yellow-400/60 shadow-[0_0_20px_rgba(250,204,21,0.25)]">
+          <div className="absolute right-6 top-24 flex flex-col items-center bg-[#0c0726]/90 px-6 py-2 rounded-2xl border-2 border-yellow-400/60 shadow-[0_0_20px_rgba(250,204,21,0.25)]">
             <p className="text-yellow-400 text-xs font-bold tracking-widest">TIME REMAINING</p>
             <p
               className={`text-4xl font-black font-mono ${
