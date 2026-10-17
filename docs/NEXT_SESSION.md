@@ -1,6 +1,6 @@
 # Decisioni e cose da fare per arrivare al 100% (stato al 2026-10-17, v1.18.0)
 
-Il gioco e' finito: tutte le 7 fasi della roadmap e tutto l'audit sono chiusi (`docs/AUDIT.md`), `npm audit` e' a zero, 582 test verdi, tutto pubblicato su `main`. Quello che manca e' la **pubblicazione**, qualche **decisione** e le **prove che solo l'utente puo' fare**. Aggiornamento del 2026-10-17, sera: la **licenza** e' scritta (D1, A1), i **due segreti** sono impostati e le chiavi hanno una copia su `F:\Backup` (D2, A2), il workflow ha girato e **`v1.18.0` e' pubblicata** (A3, A4: Windows e Linux, `latest.json` pubblico). Restano la prova dell'aggiornamento automatico (A5), D3, D4, D5 e le prove a mano.
+Il gioco e' finito: tutte le 7 fasi della roadmap e tutto l'audit sono chiusi (`docs/AUDIT.md`), `npm audit` e' a zero, 582 test verdi, tutto pubblicato su `main`. Quello che manca e' la **pubblicazione**, qualche **decisione** e le **prove che solo l'utente puo' fare**. Aggiornamento del 2026-10-17, sera: la **licenza** e' scritta (D1, A1), i **due segreti** sono impostati e le chiavi hanno una copia su `F:\Backup` (D2, A2), il workflow ha girato e **`v1.18.0` e' pubblicata** (A3, A4: Windows e Linux, `latest.json` pubblico), poi **`v1.18.1`** (la seconda, per provare l'aggiornamento). Resta da guardare l'aggiornamento sul PC dell'utente (A5), poi D3, D4, D5 e le prove a mano.
 
 ## Decisioni dell'utente (da prendere per prime)
 
@@ -20,7 +20,7 @@ Il gioco e' finito: tutte le 7 fasi della roadmap e tutto l'audit sono chiusi (`
 | A2 | Impostare i segreti con `gh secret set` (comandi in `docs/RILASCIO.md`) | **Fatta** (dopo D2) |
 | A3 | Prima build di prova (Windows e Linux) | **Fatta il 2026-10-17** (si e' passati direttamente da `mode=draft`, a richiesta dell'utente). Servirono 3 corse, vedi sotto |
 | A4 | Bozza di release con `latest.json` e `log/<versione>.md`, poi pubblicazione | **Fatta il 2026-10-17**: `v1.18.0` e' pubblicata ed e' la «Latest» ([release](https://github.com/Pitz72/PixelDebhTheGame/releases/tag/v1.18.0)), tag su `54dcb0f`. Pubblicata da Claude su richiesta esplicita dell'utente |
-| A5 | **Prova dell'aggiornamento automatico**: serve un installatore 1.18.0 installato sul serio e poi una seconda release (per esempio 1.18.1) che l'aggiorni. Provare anche l'avviso della portable. Gia' verificato: `latest.json` pubblico risponde (versione 1.18.0, sei piattaforme) e la firma dell'installatore ha lo stesso identificativo di chiave (`3E180F3F6F7C8052`) di quella pubblica nel gioco | Ora: l'utente installa 1.18.0 |
+| A5 | **Prova dell'aggiornamento automatico**: 1.18.0 installata dall'utente con il setup (e provata), `v1.18.1` pubblicata come seconda release il 2026-10-17 (tag `5ceb020`: riga di licenza nei Crediti, nessuna novita' di gioco). Verificato dall'esterno: `latest.json` pubblico annuncia 1.18.1 con sei piattaforme, la firma ha lo stesso identificativo di chiave (`3E180F3F6F7C8052`) di quella pubblica nel gioco | **Ora: l'utente apre la 1.18.0 installata**: sul titolo deve comparire l'avviso, `U` la aggiorna, nei Crediti il numero diventa 1.18.1. Poi provare l'avviso della portable |
 | A6 | Domanda a SignPath e firma nella build | Dopo D3 |
 | A7 | Classifica online (fase 1) | Dopo D4 |
 | A8 | `cargo audit` (installare lo strumento, circa 5 minuti) | Quando si vuole |
