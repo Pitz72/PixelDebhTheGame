@@ -16,6 +16,8 @@ import {
 } from '../services/assetService';
 import ShadowHeadBoss from '../components/ShadowHeadBoss';
 import { bakeFrog, bakeEye, type FrogTextures, type EyeTextures } from '../components/bosses/bakeBosses';
+import { COLLECTIBLE_TYPES } from '../constants';
+import { drawVaultWall, drawVaultShelves, drawVaultLight, drawVaultFloor } from './vaultArt';
 import { mulberry32 } from '../engine/rng';
 import { PALETTES } from './palette';
 import { extractSvg, stripText, svgToCanvas } from './svgTexture';
@@ -40,6 +42,8 @@ export interface TextureSet {
   projectiles: { bomb: Texture; egg: Texture; fireball: Texture; cdrom: Texture; shot: Texture };
   /** The frog and LeGallineNellOcchi come in parts so they can move; CapocciaNelBuio is one picture. */
   bosses: { frog: FrogTextures; chickenEye: EyeTextures; shadowHead: Texture };
+  /** The Collector's Vault, the final stage's hall. */
+  vault: { wall: Texture; shelves: Texture; light: Texture; floor: Texture };
   goalLocked: Texture;
   goalUnlocked: Texture;
   checkpointOff: Texture;
@@ -414,6 +418,17 @@ async function buildTexturesUncached(): Promise<TextureSet> {
     })
   );
 
+  // the vault's shelves are full of giant versions of the collectibles
+  const gear = await Promise.all(
+    COLLECTIBLE_TYPES.map(t => svgToCanvas(stripText(extractSvg(html(<ItemSprite type={t} />))), 64, 64, 4))
+  );
+  const vault = {
+    wall: tex(drawVaultWall()),
+    shelves: tex(drawVaultShelves(gear), { repeat: true }),
+    light: tex(drawVaultLight()),
+    floor: tex(drawVaultFloor(), { repeat: true }),
+  };
+
   const [bomb, egg, fireball, cdrom, shot, shield, goalLocked, goalUnlocked, cpOff, cpOn] = await Promise.all([
     art(<BombSprite />, 32, 32, 4),
     art(<EggSprite />, 32, 40, 4),
@@ -438,6 +453,7 @@ async function buildTexturesUncached(): Promise<TextureSet> {
     items,
     projectiles: { bomb, egg, fireball, cdrom, shot },
     bosses: { frog, chickenEye, shadowHead },
+    vault,
     goalLocked,
     goalUnlocked,
     checkpointOff: cpOff,

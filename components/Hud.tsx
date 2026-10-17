@@ -2,6 +2,12 @@ import React from 'react';
 import { HeartSprite, ItemSprite } from '../services/assetService';
 import { ItemType, Boss } from '../types';
 
+const BOSS_NAME: Record<Boss['type'], string> = {
+  frog: 'Cyclops Frog',
+  chickenEye: 'LeGallineNellOcchi',
+  shadowHead: 'CapocciaNelBuio',
+};
+
 interface HudProps {
   score: number;
   lives: number;
@@ -9,7 +15,8 @@ interface HudProps {
   levelName: string;
   collectiblesLeft: number;
   activePowerUp: ItemType | null;
-  boss?: Pick<Boss, 'hp' | 'maxHp'> | null;
+  /** One health bar for each boss still standing (the final stage has three). */
+  bosses?: Pick<Boss, 'type' | 'hp' | 'maxHp'>[];
   isGodMode: boolean;
   timeRemaining?: number | null;
   loopCount: number;
@@ -24,7 +31,7 @@ const Hud: React.FC<HudProps> = React.memo(({
   levelName,
   collectiblesLeft,
   activePowerUp,
-  boss,
+  bosses = [],
   isGodMode,
   timeRemaining,
   loopCount,
@@ -90,7 +97,7 @@ const Hud: React.FC<HudProps> = React.memo(({
             </div>
 
             {/* Collectibles Counter */}
-            {!boss && (
+            {bosses.length === 0 && (
               <div
                 className={`flex items-center space-x-2.5 px-4 py-1.5 rounded-xl border ${
                   collectiblesLeft === 0
@@ -120,7 +127,7 @@ const Hud: React.FC<HudProps> = React.memo(({
             >
               {levelName}
             </p>
-            {!boss && levelWidth > 2000 && (
+            {bosses.length === 0 && levelWidth > 2000 && (
               <div className="flex items-center space-x-2">
                 <span className="text-xs text-cyan-400/80 font-bold tracking-widest">MAP</span>
                 <div className="w-56 h-3 bg-slate-900/90 rounded-full border border-cyan-500/40 overflow-hidden relative">
@@ -169,26 +176,39 @@ const Hud: React.FC<HudProps> = React.memo(({
         </div>
       </div>
 
-      {/* Boss Vector Health Bar */}
-      {boss && boss.hp > 0 && (
-        <div className="absolute top-28 left-1/2 -translate-x-1/2 w-[46%] z-20 pointer-events-none">
-          <div className="flex justify-between items-baseline mb-1 px-2">
-            <p
-              className="text-2xl font-black text-red-400 tracking-wider uppercase"
-              style={{ textShadow: '0 0 12px rgba(255,23,68,0.6)' }}
-            >
-              {levelName}
-            </p>
-            <p className="text-lg font-mono text-white/90 font-bold">
-              HP {boss.hp} / {boss.maxHp}
-            </p>
-          </div>
-          <div className="w-full h-6 bg-slate-950/90 border-2 border-red-500/80 rounded-full overflow-hidden p-0.5 shadow-[0_0_20px_rgba(255,23,68,0.4)]">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-red-600 via-orange-500 to-yellow-400 transition-all duration-150 ease-out"
-              style={{ width: `${Math.max(0, (boss.hp / boss.maxHp) * 100)}%` }}
-            />
-          </div>
+      {/* Boss Vector Health Bars: one wide bar for a single boss, a row of compact ones when there are several */}
+      {bosses.length > 0 && (
+        <div
+          className={`absolute top-28 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex ${
+            bosses.length > 1 ? 'w-[90%] flex-row gap-6' : 'w-[46%] flex-col'
+          }`}
+        >
+          {bosses.map((boss, i) => {
+            const many = bosses.length > 1;
+            return (
+              <div key={i} className={many ? 'flex-1 min-w-0' : 'w-full'} style={{ opacity: boss.hp > 0 ? 1 : 0.25 }}>
+                <div className="flex justify-between items-baseline mb-1 px-2">
+                  <p
+                    className={`${many ? 'text-base' : 'text-2xl'} font-black text-red-400 tracking-wider uppercase truncate`}
+                    style={{ textShadow: '0 0 12px rgba(255,23,68,0.6)' }}
+                  >
+                    {many ? BOSS_NAME[boss.type] : levelName}
+                  </p>
+                  <p className={`${many ? 'text-sm' : 'text-lg'} font-mono text-white/90 font-bold`}>
+                    {boss.hp > 0 ? `HP ${boss.hp} / ${boss.maxHp}` : 'DOWN'}
+                  </p>
+                </div>
+                <div
+                  className={`w-full ${many ? 'h-3.5' : 'h-6'} bg-slate-950/90 border-2 border-red-500/80 rounded-full overflow-hidden p-0.5 shadow-[0_0_20px_rgba(255,23,68,0.4)]`}
+                >
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-red-600 via-orange-500 to-yellow-400 transition-all duration-150 ease-out"
+                    style={{ width: `${Math.max(0, (boss.hp / boss.maxHp) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </>

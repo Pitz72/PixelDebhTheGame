@@ -178,8 +178,9 @@ describe('Debh in the labyrinth', () => {
 });
 
 describe('the labyrinth level', () => {
-  it('is the last level and has a corridor wide enough for the player', () => {
-    expect(labyrinthIndex).toBe(levels.length - 1);
+  it('is the last level before the final stage and has a corridor wide enough for the player', () => {
+    expect(labyrinthIndex).toBe(levels.length - 2); // its exit leads to the three bosses
+    expect(levels[levels.length - 1].bosses).toHaveLength(3);
     const m = labyrinth.maze as NonNullable<LevelData['maze']>;
     expect(corridor(m)).toBeGreaterThanOrEqual(PLAYER_HEIGHT + 60);
     expect(corridor(m)).toBeGreaterThanOrEqual(PLAYER_WIDTH + 60);
@@ -321,5 +322,67 @@ describe('the labyrinth level', () => {
     const plain = makeFrame(createWorld({ rng: mulberry32(1) }));
     expect(plain.maze).toBe(false);
     expect(plain.zoom).toBe(1);
+  });
+});
+
+describe('the labyrinth gets harder with each LOOP, but stays the same labyrinth', () => {
+  const loop = (n: number) => createWorld({ levels: [labyrinth], loopCount: n, rng: mulberry32(1) });
+  const base = labyrinth.enemies.length;
+
+  it('is as it was in the first lap', () => {
+    const w = loop(1);
+    expect(w.enemies).toHaveLength(base);
+    expect(w.timeRemaining).toBe(labyrinth.timeLimit);
+  });
+
+  it('adds a fifth more walkers for each extra lap, and takes a minute off the clock', () => {
+    for (const n of [2, 3, 4]) {
+      const w = loop(n);
+      expect(w.enemies).toHaveLength(base + Math.round(base * 0.2 * (n - 1)));
+      expect(w.timeRemaining).toBe((labyrinth.timeLimit as number) - 60 * (n - 1));
+    }
+  });
+
+  it('keeps the same walls, items and exit', () => {
+    const first = loop(1);
+    const later = loop(5);
+    expect(later.platforms).toEqual(first.platforms);
+    expect(later.items).toEqual(first.items);
+    expect(later.goal).toEqual(first.goal);
+    expect(later.player.x).toBe(first.player.x);
+  });
+
+  it('puts the newcomers in new cells, away from the start and out of the walls', () => {
+    const reserve = labyrinth.loopEnemies ?? [];
+    expect(reserve.length).toBeGreaterThanOrEqual(base - 2);
+    const m = labyrinth.maze as NonNullable<LevelData['maze']>;
+    const cells = [...labyrinth.enemies, ...reserve].map(e => {
+      const { c, r } = cellAt(m, e.x + e.width / 2, e.y + e.height / 2);
+      return r * m.cols + c;
+    });
+    expect(new Set(cells).size).toBe(cells.length); // no two in one cell
+    const d = distancesFrom(m, 0, 0);
+    for (const cell of cells) expect(d[cell]).toBeGreaterThanOrEqual(14);
+    for (const e of reserve) {
+      expect(labyrinth.platforms.some(p => e.x < p.x + p.width && e.x + e.width > p.x && e.y < p.y + p.height && e.y + e.height > p.y)).toBe(false);
+    }
+    // a mixed bunch: the first few newcomers are not all of one kind
+    expect(new Set(reserve.slice(0, 5).map(e => e.type)).size).toBeGreaterThan(2);
+  });
+
+  it('never runs the clock below what a clean run needs, and never past the reserve', () => {
+    const late = loop(40);
+    expect(late.timeRemaining).toBeGreaterThanOrEqual(labyrinth.timeFloor as number);
+    expect(late.timeRemaining).toBe(labyrinth.timeFloor);
+    expect(late.enemies).toHaveLength(base + (labyrinth.loopEnemies ?? []).length);
+    // the floor leaves a flawless run a good margin
+    const route = (labyrinth.timeLimit as number) / 2.5;
+    expect(late.timeRemaining as number).toBeGreaterThan(route);
+  });
+
+  it('does not touch any other level', () => {
+    const plain = createWorld({ loopCount: 4, rng: mulberry32(1) });
+    expect(plain.enemies).toHaveLength(levels[0].enemies.length);
+    expect(plain.timeRemaining).toBeNull();
   });
 });

@@ -23,12 +23,13 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 
 -   **Infinite Loop (New Game+):** Beat the game to enter the next Loop! Each loop increases enemy and projectile speed by 20%. Your score and lives carry over; on the victory screen press `Enter` for the next loop or `Esc` to bank your score on the leaderboard.
 -   **Vertical Scrolling (v0.3.5):** The camera system now fully supports vertical scrolling, essential for the massive new Zero-G Labyrinth level.
--   **The Labyrinth:** The final level is a real maze in the spirit of the Atari 2600: corridors on a grid, dead ends and loops, built from a fixed seed (`mazeGen.ts`). The camera is zoomed in (1.3x) on the player so you never see the whole map. Move in four directions with no inertia, collect **every** item on the map to open the exit, avoid the enemies that patrol the corridors, and beat the countdown (about 15 minutes).
--   **Zero-G Mechanics:** The labyrinth and the last boss fight feature gravity-free movement mechanics.
+-   **The Labyrinth:** The last level before the final stage is a real maze in the spirit of the Atari 2600: corridors on a grid, dead ends and loops, built from a fixed seed (`mazeGen.ts`). The camera is zoomed in (1.3x) on the player so you never see the whole map. Move in four directions with no inertia, collect **every** item on the map to open the exit, avoid the enemies that patrol the corridors, and beat the countdown (17 minutes at first). The labyrinth is always the same, but every LOOP brings a fifth more walkers and a minute less on the clock. Its exit leads to the final stage.
+-   **The Collector's Vault (final stage):** Behind the labyrinth's exit the three bosses wait for Debh **together**, in a museum hall whose shelves are full of giant retro consoles, each with a quarter of the life it has in its own level. Debh moves freely and arrives with all her lives and a shield; the game is won when all three have fallen.
+-   **Zero-G Mechanics:** The labyrinth, the last boss's arena and the final stage feature gravity-free movement: Debh walks in every direction, up and down included.
 -   **Revamped Level Design:** Advanced levels (The Gauntlet, The Ascent, The Drop) have been audited and redesigned to provide a fair, populated, and challenging experience.
 -   **New: Standalone & Optimized:** The game engine has been refactored for maximum performance and is now completely standalone, with no external API dependencies.
 -   **Custom Pixel Art Intro:** A unique, animated intro sequence featuring a custom pixel-art avatar of the protagonist surrounded by orbiting gaming gear (webcam, cat, phone), set against a synthwave grid horizon.
--   **Structured Game Progression:** A full adventure across 13 levels: three worlds of three levels and a boss each, then the final labyrinth, with a carefully designed difficulty curve. Each standard level is progressively longer than the last, mixing horizontal and vertical platforming challenges.
+-   **Structured Game Progression:** A full adventure across 14 levels: three worlds of three levels and a boss each, then the labyrinth and the final stage with the three bosses together, with a carefully designed difficulty curve. Each standard level is progressively longer than the last, mixing horizontal and vertical platforming challenges.
 -   **Gradual Enemy Introduction:** New enemy types are introduced gradually, giving players time to learn their patterns:
     -   **Globby (Base):** The standard ground enemy.
     -   **Hoppy (Jumper):** An unpredictable jumping foe.
@@ -69,7 +70,7 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 Available only when running `npm run dev` (they are compiled out of release builds):
 
 -   **God Mode:** Press `0` to toggle invincibility.
--   **Boss Skip:** Press `9` to jump directly to the last boss (Level 11).
+-   **Boss Skip:** Press `9` to jump directly to the last boss (Level 12).
 -   **Level Skip:** Press `L` to skip the current level instantly.
 
 ## Development

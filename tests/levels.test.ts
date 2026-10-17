@@ -36,22 +36,27 @@ describe('level data sanity', () => {
         expect(bad.map(it => `${it.type}@${it.x},${it.y}`)).toEqual([]);
       });
 
-      it('has a way out: a goal or a boss', () => {
-        expect(Boolean(level.goal) || Boolean(level.boss)).toBe(true);
+      it('has a way out: a goal or a boss (or several)', () => {
+        expect(Boolean(level.goal) || Boolean(level.boss) || Boolean(level.bosses?.length)).toBe(true);
       });
     });
   });
 });
 
 describe('the order of the game', () => {
-  it('is three worlds of three levels and a boss, then the labyrinth', () => {
-    expect(levels).toHaveLength(13);
+  it('is three worlds of three levels and a boss, then the labyrinth, then the final stage', () => {
+    expect(levels).toHaveLength(14);
     const bosses = levels.flatMap((l, i) => (l.boss ? [i] : []));
     expect(bosses).toEqual([3, 7, 11]);
+    const labyrinth = levels[12];
+    expect(labyrinth.maze).toBeDefined();
+    expect(labyrinth.isZeroG).toBe(true);
+    expect(labyrinth.goal).toBeDefined();
+    expect(labyrinth.bosses).toBeUndefined();
     const last = levels[levels.length - 1];
     expect(last.boss).toBeUndefined();
-    expect(last.isZeroG).toBe(true);
-    expect(last.goal).toBeDefined();
+    expect(last.goal).toBeUndefined();
+    expect(last.bosses).toHaveLength(3);
   });
 
   it('numbers the levels in the order they are played', () => {

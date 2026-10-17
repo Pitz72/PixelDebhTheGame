@@ -71,7 +71,7 @@ describe('collectibles', () => {
   });
 
   describe('arrive a few at a time', () => {
-    const platformLevels = levels.filter(l => !l.boss && !l.maze);
+    const platformLevels = levels.filter(l => !l.boss && !l.bosses && !l.maze);
     for (const [type, debut] of Object.entries(DEBUT)) {
       it(`${type} debuts in level ${debut} and keeps turning up after it`, () => {
         for (const level of platformLevels) {

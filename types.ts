@@ -94,6 +94,13 @@ export interface Checkpoint extends GameObject {
 
 export type BossType = 'frog' | 'chickenEye' | 'shadowHead';
 
+export interface BossArena {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+}
+
 export interface Boss extends DynamicObject {
   type: BossType;
   hp: number;
@@ -103,6 +110,11 @@ export interface Boss extends DynamicObject {
   hitTimer: number;
   isThrowing: boolean;
   movementTimer: number;
+  /**
+   * Where this boss moves, when several share one arena: its own patch of it. Without one, a boss
+   * roams the whole level as before.
+   */
+  arena?: BossArena;
 
   // ShadowHead Specifics
   opacity?: number;
@@ -158,6 +170,8 @@ export interface MazeData {
 
 export type MusicTheme = 'adventure' | 'industrial' | 'ethereal' | 'boss';
 
+export type BossSpec = Omit<Boss, 'hp' | 'attackCooldown' | 'isHit' | 'hitTimer' | 'vy' | 'isThrowing' | 'vx' | 'movementTimer'>;
+
 export interface LevelData {
   name: string;
   /** Picks the colors of the level (and the music, unless musicTrack says otherwise). */
@@ -181,7 +195,17 @@ export interface LevelData {
   checkpoints?: Omit<Checkpoint, 'id' | 'activated'>[];
   playerStart: { x: number; y: number };
   goal?: Omit<Goal, 'id'>;
-  boss?: Omit<Boss, 'hp' | 'attackCooldown' | 'isHit' | 'hitTimer' | 'vy' | 'isThrowing' | 'vx' | 'movementTimer'>;
+  boss?: BossSpec;
+  /** Several bosses at once, in one arena (the final stage). Use `boss` for a single one. */
+  bosses?: BossSpec[];
+  /** Labyrinth: walkers held in reserve, that join in from the second LOOP on (see `loopEnemies` in the engine). */
+  loopEnemies?: LevelData['enemies'];
+  /** Labyrinth: the least time the clock may show, however many LOOPs have been played. */
+  timeFloor?: number;
+  /** The player arrives with all her lives and a shield (before a big fight). */
+  refill?: boolean;
+  /** A set of its own for the background, when the colors of the theme are not enough. */
+  backdrop?: 'vault';
   enemySpawns?: Omit<EnemySpawnPoint, 'timer'>[];
 }
 

@@ -41,6 +41,8 @@ export interface MazeLevelParts {
   platforms: NonNullable<LevelData['platforms']>;
   items: LevelData['items'];
   enemies: LevelData['enemies'];
+  /** Walkers in reserve for the later LOOPs (see `loopEnemies` in the engine). */
+  loopEnemies: LevelData['enemies'];
   checkpoints: NonNullable<LevelData['checkpoints']>;
   goal: NonNullable<LevelData['goal']>;
   playerStart: LevelData['playerStart'];
@@ -290,6 +292,24 @@ export function generateMaze(spec: MazeSpec): MazeLevelParts {
     }
   }
 
+  // walkers in reserve for the later LOOPs: as many again as the first lap has, taken in turn from
+  // each kind so that any first part of the list is mixed
+  const reserveByType = (Object.entries(spec.enemies) as [EnemyType, number][]).map(([type, count]) => {
+    const pool = all.filter(i => far(i) && (type !== 'bomber' || straightRun(i) >= 3));
+    return pick(pool, count, 5).map(cell => {
+      const { c, r } = cr(cell);
+      const p = cellCenter(data, c, r);
+      const s = ENEMY_SIZE[type];
+      const x = p.x - s.w / 2;
+      const y = p.y - s.h / 2;
+      return { type, x, y, width: s.w, height: s.h, originalX: x, originalY: y };
+    });
+  });
+  const loopEnemies: LevelData['enemies'] = [];
+  for (let k = 0; reserveByType.some(list => k < list.length); k++) {
+    for (const list of reserveByType) if (k < list.length) loopEnemies.push(list[k]);
+  }
+
   const g = cellCenter(data, cr(goalCell).c, cr(goalCell).r);
   const goal = { x: g.x - GOAL_W / 2, y: g.y - GOAL_H / 2, width: GOAL_W, height: GOAL_H };
   const s0 = cellCenter(data, 0, 0);
@@ -325,6 +345,7 @@ export function generateMaze(spec: MazeSpec): MazeLevelParts {
     platforms: wallRects(data),
     items,
     enemies,
+    loopEnemies,
     checkpoints,
     goal,
     playerStart,

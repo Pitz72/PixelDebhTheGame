@@ -39,6 +39,12 @@ export const MAZE_PLAYER_HEIGHT = 56;
 /** Items and the exit are picked up a bit before the footprint touches them. */
 export const MAZE_PICKUP_MARGIN = 14;
 
+// The labyrinth is always the same, but each LOOP it gets harder: a fifth more walkers and a minute
+// less on the clock, never below what a clean run needs with some room to spare.
+export const MAZE_LOOP_ENEMY_SHARE = 0.2;
+export const MAZE_LOOP_TIME_CUT = 60;
+export const MAZE_TIME_FLOOR_FACTOR = 1.3;
+
 // Player Projectile
 export const PLAYER_PROJECTILE_WIDTH = 24;
 export const PLAYER_PROJECTILE_HEIGHT = 24;
@@ -87,6 +93,9 @@ export const BOSS_3_HP = 54;
 export const FIREBALL_WIDTH = 42;
 export const FIREBALL_HEIGHT = 42;
 export const FIREBALL_SPEED = 12;
+
+// The final stage: all three bosses at once, each with this share of the life it has in its own level
+export const FINAL_BOSS_HP_SHARE = 0.25;
 
 // Scoring
 export const COLLECTIBLE_POINTS = 100;

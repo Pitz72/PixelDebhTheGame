@@ -23,6 +23,8 @@ import {
   MAZE_PLAYER_SCALE,
   MAZE_PLAYER_WIDTH,
   MAZE_PLAYER_HEIGHT,
+  MAZE_LOOP_ENEMY_SHARE,
+  MAZE_LOOP_TIME_CUT,
   BOSS_INITIAL_VX,
   BOSS_INITIAL_VY,
   FLYER_SPEED,
@@ -88,7 +90,10 @@ export interface World {
   platforms: Platform[];
   checkpoints: Checkpoint[];
   goal: Goal | null;
+  /** The first boss of the level, or null: kept for the single-boss fights; `bosses` has them all. */
   boss: Boss | null;
+  /** Every boss on the level (one, or three in the final stage). */
+  bosses: Boss[];
   projectiles: Projectile[];
   playerProjectiles: PlayerProjectile[];
   particles: Particle[];
@@ -192,6 +197,7 @@ export function createWorld(opts: CreateWorldOptions = {}): World {
     checkpoints: [],
     goal: null,
     boss: null,
+    bosses: [],
     projectiles: [],
     playerProjectiles: [],
     particles: [],
@@ -246,7 +252,7 @@ export function cameraFor(w: World, cx: number, cy: number): { x: number; y: num
 }
 
 export const isZeroG = (w: World): boolean =>
-  Boolean(w.boss && w.boss.type === 'shadowHead') || Boolean(w.levels[w.currentLevelIndex]?.isZeroG);
+  w.bosses.some(b => b.type === 'shadowHead') || Boolean(w.levels[w.currentLevelIndex]?.isZeroG);
 
 // ---------------------------------------------------------------------------
 // Visual effect spawners (still part of the simulation so they stay deterministic)
@@ -333,8 +339,23 @@ export function addScore(w: World, points: number): void {
 // Level loading
 // ---------------------------------------------------------------------------
 
+/** From the second LOOP the labyrinth fills up: a fifth more walkers for each extra lap, from the reserve. */
+export function loopEnemies(level: LevelData, loopCount: number): LevelData['enemies'] {
+  const reserve = level.loopEnemies ?? [];
+  const extra = Math.round(level.enemies.length * MAZE_LOOP_ENEMY_SHARE * Math.max(0, loopCount - 1));
+  return reserve.slice(0, Math.min(extra, reserve.length));
+}
+
+/** ...and a minute less on the clock for each extra lap, but never less than the floor the level sets. */
+export function loopTimeLimit(level: LevelData, loopCount: number): number | null {
+  if (level.timeLimit === undefined) return null;
+  const cut = level.timeLimit - MAZE_LOOP_TIME_CUT * Math.max(0, loopCount - 1);
+  return Math.min(level.timeLimit, Math.max(level.timeFloor ?? 0, cut));
+}
+
 export function loadLevel(w: World, levelIndex: number): void {
   const levelData = w.levels[levelIndex];
+  const specs = levelData?.bosses ?? (levelData?.boss ? [levelData.boss] : []);
 
   if (!levelData) {
     w.status = 'completed';
@@ -351,7 +372,7 @@ export function loadLevel(w: World, levelIndex: number): void {
       ...levelData.enemies.map(e => e.x + e.width),
     ];
     const goalX = levelData.goal ? levelData.goal.x + levelData.goal.width : 0;
-    const bossX = levelData.boss ? levelData.boss.x + levelData.boss.width : 0;
+    const bossX = Math.max(0, ...specs.map(b => b.x + b.width));
     return Math.max(GAME_WIDTH, ...allX, goalX, bossX);
   };
 
@@ -364,7 +385,7 @@ export function loadLevel(w: World, levelIndex: number): void {
       ...levelData.enemies.map(e => e.y + e.height),
     ];
     const goalY = levelData.goal ? levelData.goal.y + levelData.goal.height : 0;
-    const bossY = levelData.boss ? levelData.boss.y + levelData.boss.height : 0;
+    const bossY = Math.max(0, ...specs.map(b => b.y + b.height));
     return Math.max(GAME_HEIGHT, ...allY, goalY, bossY);
   };
 
@@ -402,6 +423,11 @@ export function loadLevel(w: World, levelIndex: number): void {
   w.prevCameraY = w.cameraY;
 
   w.player = { ...emptyPlayer(), x: spawn.x, y: spawn.y, width: spawn.width, height: spawn.height };
+  if (levelData.refill) {
+    // before a big fight: all her lives back, and a shield
+    w.lives = Math.max(w.lives, INITIAL_LIVES);
+    w.player.hasShield = true;
+  }
 
   w.platforms = levelData.platforms;
   w.checkpoints = (levelData.checkpoints || []).map((cp, idx) => ({
@@ -421,37 +447,40 @@ export function loadLevel(w: World, levelIndex: number): void {
   w.hitThisStep = false;
   w.items = levelData.items.map((c, i) => ({ id: i + 1, ...c }));
   w.goal = levelData.goal ? { id: 1, ...levelData.goal } : null;
-  w.timeRemaining = levelData.timeLimit ?? null;
+  w.timeRemaining = loopTimeLimit(levelData, w.loopCount);
   w.input = emptyInput();
   w.actions = [];
 
   const mult = w.difficultyMultiplier;
 
-  if (levelData.boss) {
-    w.boss = {
-      ...levelData.boss,
-      hp: levelData.boss.maxHp,
+  if (specs.length > 0) {
+    w.bosses = specs.map((spec, i) => ({
+      ...spec,
+      hp: spec.maxHp,
       vx: BOSS_INITIAL_VX * mult,
       vy: BOSS_INITIAL_VY * mult,
-      attackCooldown: 2400,
+      // bosses that share an arena do not all start in the same breath
+      attackCooldown: 2400 + i * 700,
       isHit: false,
       hitTimer: 0,
       isThrowing: false,
       movementTimer: 0,
-      opacity: levelData.boss.type === 'shadowHead' ? 0 : 1,
+      opacity: spec.type === 'shadowHead' ? 0 : 1,
       visibilityState: 'hidden',
-      teleportTimer: 1600,
-    };
+      teleportTimer: 1600 + i * 900,
+    }));
+    w.boss = w.bosses[0];
     w.enemies = [];
 
-    if (levelData.boss.type === 'chickenEye') {
+    if (levelData.boss?.type === 'chickenEye') {
       // Endurance fight: temporary extra lives, handed back when the boss falls (see advanceLevel).
       w.livesBeforeBoss = w.livesBeforeBoss ?? w.lives;
       w.lives = Math.max(w.lives, Math.ceil(levelData.boss.maxHp / 2));
     }
   } else {
+    w.bosses = [];
     w.boss = null;
-    w.enemies = levelData.enemies.map((e, i) => ({
+    w.enemies = [...levelData.enemies, ...loopEnemies(levelData, w.loopCount)].map((e, i) => ({
       id: i + 1,
       ...e,
       vx:
@@ -473,7 +502,7 @@ export function loadLevel(w: World, levelIndex: number): void {
   }
 
   w.status = 'playing';
-  emit(w, { type: 'music', theme: levelData.musicTrack || levelData.musicTheme || (levelData.boss ? 'boss' : 'adventure') });
+  emit(w, { type: 'music', theme: levelData.musicTrack || levelData.musicTheme || (specs.length > 0 ? 'boss' : 'adventure') });
   emit(w, { type: 'jingle', name: 'levelStart' });
 }
 

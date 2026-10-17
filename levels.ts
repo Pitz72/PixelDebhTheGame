@@ -1,5 +1,5 @@
 import { LevelData, EnemyType, ItemType, CollectibleType } from './types';
-import { GAME_WIDTH, GAME_HEIGHT, BOSS_INITIAL_HP, BOSS_2_HP, BOSS_3_HP, MAZE_PLAYER_SPEED, MAZE_ZOOM, COLLECTIBLE_TYPES } from './constants';
+import { GAME_WIDTH, GAME_HEIGHT, BOSS_INITIAL_HP, BOSS_2_HP, BOSS_3_HP, FINAL_BOSS_HP_SHARE, MAZE_TIME_FLOOR_FACTOR, MAZE_PLAYER_SPEED, MAZE_ZOOM, COLLECTIBLE_TYPES } from './constants';
 import { generateMaze } from './mazeGen';
 
 const GOAL_WIDTH = 90;
@@ -924,6 +924,8 @@ const finalLevel: LevelData = {
   maze: labyrinth.data,
   zoom: MAZE_ZOOM,
   timeLimit: labyrinth.timeLimit,
+  timeFloor: Math.ceil(labyrinth.stats.routeSeconds * MAZE_TIME_FLOOR_FACTOR),
+  loopEnemies: labyrinth.loopEnemies,
   levelWidth: labyrinth.levelWidth,
   levelHeight: labyrinth.levelHeight,
   playerStart: labyrinth.playerStart,
@@ -932,6 +934,56 @@ const finalLevel: LevelData = {
   items: labyrinth.items,
   enemies: labyrinth.enemies,
   goal: labyrinth.goal,
+};
+
+// --- LEVEL 14: The Collector's Vault ---
+// Behind the labyrinth's exit the three bosses wait together, in a collector's vault. Debh moves
+// freely (like in CapocciaNelBuio's arena) and each boss keeps to its own third of the room.
+const vaultBossHp = (full: number) => Math.ceil(full * FINAL_BOSS_HP_SHARE);
+const VAULT_W = 2688;
+const VAULT_H = 1512;
+const vaultLevel: LevelData = {
+  name: "Level 14: The Collector's Vault",
+  musicTheme: 'boss',
+  musicTrack: 'bossShadowHead',
+  isZeroG: true,
+  refill: true,
+  backdrop: 'vault',
+  levelWidth: VAULT_W,
+  levelHeight: VAULT_H,
+  playerStart: { x: VAULT_W / 2 - 27, y: 1150 },
+  platforms: [],
+  items: [],
+  enemies: [],
+  bosses: [
+    {
+      type: 'frog',
+      x: 300,
+      y: 330,
+      width: 320,
+      height: 320,
+      maxHp: vaultBossHp(BOSS_INITIAL_HP),
+      arena: { left: 40, right: 900, top: 150, bottom: 1300 },
+    },
+    {
+      type: 'chickenEye',
+      x: VAULT_W / 2 - 150,
+      y: 260,
+      width: 300,
+      height: 300,
+      maxHp: vaultBossHp(BOSS_2_HP),
+      arena: { left: 900, right: 1788, top: 150, bottom: 1000 },
+    },
+    {
+      type: 'shadowHead',
+      x: 2150,
+      y: 330,
+      width: 320,
+      height: 320,
+      maxHp: vaultBossHp(BOSS_3_HP),
+      arena: { left: 1788, right: 2648, top: 150, bottom: 1300 },
+    },
+  ],
 };
 
 export const levels: LevelData[] = [
@@ -950,6 +1002,7 @@ export const levels: LevelData[] = [
   level10,
   level11,
   bossLevel3,
-  // The finale
+  // The finale: the labyrinth, then the three bosses together behind its exit
   finalLevel,
+  vaultLevel,
 ];

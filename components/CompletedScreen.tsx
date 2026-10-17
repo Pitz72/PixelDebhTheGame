@@ -35,8 +35,11 @@ const CompletedScreen: React.FC<CompletedScreenProps> = ({ score, loopCount, onN
       <p className="text-4xl font-mono font-black text-white mb-8">
         {score.toString().padStart(8, '0')}
       </p>
-      <p className="text-2xl font-bold text-pink-400 mb-12 tracking-wider">
+      <p className="text-2xl font-bold text-pink-400 mb-3 tracking-wider">
         NEL LOOP {loopCount + 1} I NEMICI SARANNO PIÙ VELOCI DEL 20%!
+      </p>
+      <p className="text-xl font-bold text-pink-300/90 mb-12 tracking-wider">
+        NEL LABIRINTO: PIÙ NEMICI E UN MINUTO IN MENO!
       </p>
       <p className="text-3xl font-black text-white bg-emerald-600/80 px-10 py-4 rounded-2xl border-2 border-emerald-300 animate-pulse">
         PREMI INVIO PER INIZIARE IL LOOP {loopCount + 1}

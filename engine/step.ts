@@ -1,4 +1,4 @@
-import { CollectibleType, Enemy, ItemType, MazeData, Projectile } from '../types';
+import { Boss, CollectibleType, Enemy, ItemType, MazeData, Projectile } from '../types';
 import {
   GRAVITY,
   MAX_FALL_SPEED,
@@ -118,7 +118,7 @@ function rememberPrev(w: World): void {
   for (const e of w.enemies) keep(e);
   for (const p of w.projectiles) keep(p);
   for (const p of w.playerProjectiles) keep(p);
-  if (w.boss) keep(w.boss);
+  for (const b of w.bosses) keep(b);
   w.prevCameraX = w.cameraX;
   w.prevCameraY = w.cameraY;
 }
@@ -156,7 +156,7 @@ export function step(w: World): void {
 
   updateCamera(w);
   updateFx(w, zeroG);
-  updateBoss(w);
+  for (const b of w.bosses) updateBoss(w, b);
   updateProjectiles(w, zeroG);
   updateEnemies(w, zeroG);
   if (w.status !== 'playing') return;
@@ -220,7 +220,7 @@ function doJumpRelease(w: World): void {
 }
 
 function doCaptureOrLaunch(w: World): void {
-  if (w.boss) return;
+  if (w.bosses.length > 0) return;
   const p = w.player;
   const zeroG = isZeroG(w);
 
@@ -309,7 +309,7 @@ function updatePlayerTimers(w: World): void {
 
 function updatePlayerShooting(w: World): void {
   const p = w.player;
-  const canShoot = Boolean(w.boss) || Boolean(w.levels[w.currentLevelIndex]?.isZeroG);
+  const canShoot = w.bosses.length > 0 || Boolean(w.levels[w.currentLevelIndex]?.isZeroG);
   if (!w.input.shoot || !canShoot || p.shootCooldown > 0) return;
 
   sound(w, 'playerShoot');
@@ -332,7 +332,8 @@ function updatePlayerShooting(w: World): void {
     vy *= inv;
   }
 
-  const rapid = w.boss && w.boss.type === 'shadowHead';
+  // the last boss alone is fought with rapid fire; against several at once the normal rhythm holds
+  const rapid = w.bosses.length === 1 && w.bosses[0].type === 'shadowHead';
   p.shootCooldown = rapid ? PLAYER_RAPID_SHOOT_COOLDOWN : PLAYER_SHOOT_COOLDOWN;
   const mag = Math.hypot(vx, vy) || 1;
   p.aimX = vx / mag;
@@ -640,7 +641,7 @@ function checkPlayerDamage(w: World): void {
     return true;
   });
 
-  if (!hit && !w.boss) {
+  if (!hit && w.bosses.length === 0) {
     for (const en of w.enemies) {
       if (en.state === 'active' && areHurtboxesColliding(p, en, 9 * k, 7 * k, 7, 6)) {
         hit = true;
@@ -693,10 +694,12 @@ function stepLevelCleared(w: World): void {
   updateCamera(w);
   updateFx(w, zeroG);
 
-  const b = w.boss;
-  if (b && b.hp <= 0) {
+  const fallen = w.bosses.filter(b => b.hp <= 0);
+  if (fallen.length > 0) {
     w.bossDeathTick += 1;
     if (w.bossDeathTick % 9 === 0) {
+      // the fallen bosses blow up in turn
+      const b = fallen[Math.floor(w.bossDeathTick / 9) % fallen.length];
       const x = b.x + w.rng() * b.width;
       const y = b.y + w.rng() * b.height;
       sound(w, 'hit');
@@ -714,18 +717,18 @@ function stepLevelCleared(w: World): void {
 // Boss AI
 // ---------------------------------------------------------------------------
 
-function updateBoss(w: World): void {
-  const b = w.boss;
-  if (!b || b.hp <= 0) return;
+function updateBoss(w: World, b: Boss): void {
+  if (b.hp <= 0) return;
   const p = w.player;
   const mult = w.difficultyMultiplier;
   b.isThrowing = false;
 
   if (b.type === 'frog') {
+    const a = b.arena ?? { left: 20, right: w.levelWidth - 20, top: 50, bottom: w.levelHeight - 180 };
     b.x += b.vx * DT;
     b.y += b.vy * DT;
-    if (b.x <= 20 || b.x + b.width >= w.levelWidth - 20) b.vx *= -1;
-    if (b.y <= 50 || b.y + b.height >= w.levelHeight - 180) b.vy *= -1;
+    if (b.x <= a.left || b.x + b.width >= a.right) b.vx *= -1;
+    if (b.y <= a.top || b.y + b.height >= a.bottom) b.vy *= -1;
     if (w.rng() < 0.005 * DT) b.vx *= -1;
     if (w.rng() < 0.01 * DT) b.vy *= -1;
 
@@ -752,8 +755,17 @@ function updateBoss(w: World): void {
   } else if (b.type === 'chickenEye') {
     b.movementTimer += STEP_MS * 0.0012;
     const t = b.movementTimer;
-    b.x = (w.levelWidth - b.width) / 2 + Math.sin(t) * Math.min(650, w.levelWidth * 0.28);
-    b.y = w.levelHeight / 2 - 220 + Math.sin(2 * t) * 180;
+    const a = b.arena;
+    if (a) {
+      // sweeps its own patch of the arena: across it, and up and down
+      const midX = (a.left + a.right - b.width) / 2;
+      const midY = (a.top + a.bottom - b.height) / 2;
+      b.x = midX + Math.sin(t) * Math.min(650, (a.right - a.left - b.width) / 2);
+      b.y = midY + Math.sin(2 * t) * Math.min(180, (a.bottom - a.top - b.height) / 2);
+    } else {
+      b.x = (w.levelWidth - b.width) / 2 + Math.sin(t) * Math.min(650, w.levelWidth * 0.28);
+      b.y = w.levelHeight / 2 - 220 + Math.sin(2 * t) * 180;
+    }
 
     b.attackCooldown -= STEP_MS;
     if (b.attackCooldown <= 0) {
@@ -788,8 +800,9 @@ function updateBoss(w: World): void {
       b.opacity = 0;
       b.teleportTimer -= STEP_MS;
       if (b.teleportTimer <= 0) {
-        b.x = 120 + w.rng() * (w.levelWidth - b.width - 240);
-        b.y = 100 + w.rng() * (w.levelHeight - b.height - 220);
+        const a = b.arena ?? { left: 120, right: w.levelWidth - 120, top: 100, bottom: w.levelHeight - 120 };
+        b.x = a.left + w.rng() * (a.right - a.left - b.width);
+        b.y = a.top + w.rng() * (a.bottom - a.top - b.height);
         b.prevX = b.x;
         b.prevY = b.y;
         b.visibilityState = 'fadingIn';
@@ -1245,12 +1258,12 @@ function resolveLaunchedHit(w: World, enemy: Enemy, index: number): boolean {
 // Player shots -> boss / enemies
 // ---------------------------------------------------------------------------
 
-function defeatBoss(w: World): void {
-  const b = w.boss!;
+function defeatBoss(w: World, b: Boss): void {
   b.hp = 0;
   b.hitTimer = 3000;
   const bx = b.x + b.width / 2;
   const by = b.y + b.height / 2;
+  const last = w.bosses.every(x => x.hp <= 0);
   sound(w, 'bossDefeat');
   triggerShake(w, 24);
   spawnParticles(w, bx, by, '#00e676', 60);
@@ -1259,6 +1272,7 @@ function defeatBoss(w: World): void {
   spawnShockwave(w, bx, by, '#ffea00', 220, 5);
   addScore(w, ENEMY_DEFEAT_POINTS * 20);
   spawnFloatingText(w, bx, by - 30, `BOSS DEFEATED! +${ENEMY_DEFEAT_POINTS * 20}`, '#ffea00', 1.45);
+  if (!last) return; // the others fight on
   w.projectiles = [];
   w.playerProjectiles = [];
   w.status = 'level-cleared';
@@ -1267,33 +1281,33 @@ function defeatBoss(w: World): void {
 }
 
 function updatePlayerProjectileHits(w: World): void {
-  const canShoot = Boolean(w.boss) || Boolean(w.levels[w.currentLevelIndex]?.isZeroG);
+  const canShoot = w.bosses.length > 0 || Boolean(w.levels[w.currentLevelIndex]?.isZeroG);
   if (!canShoot || w.playerProjectiles.length === 0) return;
 
   w.playerProjectiles = w.playerProjectiles.filter(proj => {
     if (w.status !== 'playing') return false;
-    const boss = w.boss;
+    // a shot meets the first boss it touches (a hidden shadow head lets it through)
+    const boss = w.bosses.find(
+      bs => bs.hp > 0 && !(bs.type === 'shadowHead' && (bs.opacity || 0) < 0.45) && areRectsColliding(proj, bs)
+    );
 
-    if (boss && boss.hp > 0) {
-      if (boss.type === 'shadowHead' && (boss.opacity || 0) < 0.45) return true;
-      if (areRectsColliding(proj, boss)) {
-        sound(w, 'bossHit');
-        const hitX = proj.x + proj.width / 2;
-        const hitY = proj.y + proj.height / 2;
-        triggerShake(w, 4);
-        spawnParticles(w, hitX, hitY, '#00e676', 10);
-        spawnShockwave(w, hitX, hitY, '#00e676', 65, 3);
-        addScore(w, ENEMY_DEFEAT_POINTS / 2);
-        spawnFloatingText(w, hitX, hitY - 12, `+${ENEMY_DEFEAT_POINTS / 2}`, '#00e676', 0.95);
-        boss.hp -= 1;
-        boss.isHit = true;
-        boss.hitTimer = 180;
-        if (boss.hp <= 0) defeatBoss(w);
-        return false;
-      }
+    if (boss) {
+      sound(w, 'bossHit');
+      const hitX = proj.x + proj.width / 2;
+      const hitY = proj.y + proj.height / 2;
+      triggerShake(w, 4);
+      spawnParticles(w, hitX, hitY, '#00e676', 10);
+      spawnShockwave(w, hitX, hitY, '#00e676', 65, 3);
+      addScore(w, ENEMY_DEFEAT_POINTS / 2);
+      spawnFloatingText(w, hitX, hitY - 12, `+${ENEMY_DEFEAT_POINTS / 2}`, '#00e676', 0.95);
+      boss.hp -= 1;
+      boss.isHit = true;
+      boss.hitTimer = 180;
+      if (boss.hp <= 0) defeatBoss(w, boss);
+      return false;
     }
 
-    if (!boss) {
+    if (w.bosses.length === 0) {
       for (const en of w.enemies) {
         if ((en.state === 'active' || en.state === 'stunned') && areRectsColliding(proj, en)) {
           en.state = 'defeated';
@@ -1344,7 +1358,7 @@ function pickupRect(w: World): Rect {
 
 function updateItems(w: World): void {
   const p = w.player;
-  if (w.boss) return;
+  if (w.bosses.length > 0) return;
   const reach = pickupRect(w);
   w.items = w.items.filter(item => {
     if (!areRectsColliding(reach, item)) return true;
@@ -1386,7 +1400,7 @@ export function collectiblesLeft(w: World): number {
 }
 
 function updateGoal(w: World): void {
-  if (!w.goal || w.boss || w.status !== 'playing') return;
+  if (!w.goal || w.bosses.length > 0 || w.status !== 'playing') return;
   if (collectiblesLeft(w) !== 0 || !areRectsColliding(pickupRect(w), w.goal)) return;
 
   const gx = w.goal.x + w.goal.width / 2;

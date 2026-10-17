@@ -38,6 +38,8 @@ export interface Frame {
   maze: boolean;
   /** Camera zoom on the player. */
   zoom: number;
+  /** A set of its own for the background (the final stage's vault), or null. */
+  backdrop: 'vault' | null;
 
   player: Player;
   enemies: Enemy[];
@@ -46,6 +48,8 @@ export interface Frame {
   checkpoints: Checkpoint[];
   goal: Goal | null;
   boss: Boss | null;
+  /** Every boss on the level (the same objects as `boss` when there is one). */
+  bosses: Boss[];
   projectiles: Projectile[];
   playerProjectiles: PlayerProjectile[];
   particles: Particle[];
@@ -82,6 +86,7 @@ export function makeFrame(w: World): Frame {
     playerScale: w.playerScale,
     maze: w.maze !== null,
     zoom: w.zoom,
+    backdrop: level?.backdrop ?? null,
 
     player: { ...w.player },
     enemies: w.enemies.map(e => ({ ...e })),
@@ -89,7 +94,8 @@ export function makeFrame(w: World): Frame {
     platforms: w.platforms,
     checkpoints: w.checkpoints.map(c => ({ ...c })),
     goal: w.goal,
-    boss: w.boss ? { ...w.boss } : null,
+    boss: w.bosses[0] ? { ...w.bosses[0] } : null,
+    bosses: w.bosses.map(b => ({ ...b })),
     projectiles: w.projectiles.map(p => ({ ...p })),
     playerProjectiles: w.playerProjectiles.map(p => ({ ...p })),
     particles: w.particles.map(p => ({ ...p })),

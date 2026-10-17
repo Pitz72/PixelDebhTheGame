@@ -416,7 +416,7 @@ export class GameRenderer {
   private projViews = new Map<number, ShotView>();
   private checkpointSprites: Sprite[] = [];
   private goal: { root: Container; sprite: Sprite; rings: Sprite[]; remaining: Text; label: Text; w: number; h: number } | null = null;
-  private bossView: BossView | null = null;
+  private bossViews: BossView[] = [];
   private player: PlayerView;
   private texts = new Map<number, Text>();
 
@@ -622,7 +622,7 @@ export class GameRenderer {
     this.particles.update(frame.particles, alpha, dtF, camX, camY);
 
     // boss defeat: one big white flash
-    const bossDown = frame.status === 'level-cleared' && frame.boss && frame.boss.hp <= 0;
+    const bossDown = frame.status === 'level-cleared' && frame.bosses.length > 0 && frame.bosses.every(b => b.hp <= 0);
     if (bossDown && this.bossFlashDone !== frame.levelSerial) {
       this.bossFlashDone = frame.levelSerial;
       this.flashAlpha = 0.9;
@@ -664,18 +664,28 @@ export class GameRenderer {
     this.checkpointSprites = [];
     this.goal?.root.destroy({ children: true });
     this.goal = null;
-    this.bossView?.root.destroy({ children: true });
-    this.bossView = null;
+    for (const v of this.bossViews) v.root.destroy({ children: true });
+    this.bossViews = [];
     for (const t of this.texts.values()) t.destroy();
     this.texts.clear();
 
-    this.arena = frame.boss?.type === 'shadowHead';
+    // the dark arena of the last boss alone; the final stage has a set of its own
+    this.arena = frame.bosses.length === 1 && frame.bosses[0].type === 'shadowHead';
     this.background.setTheme(frame.theme);
     this.background.setArena(this.arena);
-    this.lighting.setAmbient(this.arena ? 0x6a5870 : frame.maze ? 0x4a4f86 : this.pal.ambient);
+    this.background.setBackdrop(frame.backdrop);
+    this.lighting.setAmbient(this.arena ? 0x6a5870 : frame.backdrop === 'vault' ? 0x7a6a98 : frame.maze ? 0x4a4f86 : this.pal.ambient);
 
     if (frame.maze) {
       this.floor = new TilingSprite({ texture: makeFloorTexture(), width: frame.levelWidth, height: frame.levelHeight });
+      this.platformLayer.addChildAt(this.floor, 0);
+    }
+
+    if (frame.backdrop === 'vault') {
+      // the polished floor of the hall: a band at the bottom she walks about on
+      const band = 140;
+      this.floor = new TilingSprite({ texture: this.tex.vault.floor, width: frame.levelWidth, height: band });
+      this.floor.position.set(0, frame.levelHeight - band);
       this.platformLayer.addChildAt(this.floor, 0);
     }
 
@@ -712,9 +722,10 @@ export class GameRenderer {
       this.goal = { root, sprite, rings, remaining, label, w: g.width, h: g.height };
     }
 
-    if (frame.boss) {
-      this.bossView = new BossView(frame.boss, this.tex);
-      this.bossLayer.addChild(this.bossView.root);
+    for (const b of frame.bosses) {
+      const view = new BossView(b, this.tex);
+      this.bossViews.push(view);
+      this.bossLayer.addChild(view.root);
     }
   }
 
@@ -861,16 +872,18 @@ export class GameRenderer {
   }
 
   private syncBoss(frame: Frame, a: number, camX: number, camY: number, now: number, dtF: number): void {
-    const b = frame.boss;
-    if (!b || !this.bossView) return;
-    this.bossView.update(b, a, now, dtF);
-    const x = ix(b, a) + b.width / 2;
-    const y = iy(b, a) + b.height / 2;
-    const strength = b.type === 'shadowHead' ? (b.opacity ?? 1) : 1;
-    this.lighting.add(x - camX, y - camY, 520, BOSS_COLOR[b.type], 0.8 * strength + (b.isHit ? 0.2 : 0));
-    if (b.hp > 0 && Math.random() < 0.35 * dtF * strength) {
-      this.particles.emit({ x: x + (Math.random() - 0.5) * b.width * 0.8, y: y + b.height * 0.35, vx: (Math.random() - 0.5) * 0.6, vy: -0.9 - Math.random(), life: 900, size: 7, color: BOSS_COLOR[b.type], alpha: 0.7 });
-    }
+    frame.bosses.forEach((b, i) => {
+      const view = this.bossViews[i];
+      if (!view) return;
+      view.update(b, a, now, dtF);
+      const x = ix(b, a) + b.width / 2;
+      const y = iy(b, a) + b.height / 2;
+      const strength = b.type === 'shadowHead' ? (b.opacity ?? 1) : 1;
+      this.lighting.add(x - camX, y - camY, 520, BOSS_COLOR[b.type], 0.8 * strength + (b.isHit ? 0.2 : 0));
+      if (b.hp > 0 && Math.random() < 0.35 * dtF * strength) {
+        this.particles.emit({ x: x + (Math.random() - 0.5) * b.width * 0.8, y: y + b.height * 0.35, vx: (Math.random() - 0.5) * 0.6, vy: -0.9 - Math.random(), life: 900, size: 7, color: BOSS_COLOR[b.type], alpha: 0.7 });
+      }
+    });
   }
 
   private syncPlayer(frame: Frame, a: number, camX: number, camY: number, now: number, dtF: number): void {

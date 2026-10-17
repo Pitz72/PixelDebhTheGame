@@ -17,7 +17,7 @@ import {
   STEP_MS,
 } from './engine';
 import { GameRenderer, Quality } from './renderer/GameRenderer';
-import { ItemType } from './types';
+import { Boss, ItemType } from './types';
 
 interface GameScreenProps {
   onGameOver: (score: number) => void;
@@ -41,7 +41,7 @@ interface HudData {
   levelName: string;
   collectiblesLeft: number;
   activePowerUp: ItemType | null;
-  boss: { hp: number; maxHp: number } | null;
+  bosses: { type: Boss['type']; hp: number; maxHp: number }[];
   godMode: boolean;
   timeRemaining: number | null;
   loopCount: number;
@@ -61,7 +61,7 @@ const deriveHud = (f: Frame): HudData => {
     levelName: f.levelName,
     collectiblesLeft: f.collectiblesLeft,
     activePowerUp: f.player.activePowerUp,
-    boss: f.boss ? { hp: f.boss.hp, maxHp: f.boss.maxHp } : null,
+    bosses: f.bosses.map(b => ({ type: b.type, hp: b.hp, maxHp: b.maxHp })),
     godMode: f.isGodMode,
     timeRemaining: f.timeRemaining === null ? null : Math.ceil(f.timeRemaining),
     loopCount: f.loopCount,
@@ -69,7 +69,7 @@ const deriveHud = (f: Frame): HudData => {
     // the labyrinth has no left-to-right progress, so the map bar stays hidden there
     levelWidth: f.maze ? 0 : f.levelWidth,
     status: f.status,
-    bossDefeated: Boolean(f.boss && f.boss.hp <= 0),
+    bossDefeated: f.bosses.length > 0 && f.bosses.every(b => b.hp <= 0),
     damageFlash: f.damageFlash,
   };
 };
@@ -81,8 +81,8 @@ const sameHud = (a: HudData, b: HudData): boolean =>
   a.levelName === b.levelName &&
   a.collectiblesLeft === b.collectiblesLeft &&
   a.activePowerUp === b.activePowerUp &&
-  a.boss?.hp === b.boss?.hp &&
-  a.boss?.maxHp === b.boss?.maxHp &&
+  a.bosses.length === b.bosses.length &&
+  a.bosses.every((x, i) => x.hp === b.bosses[i].hp && x.maxHp === b.bosses[i].maxHp) &&
   a.godMode === b.godMode &&
   a.timeRemaining === b.timeRemaining &&
   a.loopCount === b.loopCount &&
@@ -147,6 +147,10 @@ const GameScreen: React.FC<GameScreenProps> = ({
         w.player.vx = 0;
         w.player.vy = 0;
       },
+      /** Brings every boss down to at most this much life (to reach the end of a fight quickly). */
+      bossHp: (n: number) => {
+        for (const b of w.bosses) b.hp = Math.min(b.hp, n);
+      },
       state: () => ({
         level: w.currentLevelIndex,
         status: w.status,
@@ -157,6 +161,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
         x: Math.round(w.player.x),
         y: Math.round(w.player.y),
         zoom: w.zoom,
+        bosses: w.bosses.map(b => b.hp),
       }),
     };
   }, []);
@@ -418,7 +423,6 @@ const GameScreen: React.FC<GameScreenProps> = ({
   }, []);
 
   // --- Render ---------------------------------------------------------------------
-  const boss = hud.boss;
 
   return (
     <div
@@ -438,7 +442,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
         levelName={hud.levelName}
         collectiblesLeft={hud.collectiblesLeft}
         activePowerUp={hud.activePowerUp}
-        boss={boss}
+        bosses={hud.bosses}
         isGodMode={hud.godMode}
         timeRemaining={hud.timeRemaining}
         loopCount={hud.loopCount}

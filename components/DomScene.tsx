@@ -24,8 +24,9 @@ import { Frame } from '../engine/frame';
  * (some Linux setups), so the game still runs, just without lights and heavy particles.
  */
 const DomScene: React.FC<{ frame: Frame }> = ({ frame }) => {
-  const { player, boss } = frame;
-  const isShadowHeadBoss = boss && boss.type === 'shadowHead';
+  const { player, bosses } = frame;
+  // the dark arena is for the last boss alone
+  const isShadowHeadBoss = bosses.length === 1 && bosses[0].type === 'shadowHead';
 
   const cullMinX = frame.cameraX - 450;
   const cullMaxX = frame.cameraX + GAME_WIDTH + 450;
@@ -108,9 +109,15 @@ const DomScene: React.FC<{ frame: Frame }> = ({ frame }) => {
 
         {frame.enemies.map(e => (isVisible(e) ? <Enemy key={e.id} enemy={e} /> : null))}
 
-        {boss && boss.type === 'frog' && <CyclopsFrogBoss boss={boss} />}
-        {boss && boss.type === 'chickenEye' && <ChickenEyeBoss boss={boss} />}
-        {boss && boss.type === 'shadowHead' && <ShadowHeadBoss boss={boss} />}
+        {bosses.map((b, i) =>
+          b.type === 'frog' ? (
+            <CyclopsFrogBoss key={i} boss={b} />
+          ) : b.type === 'chickenEye' ? (
+            <ChickenEyeBoss key={i} boss={b} />
+          ) : (
+            <ShadowHeadBoss key={i} boss={b} />
+          )
+        )}
 
         {frame.projectiles.map(p =>
           isVisible(p) ? (
