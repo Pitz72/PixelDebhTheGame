@@ -96,6 +96,11 @@ jobs:
         if: matrix.os == 'ubuntu-22.04'
         run: |
           sudo apt-get update
+          # The ubuntu-22.04 image ships LLVM's libunwind-14-dev, which blocks the libunwind-dev that
+          # libgstreamer1.0-dev depends on ("held broken packages"): take it off first. GStreamer's dev
+          # files are needed because the AppImage bundles the media framework (bundleMediaFramework).
+          sudo apt-get remove -y 'libunwind-*-dev' || true
+          sudo apt-get install -y libunwind-dev || { dpkg -l | grep -i -E 'unwind|llvm' || true; apt-cache policy libunwind-dev; exit 1; }
           sudo apt-get install -y \
             libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev \
             libayatana-appindicator3-dev librsvg2-dev patchelf \
