@@ -112,7 +112,7 @@ const MenuList: React.FC<MenuListProps> = ({ items, onSelect, onBack, active = t
               item.disabled
                 ? 'border-white/10 text-gray-600 cursor-not-allowed'
                 : focused
-                ? 'border-yellow-300 bg-gradient-to-r from-orange-500/90 via-pink-600/90 to-purple-600/90 text-white shadow-[0_0_28px_rgba(255,145,0,0.55)]'
+                ? 'border-yellow-300 bg-linear-to-r/srgb from-orange-500/90 via-pink-600/90 to-purple-600/90 text-white shadow-[0_0_28px_rgba(255,145,0,0.55)]'
                 : 'border-cyan-500/35 bg-[#0b0420]/80 text-cyan-200 hover:text-white'
             }`}
           >

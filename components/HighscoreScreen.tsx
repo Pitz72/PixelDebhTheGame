@@ -48,7 +48,7 @@ const HighscoreScreen: React.FC<HighscoreScreenProps> = ({ onStart, closing = fa
 
   return (
     <div
-      className="relative w-full h-full bg-gradient-to-b from-[#050114] via-[#12062c] to-[#240a46] flex flex-col justify-center items-center text-center p-8 cursor-pointer"
+      className="relative w-full h-full bg-linear-to-b/srgb from-[#050114] via-[#12062c] to-[#240a46] flex flex-col justify-center items-center text-center p-8 cursor-pointer"
       onClick={handleStart}
     >
       <h1

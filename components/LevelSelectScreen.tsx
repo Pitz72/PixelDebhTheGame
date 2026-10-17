@@ -25,7 +25,7 @@ const LevelSelectScreen: React.FC<LevelSelectScreenProps> = ({ onClose, onPlay }
   }));
 
   return (
-    <div className="absolute inset-0 z-[70] flex flex-col items-center justify-center bg-[#050114] text-white">
+    <div className="absolute inset-0 z-70 flex flex-col items-center justify-center bg-[#050114] text-white">
       <h2
         className="mb-4 text-6xl font-black tracking-widest text-yellow-300"
         style={{ textShadow: '0 0 24px rgba(250,204,21,0.5), 4px 4px 0px #e8175d' }}

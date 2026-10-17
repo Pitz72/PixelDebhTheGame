@@ -30,7 +30,7 @@ const ScreenOverlay: React.FC<ScreenOverlayProps> = ({ kind, onClose, onPlayLeve
       return <LevelSelectScreen onClose={onClose} onPlay={onPlayLevel ?? onClose} />;
     case 'leaderboard':
       return (
-        <div className="absolute inset-0 z-[70] bg-[#050114]">
+        <div className="absolute inset-0 z-70 bg-[#050114]">
           <HighscoreScreen onStart={onClose} closing />
         </div>
       );

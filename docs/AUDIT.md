@@ -111,6 +111,22 @@ Verificato nel gioco (app di sviluppo su Windows e exe di release a 1920x1080): 
 
 Non verificato: capriola e posa a gravita' zero in gioco (viste solo nella tavola delle pose), reazione al danno e pollice alzato in gioco, aspetto su schermi 4K.
 
+## Stato dopo la 1.18.0 (rifinitura): le voci rimaste dell'audit
+
+Ogni voce ancora aperta e' stata riguardata nel codice di oggi.
+
+| Voce | Esito |
+|---|---|
+| M4 musica a timer JavaScript | **Chiusa** (Fase 5, 1.3.0): la musica sono file audio pianificati sull'orologio dell'`AudioContext`; in `services/soundService.ts` non c'e' piu' nessuna catena di `setTimeout`. |
+| M7 raccolta senza guida | **Chiusa** (1.15.0): freccia verso gli ultimi 3 oggetti, spegnibile nelle Opzioni. |
+| M8 piattaforme semi-solide | **Scelta di design confermata**: si attraversano dai lati e si colpiscono dal basso perche' il colpo da sotto e' una meccanica del gioco (stordisce i nemici sopra la piattaforma); salire attraverso una piattaforma si fa col salto, anche doppio. Non si cambia. |
+| L4 interfaccia mista italiano/inglese | **Chiusa** (1.14.0): tutto in due lingue; restano in inglese solo le grida arcade, le etichette dell'HUD e i nomi propri, per scelta. |
+| L8 gamepad, rimappa, opzioni, tutorial | **Chiusa** (1.13.0): gamepad, tasti rimappabili, Opzioni a schede, "Come si gioca". |
+| L9 testo sfocato con `transform: scale()` | **Non riproducibile**: a 1280x720, 1366x768 e 1536x864 con densita' 1,25 il testo dell'HUD e' nitido (Chromium disegna il testo alla scala finale); il canvas segue la finestra dalla 1.17.0. |
+| L10 lampeggio con `Date.now()` nel render | **Chiusa** (1.18.0) per il giocatore del ripiego DOM (ora e' un'animazione CSS). Restano `Date.now()` nelle pose dei due boss del ripiego DOM, solo estetica. |
+
+`npm audit`: **0 avvisi** dalla 1.18.0 (erano 7, tutti nella catena di sviluppo di Tailwind 3; l'unica correzione era passare a Tailwind 4).
+
 ## Piano proposto
 
 Principio: non riscrivere due volte. Prima si estrae la logica in un modulo puro e si correggono i bug lì, poi si cambia il renderer senza toccare la logica.

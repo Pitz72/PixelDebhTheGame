@@ -610,7 +610,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
             {t('game.compat')}
           </p>
           {renderError && (
-            <p className="mt-2 text-xs font-mono text-gray-300 bg-black/70 px-3 py-1 rounded max-w-[1200px] mx-auto">{renderError.slice(0, 300)}</p>
+            <p className="mt-2 text-xs font-mono text-gray-300 bg-black/70 px-3 py-1 rounded-sm max-w-[1200px] mx-auto">{renderError.slice(0, 300)}</p>
           )}
         </div>
       )}
@@ -623,7 +623,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
 
       {/* Pause menu */}
       {isPaused && !overlay && (
-        <div className="absolute inset-0 bg-[#050114]/85 backdrop-blur-sm z-50 flex flex-col justify-center items-center text-white">
+        <div className="absolute inset-0 bg-[#050114]/85 backdrop-blur-xs z-50 flex flex-col justify-center items-center text-white">
           <h2
             className="text-7xl font-black tracking-widest text-cyan-300 mb-8"
             style={{ textShadow: '0 0 25px #00e5ff' }}

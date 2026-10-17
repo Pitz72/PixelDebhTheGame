@@ -45,7 +45,7 @@ const HowToPlayScreen: React.FC<HowToPlayScreenProps> = ({ onClose }) => {
 
   return (
     <div
-      className="absolute inset-0 z-[70] flex flex-col items-center justify-center bg-[#050114] px-16 text-white"
+      className="absolute inset-0 z-70 flex flex-col items-center justify-center bg-[#050114] px-16 text-white"
       onClick={e => {
         e.stopPropagation();
         onClose();
@@ -69,20 +69,20 @@ const HowToPlayScreen: React.FC<HowToPlayScreenProps> = ({ onClose }) => {
             {t('howto.controls.title')}
             {padConnected && <span className="ml-4 text-sm text-emerald-300">● GAMEPAD</span>}
           </h3>
-          <table className="mt-2 w-full text-left text-xl">
+          <table className="mt-2 w-full border-collapse text-left text-xl">
             <thead>
               <tr className="text-sm tracking-[0.2em] text-gray-400">
-                <th className="w-[44%] font-bold" />
-                <th className="w-[28%] font-bold">{t('howto.controls.keyboard')}</th>
-                <th className="font-bold">{t('howto.controls.pad')}</th>
+                <th className="w-[44%] p-px font-bold" />
+                <th className="w-[28%] p-px font-bold">{t('howto.controls.keyboard')}</th>
+                <th className="p-px font-bold">{t('howto.controls.pad')}</th>
               </tr>
             </thead>
             <tbody>
               {rows.map(r => (
                 <tr key={r.action} className="border-t border-white/10">
-                  <td className="py-1 text-gray-100">{r.action}</td>
-                  <td className="py-1 font-black tracking-widest text-yellow-300">{r.keys}</td>
-                  <td className="py-1 font-black tracking-widest text-emerald-300">{r.pad}</td>
+                  <td className="px-px py-1 text-gray-100">{r.action}</td>
+                  <td className="px-px py-1 font-black tracking-widest text-yellow-300">{r.keys}</td>
+                  <td className="px-px py-1 font-black tracking-widest text-emerald-300">{r.pad}</td>
                 </tr>
               ))}
             </tbody>

@@ -47,7 +47,7 @@ const AiNotice: React.FC<AiNoticeProps> = ({ onDone }) => {
 
   return (
     <div
-      className="relative w-full h-full overflow-hidden flex flex-col justify-center items-center text-center cursor-pointer bg-gradient-to-b from-[#050114] via-[#140732] to-[#260c4d]"
+      className="relative w-full h-full overflow-hidden flex flex-col justify-center items-center text-center cursor-pointer bg-linear-to-b/srgb from-[#050114] via-[#140732] to-[#260c4d]"
       onClick={prosegui}
       role="alertdialog"
       aria-modal="true"

@@ -72,7 +72,7 @@ const EnterHighscoreScreen: React.FC<EnterHighscoreScreenProps> = ({ score, diff
   }, [handleKeyDown]);
 
   return (
-    <div className="w-full h-full bg-gradient-to-b from-[#050114] via-[#12062c] to-[#240a46] flex flex-col justify-center items-center text-center p-8">
+    <div className="w-full h-full bg-linear-to-b/srgb from-[#050114] via-[#12062c] to-[#240a46] flex flex-col justify-center items-center text-center p-8">
       <h1
         className="text-7xl font-black text-emerald-400 mb-6 tracking-wider"
         style={{ textShadow: '0 0 25px rgba(16,185,129,0.55)' }}

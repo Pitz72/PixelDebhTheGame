@@ -131,7 +131,7 @@ The game simulation lives in `engine/` as plain TypeScript with a fixed 60 Hz ti
 
 -   **React:** For the component-based UI and game structure.
 -   **TypeScript:** For strong typing and code quality.
--   **TailwindCSS (v3, compiled locally):** For styling the UI components.
+-   **TailwindCSS (v4, compiled locally):** For styling the UI components. The palette of Tailwind 3 is kept in `theme-v3-colors.css` so the look did not change.
 -   **Vitest:** For the engine tests.
 
 ---

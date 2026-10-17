@@ -22,7 +22,7 @@ const CompletedScreen: React.FC<CompletedScreenProps> = ({ score, loopCount, onN
 
   return (
     <div
-      className="w-full h-full bg-gradient-to-b from-[#041a14] via-[#092b29] to-[#050114] flex flex-col justify-center items-center text-center cursor-pointer"
+      className="w-full h-full bg-linear-to-b/srgb from-[#041a14] via-[#092b29] to-[#050114] flex flex-col justify-center items-center text-center cursor-pointer"
       onClick={onNextLoop}
     >
       <h1

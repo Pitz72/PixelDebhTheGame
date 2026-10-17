@@ -116,7 +116,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onSelect, active = true }) =>
   };
 
   return (
-    <div className="w-full h-full relative bg-gradient-to-b from-[#050114] via-[#140732] to-[#260c4d] flex flex-col justify-center items-center text-center overflow-hidden">
+    <div className="w-full h-full relative bg-linear-to-b/srgb from-[#050114] via-[#140732] to-[#260c4d] flex flex-col justify-center items-center text-center overflow-hidden">
       {/* Decorative Vector Grid Glow */}
       <div
         className="absolute inset-0 opacity-20 pointer-events-none"

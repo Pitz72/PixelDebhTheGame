@@ -32,7 +32,7 @@ const TrophyScreen: React.FC<TrophyScreenProps> = ({ onClose }) => {
 
   return (
     <div
-      className="absolute inset-0 z-[70] flex flex-col items-center bg-[#050114] px-12 py-8 text-white"
+      className="absolute inset-0 z-70 flex flex-col items-center bg-[#050114] px-12 py-8 text-white"
       onClick={e => {
         e.stopPropagation();
         onClose();

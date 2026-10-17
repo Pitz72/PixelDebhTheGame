@@ -241,7 +241,7 @@ const OptionsScreen: React.FC<OptionsScreenProps> = ({ onClose }) => {
 
   return (
     <div
-      className="absolute inset-0 z-[70] flex items-center justify-center bg-[#050114] text-white"
+      className="absolute inset-0 z-70 flex items-center justify-center bg-[#050114] text-white"
       onClick={e => e.stopPropagation()}
     >
       <div className="w-[1180px] rounded-3xl border-2 border-cyan-400/60 bg-[#0b0420] px-10 py-8 shadow-[0_0_45px_rgba(0,229,255,0.25)]">

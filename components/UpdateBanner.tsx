@@ -20,7 +20,7 @@ const UpdateBanner: React.FC<UpdateBannerProps> = ({ update, status, error }) =>
   const action = update.canInstall ? t('update.install') : t('update.download');
   return (
     <div
-      className="absolute top-5 left-1/2 -translate-x-1/2 z-[55] flex items-center gap-5 rounded-2xl border-2 border-emerald-400/70 bg-[#04140f]/95 px-7 py-3 shadow-[0_0_30px_rgba(16,185,129,0.4)] pointer-events-none"
+      className="absolute top-5 left-1/2 -translate-x-1/2 z-55 flex items-center gap-5 rounded-2xl border-2 border-emerald-400/70 bg-[#04140f]/95 px-7 py-3 shadow-[0_0_30px_rgba(16,185,129,0.4)] pointer-events-none"
       role="status"
     >
       <span className="text-3xl" aria-hidden="true">⬆</span>

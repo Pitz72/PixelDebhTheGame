@@ -97,7 +97,7 @@ const Hud: React.FC<HudProps> = React.memo(({
             <div className="flex items-center space-x-3 bg-[#0c0726]/80 px-4 py-1.5 rounded-xl border border-purple-500/40">
               <span className="text-yellow-400 text-lg font-extrabold tracking-widest">STAGE</span>
               <span className="text-white text-3xl font-black">{level}</span>
-              <span className="text-xs px-2 py-0.5 rounded bg-pink-600/80 text-white font-bold tracking-wider">
+              <span className="text-xs px-2 py-0.5 rounded-sm bg-pink-600/80 text-white font-bold tracking-wider">
                 LOOP {loopCount}
               </span>
             </div>
@@ -141,7 +141,7 @@ const Hud: React.FC<HudProps> = React.memo(({
                   <span className="text-xs text-orange-200/80 font-bold">{combo.count} K.O.</span>
                 </div>
                 <div className="mt-0.5 h-1.5 w-full rounded-full bg-slate-900/90 overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-orange-500 to-yellow-300" style={{ width: `${combo.pct}%` }} />
+                  <div className="h-full bg-linear-to-r/srgb from-orange-500 to-yellow-300" style={{ width: `${combo.pct}%` }} />
                 </div>
               </div>
             )}
@@ -160,7 +160,7 @@ const Hud: React.FC<HudProps> = React.memo(({
                 <span className="text-xs text-cyan-400/80 font-bold tracking-widest">MAP</span>
                 <div className="w-56 h-3 bg-slate-900/90 rounded-full border border-cyan-500/40 overflow-hidden relative">
                   <div
-                    className="h-full bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-500 transition-all duration-150"
+                    className="h-full bg-linear-to-r/srgb from-cyan-400 via-purple-400 to-pink-500 transition-all duration-150"
                     style={{ width: `${progressPct}%` }}
                   />
                 </div>
@@ -230,7 +230,7 @@ const Hud: React.FC<HudProps> = React.memo(({
                   className={`w-full ${many ? 'h-3.5' : 'h-6'} bg-slate-950/90 border-2 border-red-500/80 rounded-full overflow-hidden p-0.5 shadow-[0_0_20px_rgba(255,23,68,0.4)]`}
                 >
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-red-600 via-orange-500 to-yellow-400 transition-all duration-150 ease-out"
+                    className="h-full rounded-full bg-linear-to-r/srgb from-red-600 via-orange-500 to-yellow-400 transition-all duration-150 ease-out"
                     style={{ width: `${Math.max(0, (boss.hp / boss.maxHp) * 100)}%` }}
                   />
                 </div>

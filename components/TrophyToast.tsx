@@ -12,7 +12,7 @@ const TrophyToast: React.FC<{ trophy: TrophyDef }> = ({ trophy }) => {
   const c = TIER_COLORS[trophy.tier];
   return (
     <div
-      className="absolute bottom-10 left-1/2 z-[60] pointer-events-none flex items-center gap-5 rounded-2xl border-2 bg-[#0b0420]/95 px-7 py-4"
+      className="absolute bottom-10 left-1/2 z-60 pointer-events-none flex items-center gap-5 rounded-2xl border-2 bg-[#0b0420]/95 px-7 py-4"
       style={{
         borderColor: c.main,
         boxShadow: `0 0 34px ${c.main}77`,

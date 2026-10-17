@@ -91,7 +91,7 @@ const Background: React.FC<BackgroundProps> = React.memo(({ cameraX, cameraY = 0
 
       {/* Layer 3: Distant Starfield (Infinite Modulo Wrapping) */}
       <div
-        className="absolute -inset-[400px]"
+        className="absolute inset-[-400px]"
         style={{
           backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.85) 1.2px, transparent 1.8px)',
           backgroundSize: '80px 80px',
@@ -155,7 +155,7 @@ const Background: React.FC<BackgroundProps> = React.memo(({ cameraX, cameraY = 0
 
       {/* Layer 6: Near Twinkling Stars */}
       <div
-        className="absolute -inset-[240px]"
+        className="absolute inset-[-240px]"
         style={{
           backgroundImage: `radial-gradient(circle, ${pal.neon} 1.3px, transparent 2px)`,
           backgroundSize: '120px 120px',

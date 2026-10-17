@@ -11,7 +11,7 @@ interface GameoverScreenProps {
 const GameoverScreen: React.FC<GameoverScreenProps> = ({ onRestart, onTitle }) => {
   useLanguage();
   return (
-    <div className="w-full h-full bg-gradient-to-b from-[#1a0008] via-[#0d010a] to-black flex flex-col justify-center items-center">
+    <div className="w-full h-full bg-linear-to-b/srgb from-[#1a0008] via-[#0d010a] to-black flex flex-col justify-center items-center">
       <h1
         className="text-9xl font-black text-red-500 mb-14 tracking-wider"
         style={{ textShadow: '0 0 35px rgba(239,68,68,0.75), 5px 5px 0px #ffffff' }}

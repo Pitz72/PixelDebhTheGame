@@ -46,7 +46,7 @@ const CreditsScreen: React.FC<CreditsScreenProps> = ({ onClose }) => {
 
   return (
     <div
-      className="absolute inset-0 z-[70] flex flex-col items-center justify-center bg-[#050114] px-16 text-center text-white"
+      className="absolute inset-0 z-70 flex flex-col items-center justify-center bg-[#050114] px-16 text-center text-white"
       onClick={e => {
         e.stopPropagation();
         onClose();
