@@ -2,7 +2,7 @@
   "name": "pixeldebh-retro-rescue",
   "private": true,
   "license": "SEE LICENSE IN LICENZE.md",
-  "version": "1.18.0",
+  "version": "1.18.1",
   "type": "module",
   "scripts": {
     "dev": "vite",

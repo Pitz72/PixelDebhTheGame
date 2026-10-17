@@ -102,6 +102,8 @@ export const en: Record<TextKey, string> = {
   'credits.fonts.text': 'Orbitron and Press Start 2P (SIL Open Font License)',
   'credits.software.role': 'OPEN SOURCE SOFTWARE',
   'credits.software.text': 'React, PixiJS, Tauri, Vite, Tailwind CSS',
+  'credits.license.role': 'LICENSE',
+  'credits.license.text': 'Code MIT. Music and artwork CC BY-NC-SA 4.0. Names, logos and intros: all rights reserved. Details in LICENZE.md',
   'credits.close': 'ESC TO GO BACK',
 
   'howto.title': 'HOW TO PLAY',

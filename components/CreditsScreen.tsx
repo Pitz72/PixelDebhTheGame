@@ -27,6 +27,7 @@ const SECTIONS: { role: TextKey; text?: TextKey; plain?: string; extra?: string 
   { role: 'credits.logo.role', text: 'credits.logo.text' },
   { role: 'credits.fonts.role', text: 'credits.fonts.text' },
   { role: 'credits.software.role', text: 'credits.software.text' },
+  { role: 'credits.license.role', text: 'credits.license.text' },
 ];
 
 /** Who made the game and with what. Escape (or Enter, or a click) goes back. */

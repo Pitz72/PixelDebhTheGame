@@ -113,6 +113,8 @@ export const it = {
   'credits.fonts.text': 'Orbitron e Press Start 2P (SIL Open Font License)',
   'credits.software.role': 'SOFTWARE LIBERO',
   'credits.software.text': 'React, PixiJS, Tauri, Vite, Tailwind CSS',
+  'credits.license.role': 'LICENZA',
+  'credits.license.text': 'Codice MIT. Musiche e grafica CC BY-NC-SA 4.0. Nomi, loghi e intro: diritti riservati. Dettagli in LICENZE.md',
   'credits.close': 'ESC PER TORNARE',
 
   // How to play
