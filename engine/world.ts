@@ -12,12 +12,17 @@ import {
   LevelData,
   MazeData,
   Difficulty,
+  Spring,
 } from '../types';
 import {
   GAME_WIDTH,
   GAME_HEIGHT,
   INITIAL_LIVES,
   DIFFICULTY,
+  SPRING_HEIGHT,
+  COMBO_WINDOW_MS,
+  COMBO_STEP,
+  COMBO_MAX_MULT,
   EXTRA_LIFE_SCORE_START,
   PLAYER_WIDTH,
   PLAYER_HEIGHT,
@@ -82,6 +87,8 @@ export interface World {
   /** How fast the enemies and bosses are: the LOOP and the chosen difficulty together. */
   difficultyMultiplier: number;
   difficulty: Difficulty;
+  /** The chain of defeats: how many, and how long (ms) before it breaks. */
+  combo: { count: number; timer: number };
   /** A game started from the level select: no leaderboard, no trophies. */
   practice: boolean;
 
@@ -96,6 +103,7 @@ export interface World {
   enemies: Enemy[];
   items: Item[];
   platforms: Platform[];
+  springs: Spring[];
   checkpoints: Checkpoint[];
   goal: Goal | null;
   /** The first boss of the level, or null: kept for the single-boss fights; `bosses` has them all. */
@@ -190,6 +198,16 @@ export const nextExtraLifeFor = (score: number): number => {
   return n;
 };
 
+/** Where a moving platform is `elapsed` ms into the game: a sine between the place it is given and `range` px further on. */
+export function movingPlatformSpot(plat: Platform, elapsed: number): { x: number; y: number } {
+  const m = plat.move;
+  const baseX = plat.baseX ?? plat.x;
+  const baseY = plat.baseY ?? plat.y;
+  if (!m) return { x: baseX, y: baseY };
+  const k = 0.5 + 0.5 * Math.sin((elapsed / m.period + (m.phase ?? 0)) * Math.PI * 2); // 0..1
+  return { x: m.axis === 'x' ? baseX + m.range * k : baseX, y: m.axis === 'y' ? baseY + m.range * k : baseY };
+}
+
 export function createWorld(opts: CreateWorldOptions = {}): World {
   const loopCount = opts.loopCount ?? 1;
   const score = opts.score ?? 0;
@@ -203,6 +221,7 @@ export function createWorld(opts: CreateWorldOptions = {}): World {
     loopCount,
     difficultyMultiplier: (1 + (loopCount - 1) * 0.2) * DIFFICULTY[difficulty].speed,
     difficulty,
+    combo: { count: 0, timer: 0 },
     practice: Boolean(opts.practice),
     score,
     lives: opts.lives ?? DIFFICULTY[difficulty].lives,
@@ -213,6 +232,7 @@ export function createWorld(opts: CreateWorldOptions = {}): World {
     enemies: [],
     items: [],
     platforms: [],
+    springs: [],
     checkpoints: [],
     goal: null,
     boss: null,
@@ -344,6 +364,22 @@ export function triggerShake(w: World, intensity: number): void {
   w.screenShake = Math.max(w.screenShake, intensity);
 }
 
+/** The multiplier of the points for a chain of this many defeats. */
+export const comboMultiplier = (count: number): number => Math.min(COMBO_MAX_MULT, 1 + Math.floor(count / COMBO_STEP));
+
+/** Counts defeats in the chain and gives the multiplier to use for them. */
+export function bumpCombo(w: World, kills: number): number {
+  w.combo.count += kills;
+  w.combo.timer = COMBO_WINDOW_MS;
+  w.stats.bestCombo = Math.max(w.stats.bestCombo, w.combo.count);
+  return comboMultiplier(w.combo.count);
+}
+
+export function breakCombo(w: World): void {
+  w.combo.count = 0;
+  w.combo.timer = 0;
+}
+
 export function addScore(w: World, points: number): void {
   w.score += points;
   if (w.score >= w.nextExtraLifeScore) {
@@ -449,7 +485,16 @@ export function loadLevel(w: World, levelIndex: number): void {
     w.player.hasShield = true;
   }
 
-  w.platforms = levelData.platforms;
+  // a moving platform is its own copy (it changes during the level); the others are shared as before
+  w.platforms = levelData.platforms.map(p => {
+    if (!p.move) return p;
+    const copy: Platform = { ...p, baseX: p.x, baseY: p.y };
+    const at = movingPlatformSpot(copy, w.elapsed); // already where its sweep has it, so nothing jumps at the first step
+    copy.x = copy.prevX = at.x;
+    copy.y = copy.prevY = at.y;
+    return copy;
+  });
+  w.springs = (levelData.springs ?? []).map(s => ({ x: s.x, y: s.y, width: s.width ?? 90, height: SPRING_HEIGHT, pressed: 0 }));
   w.checkpoints = (levelData.checkpoints || []).map((cp, idx) => ({
     id: idx + 1,
     ...cp,
@@ -466,6 +511,7 @@ export function loadLevel(w: World, levelIndex: number): void {
   w.bossDeathTick = 0;
   w.hitThisStep = false;
   w.stats.levelHits = 0;
+  w.combo = { count: 0, timer: 0 };
   w.stats.levelLivesLost = 0;
   w.items = levelData.items.map((c, i) => ({ id: i + 1, ...c }));
   w.goal = levelData.goal ? { id: 1, ...levelData.goal } : null;

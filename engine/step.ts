@@ -32,6 +32,9 @@ import {
   PLAYER_SHOOT_COOLDOWN,
   PLAYER_RAPID_SHOOT_COOLDOWN,
   BOSS_PROJECTILE_SPEED,
+  BOSS_PHASE_RATE,
+  SPRING_FORCE,
+  BOSS_PHASE_SPEED,
   BOSS_PROJECTILE_WIDTH,
   BOSS_PROJECTILE_HEIGHT,
   PHASER_SPEED,
@@ -64,6 +67,9 @@ import {
   addScore,
   advanceLevel,
   cameraFor,
+  bumpCombo,
+  breakCombo,
+  movingPlatformSpot,
 } from './world';
 import { HEADINGS, cellAt, cellCenter, isOpen } from './mazeGrid';
 
@@ -110,6 +116,12 @@ const MUZZLE_REACH = 40;
 
 /** Remember where everything was, so the renderer can interpolate between two fixed steps. */
 function rememberPrev(w: World): void {
+  for (const plat of w.platforms) {
+    if (plat.move) {
+      plat.prevX = plat.x;
+      plat.prevY = plat.y;
+    }
+  }
   const keep = (o: { x: number; y: number; prevX?: number; prevY?: number }) => {
     o.prevX = o.x;
     o.prevY = o.y;
@@ -138,6 +150,10 @@ export function step(w: World): void {
   if (w.status !== 'playing') return;
 
   w.hitThisStep = false;
+  if (w.combo.timer > 0) {
+    w.combo.timer -= STEP_MS;
+    if (w.combo.timer <= 0) breakCombo(w);
+  }
   const zeroG = isZeroG(w);
 
   // 1. Level timer
@@ -150,10 +166,12 @@ export function step(w: World): void {
     }
   }
 
+  updateMovingPlatforms(w);
   updatePlayerTimers(w);
   updatePlayerShooting(w);
   updatePlayerMovement(w, zeroG);
   if (w.status !== 'playing') return;
+  updateSprings(w, zeroG);
 
   updateCamera(w);
   updateFx(w, zeroG);
@@ -405,6 +423,58 @@ function moveInZeroG(w: World): void {
   }
 }
 
+/**
+ * Moving platforms sweep to and fro (a sine, so they slow down at the ends) and carry whoever stands on them:
+ * she goes along by the same amount they moved.
+ */
+function updateMovingPlatforms(w: World): void {
+  const p = w.player;
+  for (const plat of w.platforms) {
+    if (!plat.move) continue;
+    const { x: nx, y: ny } = movingPlatformSpot(plat, w.elapsed);
+    const dx = nx - plat.x;
+    const dy = ny - plat.y;
+    const standing =
+      p.isOnGround &&
+      p.x + p.width > plat.x + 4 &&
+      p.x < plat.x + plat.width - 4 &&
+      Math.abs(p.y + p.height - plat.y) <= 3;
+    plat.x = nx;
+    plat.y = ny;
+    if (standing) {
+      p.x += dx;
+      p.y += dy;
+    }
+  }
+}
+
+/**
+ * Touching a spring from above or from the side (stepping onto it) throws her up; from below it does nothing. A bounce
+ * also counts as her first jump: one more in the air.
+ */
+function updateSprings(w: World, zeroG: boolean): void {
+  if (w.springs.length === 0) return;
+  const p = w.player;
+  for (const s of w.springs) {
+    if (s.pressed > 0) s.pressed = Math.max(0, s.pressed - STEP_MS);
+    if (zeroG || w.maze) continue;
+    const feet = p.y + p.height;
+    const over = p.x + p.width > s.x + 6 && p.x < s.x + s.width - 6;
+    if (over && p.vy >= 0 && feet >= s.y - 4 && feet <= s.y + s.height) {
+      p.y = s.y - p.height;
+      p.vy = -SPRING_FORCE;
+      p.isOnGround = false;
+      p.jumpCount = 1;
+      p.coyoteTimer = 0;
+      p.jumpBufferTimer = 0;
+      s.pressed = 260;
+      sound(w, 'spring');
+      spawnParticles(w, s.x + s.width / 2, s.y, '#69f0ae', 10);
+      spawnShockwave(w, s.x + s.width / 2, s.y, '#69f0ae', 70, 3.5);
+    }
+  }
+}
+
 function updatePlayerMovement(w: World, zeroG: boolean): void {
   if (w.maze) {
     updateMazeMovement(w);
@@ -610,6 +680,7 @@ export function damagePlayer(w: World): void {
     return;
   }
 
+  breakCombo(w);
   hurtEffects(w);
   p.hurtAnim = 420;
   releaseCapturedEnemy(w);
@@ -631,6 +702,7 @@ export function fallIntoPit(w: World): void {
 
   w.stats.hits += 1;
   w.stats.levelHits += 1;
+  breakCombo(w);
   hurtEffects(w);
   w.player.hurtAnim = 420;
   loseLife(w);
@@ -726,16 +798,34 @@ function stepLevelCleared(w: World): void {
 // Boss AI
 // ---------------------------------------------------------------------------
 
+/** 1 at full life, 2 below half, 3 below a quarter: the boss gets quicker (BOSS_PHASE_RATE / BOSS_PHASE_SPEED). */
+export const bossPhase = (b: Pick<Boss, 'hp' | 'maxHp'>): 1 | 2 | 3 => {
+  const ratio = b.hp / b.maxHp;
+  return ratio > 0.5 ? 1 : ratio > 0.25 ? 2 : 3;
+};
+
 function updateBoss(w: World, b: Boss): void {
   if (b.hp <= 0) return;
   const p = w.player;
   const mult = w.difficultyMultiplier;
   b.isThrowing = false;
 
+  const phase = bossPhase(b);
+  if (b.phase !== undefined && phase > b.phase) {
+    // a new phase: a ring of light, a shake and the name of it
+    sound(w, 'powerup');
+    triggerShake(w, 12);
+    spawnShockwave(w, b.x + b.width / 2, b.y + b.height / 2, phase === 3 ? '#ff1744' : '#ff9100', 180, 6);
+    spawnFloatingText(w, b.x + b.width / 2, b.y - 20, `PHASE ${phase}!`, phase === 3 ? '#ff1744' : '#ff9100', 1.4);
+  }
+  b.phase = phase;
+  const rate = BOSS_PHASE_RATE[phase];
+  const quick = BOSS_PHASE_SPEED[phase];
+
   if (b.type === 'frog') {
     const a = b.arena ?? { left: 20, right: w.levelWidth - 20, top: 50, bottom: w.levelHeight - 180 };
-    b.x += b.vx * DT;
-    b.y += b.vy * DT;
+    b.x += b.vx * DT * quick;
+    b.y += b.vy * DT * quick;
     if (b.x <= a.left || b.x + b.width >= a.right) b.vx *= -1;
     if (b.y <= a.top || b.y + b.height >= a.bottom) b.vy *= -1;
     if (w.rng() < 0.005 * DT) b.vx *= -1;
@@ -743,7 +833,7 @@ function updateBoss(w: World, b: Boss): void {
 
     b.attackCooldown -= STEP_MS;
     if (b.attackCooldown <= 0) {
-      b.attackCooldown = 1800 + w.rng() * 1200;
+      b.attackCooldown = (1800 + w.rng() * 1200) * rate;
       b.isThrowing = true;
       sound(w, 'bossShoot');
       const dx = p.x + p.width / 2 - (b.x + b.width / 2);
@@ -762,7 +852,7 @@ function updateBoss(w: World, b: Boss): void {
       });
     }
   } else if (b.type === 'chickenEye') {
-    b.movementTimer += STEP_MS * 0.0012;
+    b.movementTimer += STEP_MS * 0.0012 * quick;
     const t = b.movementTimer;
     const a = b.arena;
     if (a) {
@@ -778,7 +868,7 @@ function updateBoss(w: World, b: Boss): void {
 
     b.attackCooldown -= STEP_MS;
     if (b.attackCooldown <= 0) {
-      b.attackCooldown = 2600 + w.rng() * 900;
+      b.attackCooldown = (2600 + w.rng() * 900) * rate;
       sound(w, 'bossShoot');
       const dx = p.x + p.width / 2 - (b.x + b.width / 2);
       const dy = p.y + p.height / 2 - (b.y + b.height / 2);
@@ -831,7 +921,7 @@ function updateBoss(w: World, b: Boss): void {
       if (b.teleportTimer <= 0) b.visibilityState = 'fadingOut';
       b.attackCooldown -= STEP_MS;
       if (b.attackCooldown <= 0) {
-        b.attackCooldown = 220;
+        b.attackCooldown = 220 * rate;
         sound(w, 'bossShoot');
         const dx = p.x + p.width / 2 - (b.x + b.width / 2);
         const dy = p.y + p.height / 2 - (b.y + b.height / 2);
@@ -852,7 +942,7 @@ function updateBoss(w: World, b: Boss): void {
       if (b.opacity <= 0) {
         b.opacity = 0;
         b.visibilityState = 'hidden';
-        b.teleportTimer = 1800;
+        b.teleportTimer = 1800 / quick;
       }
     }
   }
@@ -1247,9 +1337,10 @@ function resolveLaunchedHit(w: World, enemy: Enemy, index: number): boolean {
       }
       w.stats.enemiesDefeated += defeatedCount;
       w.stats.bestBlast = Math.max(w.stats.bestBlast, defeatedCount);
-      const pts = ENEMY_DEFEAT_POINTS * defeatedCount;
+      const chain = bumpCombo(w, defeatedCount);
+      const pts = ENEMY_DEFEAT_POINTS * defeatedCount * chain;
       addScore(w, pts);
-      spawnFloatingText(w, hitX, hitY - 16, `SUPER BLAST! +${pts}`, '#ffea00', 1.3);
+      spawnFloatingText(w, hitX, hitY - 16, `SUPER BLAST! +${pts}${chain > 1 ? ` x${chain}` : ''}`, '#ffea00', 1.3);
     } else {
       triggerShake(w, 7);
       spawnParticles(w, hitX, hitY, '#ff1744', 20);
@@ -1258,9 +1349,10 @@ function resolveLaunchedHit(w: World, enemy: Enemy, index: number): boolean {
       other.state = 'defeated';
       w.stats.enemiesDefeated += 2;
       w.stats.doubleKos += 1;
-      const pts = ENEMY_DEFEAT_POINTS * 2;
+      const chain = bumpCombo(w, 2);
+      const pts = ENEMY_DEFEAT_POINTS * 2 * chain;
       addScore(w, pts);
-      spawnFloatingText(w, hitX, hitY - 12, `DOUBLE K.O.! +${pts}`, '#00e5ff', 1.15);
+      spawnFloatingText(w, hitX, hitY - 12, `DOUBLE K.O.! +${pts}${chain > 1 ? ` x${chain}` : ''}`, '#00e5ff', 1.15);
     }
     return true;
   }
@@ -1333,8 +1425,9 @@ function updatePlayerProjectileHits(w: World): void {
           triggerShake(w, 4);
           spawnParticles(w, ex, ey, '#00e5ff', 16);
           spawnShockwave(w, ex, ey, '#00e5ff', 75, 3.5);
-          addScore(w, ENEMY_DEFEAT_POINTS);
-          spawnFloatingText(w, ex, ey - 10, `+${ENEMY_DEFEAT_POINTS}`, '#00e5ff', 1.0);
+          const chain = bumpCombo(w, 1);
+          addScore(w, ENEMY_DEFEAT_POINTS * chain);
+          spawnFloatingText(w, ex, ey - 10, `+${ENEMY_DEFEAT_POINTS * chain}${chain > 1 ? ` x${chain}` : ''}`, '#00e5ff', 1.0);
           return false;
         }
       }

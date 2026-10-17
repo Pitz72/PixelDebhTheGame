@@ -3,7 +3,7 @@
 import 'pixi.js/unsafe-eval';
 import { Application, Container, Graphics, Rectangle, Sprite, Text, Texture, TilingSprite } from 'pixi.js';
 import { AdvancedBloomFilter } from 'pixi-filters';
-import { Boss, Enemy, Item, ItemType, Platform, Projectile, PlayerProjectile, Player } from '../types';
+import { Boss, Enemy, Item, ItemType, Platform, Projectile, PlayerProjectile, Player, Spring } from '../types';
 import { Frame } from '../engine/frame';
 import { GAME_HEIGHT, GAME_WIDTH } from '../constants';
 import { buildTextures, TextureSet } from './textures';
@@ -107,8 +107,86 @@ class PlatformView {
     glow.alpha = 0.4;
     glow.blendMode = 'add';
     this.root.addChild(body, truss, highlight, rail, frame, glow);
+    if (p.move) {
+      // a pair of yellow chevrons says "this one moves", along the way it goes
+      const arrows = new Graphics();
+      const cy = h / 2 + 2;
+      const horizontal = p.move.axis === 'x';
+      for (const side of [-1, 1]) {
+        const cx = w / 2 + side * Math.min(34, w * 0.28);
+        if (horizontal) arrows.poly([cx + side * 7, cy, cx - side * 5, cy - 7, cx - side * 5, cy + 7]);
+        else arrows.poly([cx, cy + side * 5, cx - 7, cy - side * 3, cx + 7, cy - side * 3]);
+      }
+      arrows.fill({ color: 0xffd54f, alpha: 0.9 });
+      this.root.addChild(arrows);
+    }
     this.root.position.set(p.x, p.y);
     void tex;
+  }
+}
+
+/**
+ * A spring pad: a plate on the floor, a steel coil and a neon-green top. After a bounce the coil squashes, springs past its
+ * rest length and settles (`pressed` counts down from SPRING_PRESS_MS).
+ */
+const SPRING_PRESS_MS = 260;
+const SPRING_BASE = 5;
+const SPRING_CAP = 7;
+
+class SpringView {
+  readonly root = new Container();
+  private coil = new Graphics();
+  private cap = new Container();
+  private glow: Sprite;
+  private coilH: number;
+  private lastF = -1;
+
+  constructor(s: Spring, tex: TextureSet) {
+    const { width: w, height: h } = s;
+    this.coilH = h - SPRING_BASE - SPRING_CAP;
+    const base = new Graphics();
+    base.roundRect(0, h - SPRING_BASE, w, SPRING_BASE, 2).fill(0x263238).stroke({ width: 1.5, color: 0x69f0ae, alpha: 0.9 });
+    const capBody = new Graphics();
+    capBody.roundRect(0, 0, w, SPRING_CAP, 3).fill(0x1b5e20).stroke({ width: 2, color: 0x69f0ae, alpha: 1 });
+    capBody.rect(4, 1.5, w - 8, 1.5).fill({ color: 0xffffff, alpha: 0.5 });
+    this.glow = glowSprite(tex.glow, w * 1.7, 0x69f0ae);
+    this.glow.position.set(w / 2, SPRING_CAP / 2);
+    this.glow.alpha = 0.22;
+    this.cap.addChild(this.glow, capBody);
+    this.coil.position.set(0, h - SPRING_BASE);
+    this.drawCoil(w);
+    this.root.addChild(base, this.coil, this.cap);
+    this.root.position.set(s.x, s.y);
+    this.setStretch(1);
+  }
+
+  /** The coil is a zig-zag of steel, drawn once at rest length and squashed by scaling it. */
+  private drawCoil(w: number): void {
+    const segments = 4; // the coil is only ~14 px tall: more turns than this blur into a block
+    const top = -this.coilH;
+    const pad = 9;
+    this.coil.moveTo(pad, 0);
+    for (let i = 1; i <= segments; i++) {
+      this.coil.lineTo(i % 2 === 1 ? w - pad : pad, (top * i) / segments);
+    }
+    // dark steel with a thin lighter core: anything brighter is blown out to white by the bloom
+    this.coil.stroke({ width: 4.5, color: 0x455a64, alpha: 1, join: 'round', cap: 'round' });
+    this.coil.stroke({ width: 1.8, color: 0x8aa0aa, alpha: 0.85, join: 'round', cap: 'round' });
+  }
+
+  private setStretch(f: number): void {
+    if (f === this.lastF) return;
+    this.lastF = f;
+    this.coil.scale.y = f;
+    this.cap.position.set(0, this.coilH * (1 - f));
+  }
+
+  update(s: Spring): void {
+    // 0 -> just bounced; 1 -> settled. Squash, overshoot, settle.
+    const u = s.pressed > 0 ? 1 - s.pressed / SPRING_PRESS_MS : 1;
+    const f = u >= 1 ? 1 : u < 0.2 ? 1 - (0.55 * u) / 0.2 : u < 0.5 ? 0.45 + (0.75 * (u - 0.2)) / 0.3 : 1.2 - (0.2 * (u - 0.5)) / 0.5;
+    this.setStretch(f);
+    this.glow.alpha = 0.22 + (s.pressed > 0 ? 0.5 * (s.pressed / SPRING_PRESS_MS) : 0);
   }
 }
 
@@ -206,7 +284,15 @@ class EnemyView {
     if (e.type === 'flyer') bob = Math.sin(now / 180 + this.phase) * 3;
     else if (e.type === 'phaser') bob = Math.sin(now / 420 + this.phase) * 6;
     else if (e.onGround && Math.abs(e.vx) > 0.1) bob = -Math.abs(Math.sin(now / 95 + this.phase)) * 2.5;
-    this.body.scale.set(dir * this.bsx * (1 - sq * 0.6), this.bsy * (1 + sq));
+    // the warning before an attack: Hoppy crouches before he jumps, Bomby swells and flickers before the bomb
+    let tele = 0;
+    if (e.state === 'active') {
+      if (e.type === 'bomber' && e.attackCooldown !== undefined) tele = clamp(1 - e.attackCooldown / 500, 0, 1);
+      else if (e.type === 'jumper' && e.jumpCooldown !== undefined && e.onGround) tele = clamp(1 - e.jumpCooldown / 380, 0, 1);
+    }
+    const teleX = e.type === 'jumper' ? 1 + 0.12 * tele : 1 + 0.09 * tele * (0.6 + 0.4 * Math.sin(now / 36));
+    const teleY = e.type === 'jumper' ? 1 - 0.2 * tele : 1 + 0.05 * tele;
+    this.body.scale.set(dir * this.bsx * (1 - sq * 0.6) * teleX, this.bsy * (1 + sq) * teleY);
     if (e.state === 'launched') {
       this.spin += dtF * 0.32 * (e.vx >= 0 ? 1 : -1);
       this.body.rotation = this.spin;
@@ -219,6 +305,10 @@ class EnemyView {
 
     this.glow.tint = captured ? 0xd500f9 : e.state === 'launched' ? (e.isSuperLaunched ? 0xff6d00 : 0x00e5ff) : stunned ? 0xffea00 : ENEMY_COLOR[e.type] ?? 0xffffff;
     this.glow.alpha = (captured || e.state === 'launched' ? 0.75 : 0.32) + Math.sin(now / 250 + this.phase) * 0.08;
+    if (tele > 0) {
+      this.glow.tint = 0xff3d00;
+      this.glow.alpha = Math.min(1, this.glow.alpha + 0.55 * tele);
+    }
     this.ring.visible = captured;
     if (captured) {
       this.ring.rotation = now / 500;
@@ -362,7 +452,10 @@ class BossView {
     this.throwAnim = Math.max(0, this.throwAnim - dtF * 0.07);
     const sx = 1 + 0.08 * this.throwAnim;
     const sy = 1 - 0.08 * this.throwAnim;
-    this.art.body.scale.set((b.width / this.art.box) * sx, (b.height / this.art.box) * sy);
+    // before it attacks the frog and the eye swell and brighten (the shadow head fires too fast for a warning)
+    const tele = !defeated && b.type !== 'shadowHead' && b.attackCooldown > 0 && b.attackCooldown < 480 ? 1 - b.attackCooldown / 480 : 0;
+    const pulse = 1 + 0.05 * tele * (0.6 + 0.4 * Math.sin(now / 40));
+    this.art.body.scale.set((b.width / this.art.box) * sx * pulse, (b.height / this.art.box) * sy * pulse);
     this.art.flash.scale.copyFrom(this.art.body.scale);
     this.art.update(b, now, dtF, this.throwAnim);
     this.root.position.set(x + b.width / 2, y + b.height / 2 + bob);
@@ -370,7 +463,9 @@ class BossView {
     this.root.alpha = defeated ? 0.55 + Math.sin(now / 45) * 0.45 : opacity;
     this.art.flash.visible = b.isHit || defeated;
     this.art.flash.alpha = defeated ? 0.5 + Math.sin(now / 60) * 0.3 : 0.75;
-    this.glow.alpha = 0.3 + Math.sin(now / 350) * 0.1 + (b.isHit ? 0.4 : 0);
+    this.glow.alpha = Math.min(1, 0.3 + Math.sin(now / 350) * 0.1 + (b.isHit ? 0.4 : 0) + 0.5 * tele);
+    // the glow turns orange and then red as the boss gets worse
+    this.glow.tint = tele > 0.2 ? 0xffffff : (b.phase ?? 1) >= 3 ? 0xff1744 : (b.phase ?? 1) === 2 ? 0xff9100 : BOSS_COLOR[b.type];
     this.root.rotation = defeated ? Math.sin(now / 33) * 0.03 : 0;
   }
 }
@@ -409,6 +504,7 @@ export class GameRenderer {
   private bloom: AdvancedBloomFilter;
 
   private platformViews = new Map<number, { root: Container }>();
+  private springViews: SpringView[] = [];
   private floor: TilingSprite | null = null;
   private zoomApplied = 1;
   private itemViews = new Map<number, ItemView>();
@@ -619,7 +715,8 @@ export class GameRenderer {
     this.background.update(camX, camY, now);
     this.lighting.begin();
 
-    this.syncPlatforms(frame, camX, camY);
+    this.syncPlatforms(frame, alpha, camX, camY);
+    this.syncSprings(frame);
     this.syncDecor(frame, camX, camY, now, dtF);
     this.syncItems(frame, camX, camY, now);
     this.syncEnemies(frame, alpha, camX, camY, now, dtF);
@@ -662,6 +759,8 @@ export class GameRenderer {
     this.themeTex = this.tex.themes[frame.theme];
     for (const v of this.platformViews.values()) v.root.destroy({ children: true });
     this.platformViews.clear();
+    for (const v of this.springViews) v.root.destroy({ children: true });
+    this.springViews = [];
     this.floor?.destroy();
     this.floor = null;
     for (const v of this.itemViews.values()) v.root.destroy({ children: true });
@@ -697,6 +796,12 @@ export class GameRenderer {
       this.floor = new TilingSprite({ texture: this.tex.vault.floor, width: frame.levelWidth, height: band });
       this.floor.position.set(0, frame.levelHeight - band);
       this.platformLayer.addChildAt(this.floor, 0);
+    }
+
+    for (const s of frame.springs) {
+      const view = new SpringView(s, this.tex);
+      this.springViews.push(view);
+      this.platformLayer.addChild(view.root);
     }
 
     for (const cp of frame.checkpoints) {
@@ -747,11 +852,21 @@ export class GameRenderer {
     return x + w >= camX - m && x <= camX + GAME_WIDTH + m && y + h >= camY - m && y <= camY + GAME_HEIGHT + m;
   }
 
-  private syncPlatforms(frame: Frame, camX: number, camY: number): void {
+  private syncSprings(frame: Frame): void {
+    for (let i = 0; i < this.springViews.length; i++) {
+      const s = frame.springs[i];
+      if (s) this.springViews[i].update(s);
+    }
+  }
+
+  private syncPlatforms(frame: Frame, alpha: number, camX: number, camY: number): void {
     const list = frame.platforms;
     for (let i = 0; i < list.length; i++) {
       const p = list[i];
-      const visible = this.inView(p.x, p.y, p.width, p.height + 40, camX, camY, 120);
+      // a moving platform is drawn between its last two simulated positions
+      const px = p.move ? ix(p, alpha) : p.x;
+      const py = p.move ? iy(p, alpha) : p.y;
+      const visible = this.inView(px, py, p.width, p.height + 40, camX, camY, 120);
       let v = this.platformViews.get(i);
       if (visible) {
         if (!v) {
@@ -760,10 +875,11 @@ export class GameRenderer {
           this.platformLayer.addChild(v.root);
         }
         v.root.visible = true;
+        if (p.move) v.root.position.set(px, py);
         // rail light: cheap strip lights along visible platforms (a few segments each)
         if (!p.wall && p.width < 1400) {
-          const lx = clamp(camX + GAME_WIDTH / 2, p.x, p.x + p.width);
-          this.lighting.add(lx - camX, p.y - camY - 6, Math.min(240, 60 + p.width * 0.35), this.pal.railHex, 0.35);
+          const lx = clamp(camX + GAME_WIDTH / 2, px, px + p.width);
+          this.lighting.add(lx - camX, py - camY - 6, Math.min(240, 60 + p.width * 0.35), p.move ? 0xffd54f : this.pal.railHex, p.move ? 0.5 : 0.35);
         }
       } else if (v) {
         v.root.visible = false;

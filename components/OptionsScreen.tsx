@@ -87,6 +87,7 @@ function rowsFor(tab: Tab, s: Settings, lang: Language, refresh: () => void): Ro
           ],
           set: v => updateSettings({ difficulty: v === 'easy' ? 'easy' : v === 'hard' ? 'hard' : 'normal' }),
         },
+        { kind: 'toggle', id: 'guide', label: t('options.game.guide'), help: t('options.game.guideHelp'), value: s.guide, set: v => updateSettings({ guide: v }) },
       ];
     case 'language':
       return [

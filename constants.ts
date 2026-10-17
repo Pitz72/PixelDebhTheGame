@@ -97,6 +97,23 @@ export const FIREBALL_SPEED = 12;
 // The final stage: all three bosses at once, each with this share of the life it has in its own level
 export const FINAL_BOSS_HP_SHARE = 0.25;
 
+// Springs: how hard they throw (a jump is -25) and how tall the pad is
+export const SPRING_FORCE = 36;
+export const SPRING_HEIGHT = 26;
+
+// Combo: defeats in a row, each within this window of the last one, raise the multiplier of the points
+export const COMBO_WINDOW_MS = 4000;
+export const COMBO_STEP = 3; // one more for every three defeats
+export const COMBO_MAX_MULT = 5;
+
+// The guide arrow shows when this few collectibles are left and the nearest is at least this far (px)
+export const GUIDE_MAX_LEFT = 3;
+export const GUIDE_MIN_DISTANCE = 500;
+
+// Boss phases (index = phase): below half of its life and then below a quarter, a boss attacks and moves faster
+export const BOSS_PHASE_RATE = [1, 1, 0.8, 0.62]; // cooldown factor
+export const BOSS_PHASE_SPEED = [1, 1, 1.15, 1.3];
+
 // Scoring
 export const COLLECTIBLE_POINTS = 100;
 export const ENEMY_DEFEAT_POINTS = 500;

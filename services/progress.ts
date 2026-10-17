@@ -43,6 +43,7 @@ export function parseStats(raw: unknown): RunStats {
   out.enemiesDefeated = count(r.enemiesDefeated);
   out.doubleKos = count(r.doubleKos);
   out.bestBlast = count(r.bestBlast);
+  out.bestCombo = count(r.bestCombo);
   out.shieldBlocks = count(r.shieldBlocks);
   out.hits = count(r.hits);
   out.livesLost = count(r.livesLost);

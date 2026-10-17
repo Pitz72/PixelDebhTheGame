@@ -31,6 +31,8 @@ export interface Settings {
   flashes: boolean;
   /** The very short freeze on a hit and the slow motion when a boss falls. */
   hitStop: boolean;
+  /** The arrow towards the last collectibles, when they are far away. */
+  guide: boolean;
   /** Skip the intros' flashing TV and the long animations (also on when the system asks for less motion). */
   reduceMotion: boolean;
   bindings: Bindings;
@@ -48,6 +50,7 @@ export const defaultSettings = (): Settings => ({
   flashes: true,
   hitStop: true,
   reduceMotion: false,
+  guide: true,
   bindings: defaultBindings(),
 });
 
@@ -65,6 +68,7 @@ export function parseSettings(json: string | null, legacyQuality: string | null 
     if (typeof raw.flashes === 'boolean') out.flashes = raw.flashes;
     if (typeof raw.hitStop === 'boolean') out.hitStop = raw.hitStop;
     if (typeof raw.reduceMotion === 'boolean') out.reduceMotion = raw.reduceMotion;
+    if (typeof raw.guide === 'boolean') out.guide = raw.guide;
     out.bindings = parseBindings(raw.bindings);
   } catch (error) {
     console.error('Could not read the settings:', error);

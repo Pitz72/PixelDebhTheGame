@@ -137,6 +137,8 @@ export const it = {
   'howto.tip2': 'Con il super lancio la botta abbatte tutti i nemici vicini.',
   'howto.tip3': 'Nel labirinto Debh si muove libera: raccogli tutto prima che scada il tempo.',
   'howto.tip4': 'Lo scontro finale ha tutti e tre i boss insieme: stai in movimento.',
+  'howto.tip5': 'Più K.O. di fila formano una catena: ogni terzo alza il moltiplicatore dei punti.',
+  'howto.tip6': 'Le molle verdi ti lanciano altissimo e gli ascensori ti portano su: cerca le mensole facoltative.',
   'howto.close': 'ESC PER TORNARE',
 
   // Continue, level select, difficulty
@@ -151,6 +153,8 @@ export const it = {
   'options.game.easy': 'FACILE',
   'options.game.normal': 'NORMALE',
   'options.game.hard': 'DIFFICILE',
+  'options.game.guide': 'FRECCIA VERSO GLI ULTIMI OGGETTI',
+  'options.game.guideHelp': 'Quando restano al massimo tre oggetti da raccogliere e sono lontani, una freccia dice da che parte stanno.',
   'options.game.help': 'Facile: 5 vite, nemici più lenti, boss più deboli. Difficile: 2 vite, nemici più veloci, boss più resistenti. Vale dalla prossima partita.',
 
   // Trophies
@@ -184,6 +188,8 @@ export const it = {
   'trophy.full-set.desc': 'Raccogli tutti gli {n} tipi di oggetti retro in una partita.',
   'trophy.bowling.name': 'Re del Bowling',
   'trophy.bowling.desc': 'Fai {n} doppi K.O. in una partita.',
+  'trophy.combo.name': 'Catena Infinita',
+  'trophy.combo.desc': 'Raggiungi il moltiplicatore x{n} con una catena di K.O.',
   'trophy.high-score.name': 'Centomila',
   'trophy.high-score.desc': 'Raggiungi {n} punti in una partita.',
   'trophy.maze-out.name': 'Fuori dal Labirinto',

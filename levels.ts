@@ -1,5 +1,5 @@
 import { LevelData, EnemyType, ItemType, CollectibleType } from './types';
-import { GAME_WIDTH, GAME_HEIGHT, BOSS_INITIAL_HP, BOSS_2_HP, BOSS_3_HP, FINAL_BOSS_HP_SHARE, MAZE_TIME_FLOOR_FACTOR, MAZE_PLAYER_SPEED, MAZE_ZOOM, COLLECTIBLE_TYPES } from './constants';
+import { GAME_WIDTH, GAME_HEIGHT, BOSS_INITIAL_HP, BOSS_2_HP, BOSS_3_HP, FINAL_BOSS_HP_SHARE, MAZE_TIME_FLOOR_FACTOR, MAZE_PLAYER_SPEED, MAZE_ZOOM, COLLECTIBLE_TYPES, SPRING_HEIGHT } from './constants';
 import { generateMaze } from './mazeGen';
 
 const GOAL_WIDTH = 90;
@@ -88,6 +88,11 @@ function buildExponentialExtension(
   const items = baseLevel.items.map(it => ({
     ...it,
     y: cfg.isSkyway && it.y < GAME_HEIGHT - 150 ? it.y : it.y + shiftY,
+  }));
+
+  const springs = baseLevel.springs?.map(s => ({
+    ...s,
+    y: cfg.isSkyway && s.y < GAME_HEIGHT - 100 ? s.y : s.y + shiftY,
   }));
 
   const enemies = baseLevel.enemies.map(en => {
@@ -285,6 +290,7 @@ function buildExponentialExtension(
       y: cfg.isSkyway ? baseLevel.playerStart.y : baseLevel.playerStart.y + shiftY,
     },
     platforms,
+    ...(springs ? { springs } : {}),
     items,
     enemies,
     checkpoints,
@@ -417,20 +423,24 @@ const rawLevel3: LevelData = {
     { x: 2850, y: GAME_HEIGHT - 400, width: 340, height: 30 },
     { x: 2400, y: GAME_HEIGHT - 600, width: 420, height: 30 },
     { x: 3300, y: GAME_HEIGHT - 40, width: 1200, height: 40 },
+    // The first spring: a pad on the floor throws her up to a shelf of its own (optional, a shield waits there)
+    { x: 1820, y: GAME_HEIGHT - 626, width: 400, height: 30 },
   ],
+  springs: [{ x: 1480, y: GAME_HEIGHT - 40 - SPRING_HEIGHT }],
   items: [
     { type: 'joystick', x: 800, y: GAME_HEIGHT - 320, width: 50, height: 50 },
     { type: 'floppy', x: 300, y: GAME_HEIGHT - 570, width: 50, height: 50 },
     { type: 'cartridge', x: 900, y: GAME_HEIGHT - 770, width: 50, height: 50 },
+    { type: 'shield', x: 1995, y: GAME_HEIGHT - 691, width: 50, height: 50 },
     { type: 'super-throw', x: 2650, y: GAME_HEIGHT - 670, width: 50, height: 50 },
     { type: 'speed-boost', x: 4200, y: GAME_HEIGHT - 110, width: 50, height: 50 },
     { type: 'cartridge', x: 3800, y: GAME_HEIGHT - 110, width: 50, height: 50 },
   ],
   enemies: [
     { type: 'jumper', x: 700, y: GAME_HEIGHT - 300, width: 50, height: 50, originalX: 700, originalY: GAME_HEIGHT - 300 },
-    { type: 'base', x: 1500, y: GAME_HEIGHT - 90, width: 50, height: 50, originalX: 1500, originalY: GAME_HEIGHT - 90 },
+    { type: 'base', x: 2150, y: GAME_HEIGHT - 90, width: 50, height: 50, originalX: 2150, originalY: GAME_HEIGHT - 90 }, // clear of the spring at 1480
     { type: 'base', x: 300, y: GAME_HEIGHT - 90, width: 50, height: 50, originalX: 300, originalY: GAME_HEIGHT - 90 },
-    { type: 'jumper', x: 1800, y: GAME_HEIGHT - 90, width: 50, height: 50, originalX: 1800, originalY: GAME_HEIGHT - 90 },
+    { type: 'jumper', x: 2000, y: GAME_HEIGHT - 90, width: 50, height: 50, originalX: 2000, originalY: GAME_HEIGHT - 90 },
     { type: 'base', x: 2500, y: GAME_HEIGHT - 250, width: 50, height: 50, originalX: 2500, originalY: GAME_HEIGHT - 250 },
     { type: 'jumper', x: 3400, y: GAME_HEIGHT - 90, width: 50, height: 50, originalX: 3400, originalY: GAME_HEIGHT - 90 },
     { type: 'base', x: 4000, y: GAME_HEIGHT - 90, width: 50, height: 50, originalX: 4000, originalY: GAME_HEIGHT - 90 },
@@ -496,8 +506,12 @@ const rawLevel5: LevelData = {
     { x: 1500, y: GAME_HEIGHT - 220, width: 200, height: 30 },
     { x: 1800, y: GAME_HEIGHT - 420, width: 200, height: 30 },
     { x: 1500, y: GAME_HEIGHT - 620, width: 200, height: 30 },
+    // A lift (optional): from the floor it rises 600 px to a ledge with a power-up
+    { x: 3900, y: GAME_HEIGHT - 900, width: 260, height: 30, move: { axis: 'y', range: 600, period: 6000 } },
+    { x: 4250, y: GAME_HEIGHT - 920, width: 300, height: 30 },
   ],
   items: [
+    { type: 'super-throw', x: 4380, y: GAME_HEIGHT - 985, width: 50, height: 50 },
     { type: 'super-throw', x: 520, y: GAME_HEIGHT - 270, width: 50, height: 50 },
     { type: 'floppy', x: 900, y: GAME_HEIGHT - 730, width: 50, height: 50 },
     { type: 'cartridge', x: 1780, y: GAME_HEIGHT - 1020, width: 50, height: 50 },
@@ -629,8 +643,12 @@ const rawLevel7: LevelData = {
     { x: 6000, y: GAME_HEIGHT - 200, width: 240, height: 30 },
     { x: 6300, y: GAME_HEIGHT - 350, width: 240, height: 30 },
     { x: 6600, y: GAME_HEIGHT - 500, width: 420, height: 30 },
+    // The second spring: a shelf high above the last stretch of floor, with a speed boost
+    { x: 6040, y: GAME_HEIGHT - 626, width: 300, height: 30 },
   ],
+  springs: [{ x: 5700, y: GAME_HEIGHT - 40 - SPRING_HEIGHT }],
   items: [
+    { type: 'speed-boost', x: 6165, y: GAME_HEIGHT - 691, width: 50, height: 50 },
     { type: 'shield', x: 1500, y: GAME_HEIGHT - 510, width: 50, height: 50 },
     { type: 'joystick', x: 2120, y: GAME_HEIGHT - 660, width: 50, height: 50 },
     { type: 'floppy', x: 3080, y: GAME_HEIGHT - 310, width: 50, height: 50 },
@@ -686,8 +704,12 @@ const rawLevel9: LevelData = {
     { x: 6800, y: GAME_HEIGHT - 500, width: 420, height: 30 },
     { x: 7400, y: GAME_HEIGHT - 350, width: 420, height: 30 },
     { x: 8000, y: GAME_HEIGHT - 200, width: 420, height: 30 },
+    // A ferry that crosses a gap high in the air (optional): a shield waits on the far ledge
+    { x: 3500, y: GAME_HEIGHT - 700, width: 260, height: 30, move: { axis: 'x', range: 500, period: 7000 } },
+    { x: 4380, y: GAME_HEIGHT - 700, width: 300, height: 30 },
   ],
   items: [
+    { type: 'shield', x: 4505, y: GAME_HEIGHT - 765, width: 50, height: 50 },
     { type: 'joystick', x: 1450, y: GAME_HEIGHT - 720, width: 50, height: 50 },
     { type: 'shield', x: 2000, y: GAME_HEIGHT - 720, width: 50, height: 50 },
     { type: 'floppy', x: 3800, y: GAME_HEIGHT - 110, width: 50, height: 50 },

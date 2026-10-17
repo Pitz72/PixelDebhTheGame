@@ -225,6 +225,16 @@ export const SFX = {
     gain: 0.6,
     duck: [0.4, 800],
   },
+  // A spring: a springy "boing" that goes up
+  spring: {
+    tones: [
+      { ...pulse(0.5), start: 0, dur: 0.24, f0: 170, f1: 780, vol: 0.5, curve: 1.6, vibrato: [18, 0.1] },
+      { ...pulse(0.25), start: 0.05, dur: 0.2, f0: 340, f1: 1400, vol: 0.28 },
+    ],
+    gain: 0.5,
+    jitter: 0.03,
+    minGapMs: 80,
+  },
   // A trophy is earned: a short rising fanfare, brighter and shorter than the level jingle
   trophy: {
     tones: [

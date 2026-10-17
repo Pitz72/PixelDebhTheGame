@@ -68,6 +68,26 @@ const DomScene: React.FC<{ frame: Frame }> = ({ frame }) => {
           isVisible(p) ? <Platform key={i} platform={p} theme={frame.theme} /> : null
         )}
 
+        {frame.springs.map((s, i) =>
+          isVisible(s) ? (
+            <div
+              key={`spring-${i}`}
+              style={{
+                position: 'absolute',
+                left: s.x,
+                top: s.y + (s.pressed > 0 ? s.height * 0.5 : 0),
+                width: s.width,
+                height: s.pressed > 0 ? s.height * 0.5 : s.height,
+                zIndex: 2,
+                background: 'linear-gradient(#69f0ae 0 28%, #263238 28% 100%)',
+                border: '2px solid #69f0ae',
+                borderRadius: 4,
+                boxShadow: '0 0 14px rgba(105, 240, 174, 0.55)',
+              }}
+            />
+          ) : null
+        )}
+
         {frame.checkpoints.map(cp =>
           isVisible(cp) ? (
             <div

@@ -13,7 +13,7 @@ import { createTrophyTracker, TrophyTracker } from './services/trophyService';
 import { clearRun, saveRun } from './services/progress';
 import type { TrophyDef } from './trophies';
 import { levels } from './levels';
-import { GAME_WIDTH, GAME_HEIGHT } from './constants';
+import { GAME_WIDTH, GAME_HEIGHT, COMBO_WINDOW_MS } from './constants';
 import {
   World,
   Frame,
@@ -67,9 +67,11 @@ interface HudData {
   status: Frame['status'];
   bossDefeated: boolean;
   damageFlash: boolean;
+  combo: { count: number; mult: number; pct: number };
+  guide: { angle: number; metres: number } | null;
 }
 
-const deriveHud = (f: Frame): HudData => {
+const deriveHud = (f: Frame, showGuide: boolean): HudData => {
   const bucket = Math.max(1, f.levelWidth / 200);
   return {
     score: f.score,
@@ -88,6 +90,11 @@ const deriveHud = (f: Frame): HudData => {
     status: f.status,
     bossDefeated: f.bosses.length > 0 && f.bosses.every(b => b.hp <= 0),
     damageFlash: f.damageFlash,
+    combo: { count: f.combo.count, mult: f.combo.mult, pct: Math.round((f.combo.timer / COMBO_WINDOW_MS) * 10) * 10 },
+    guide:
+      showGuide && f.guide
+        ? { angle: Math.round(((Math.atan2(f.guide.dy, f.guide.dx) * 180) / Math.PI) / 6) * 6, metres: Math.round(f.guide.dist / 100) }
+        : null,
   };
 };
 
@@ -107,7 +114,12 @@ const sameHud = (a: HudData, b: HudData): boolean =>
   a.levelWidth === b.levelWidth &&
   a.status === b.status &&
   a.bossDefeated === b.bossDefeated &&
-  a.damageFlash === b.damageFlash;
+  a.damageFlash === b.damageFlash &&
+  a.combo.count === b.combo.count &&
+  a.combo.mult === b.combo.mult &&
+  a.combo.pct === b.combo.pct &&
+  a.guide?.angle === b.guide?.angle &&
+  a.guide?.metres === b.guide?.metres;
 
 const GameScreen: React.FC<GameScreenProps> = ({
   onGameOver,
@@ -147,7 +159,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
   const rendererRef = useRef<GameRenderer | null>(null);
   const modeRef = useRef<RenderMode>('loading');
   const [mode, setMode] = useState<RenderMode>('loading');
-  const [hud, setHud] = useState<HudData>(() => deriveHud(frameRef.current as Frame));
+  const [hud, setHud] = useState<HudData>(() => deriveHud(frameRef.current as Frame, getSettings().guide));
   const [domFrame, setDomFrame] = useState<Frame>(() => frameRef.current as Frame);
   const [isPaused, setIsPaused] = useState(false);
   // The page open over the pause menu (options, trophies, how to play), and the "leave the game?" question
@@ -201,6 +213,9 @@ const GameScreen: React.FC<GameScreenProps> = ({
       /** Where the items and the exit are, for walking a level in a test. */
       items: () => w.items.map(i => ({ type: i.type, x: i.x, y: i.y, width: i.width, height: i.height })),
       goal: () => w.goal,
+      /** The moving platforms and the springs, where they are now (for timing a ride in a test). */
+      movers: () => w.platforms.filter(p => p.move).map(p => ({ x: p.x, y: p.y, width: p.width })),
+      springs: () => w.springs.map(s => ({ x: s.x, y: s.y, pressed: s.pressed })),
       state: () => ({
         level: w.currentLevelIndex,
         status: w.status,
@@ -531,7 +546,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
         if (steps > 0) {
           const frame = makeFrame(w);
           frameRef.current = frame;
-          const next = deriveHud(frame);
+          const next = deriveHud(frame, settingsRef.current.guide);
           setHud(prev => (sameHud(prev, next) ? prev : next));
           if (modeRef.current === 'dom') setDomFrame(frame);
         }
@@ -569,6 +584,8 @@ const GameScreen: React.FC<GameScreenProps> = ({
         activePowerUp={hud.activePowerUp}
         bosses={hud.bosses}
         isGodMode={hud.godMode}
+        combo={hud.combo}
+        guide={hud.guide}
         timeRemaining={hud.timeRemaining}
         loopCount={hud.loopCount}
         playerX={hud.playerX}

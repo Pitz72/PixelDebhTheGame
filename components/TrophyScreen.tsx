@@ -54,7 +54,7 @@ const TrophyScreen: React.FC<TrophyScreenProps> = ({ onClose }) => {
           const done = list.filter(tr => save.unlocked[tr.id] !== undefined).length;
           const c = TIER_COLORS[tier];
           return (
-            <div key={tier} className="flex flex-col gap-3">
+            <div key={tier} className="flex flex-col gap-2">
               <div
                 className="flex items-baseline justify-between border-b-2 pb-1"
                 style={{ borderColor: c.main }}
@@ -71,14 +71,14 @@ const TrophyScreen: React.FC<TrophyScreenProps> = ({ onClose }) => {
                 return (
                   <div
                     key={tr.id}
-                    className="flex items-center gap-3 rounded-xl border px-3 py-2"
+                    className="flex items-center gap-3 rounded-xl border px-3 py-1.5"
                     style={{
                       borderColor: got ? c.main : 'rgba(255,255,255,0.12)',
                       background: got ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.03)',
                       boxShadow: got ? `0 0 16px ${c.main}44` : undefined,
                     }}
                   >
-                    <TrophyIcon tier={tier} locked={!got} size={52} />
+                    <TrophyIcon tier={tier} locked={!got} size={48} />
                     <div className="min-w-0 text-left">
                       <p className={`text-lg font-black leading-tight ${got ? 'text-white' : 'text-gray-500'}`}>
                         {trophyName(tr)}

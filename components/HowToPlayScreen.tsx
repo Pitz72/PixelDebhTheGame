@@ -117,6 +117,8 @@ const HowToPlayScreen: React.FC<HowToPlayScreenProps> = ({ onClose }) => {
               <li>{t('howto.tip2')}</li>
               <li>{t('howto.tip3')}</li>
               <li>{t('howto.tip4')}</li>
+              <li>{t('howto.tip5')}</li>
+              <li>{t('howto.tip6')}</li>
             </ul>
           </section>
         </div>

@@ -78,9 +78,36 @@ export interface Item extends GameObject {
   type: ItemType;
 }
 
+/** A platform that moves to and fro: it sweeps `range` px from where it is placed, along one axis, in `period` ms each way and back. */
+export interface PlatformMotion {
+  axis: 'x' | 'y';
+  range: number;
+  period: number;
+  /** Where in the cycle it starts (0..1). */
+  phase?: number;
+}
+
 export interface Platform extends GameObject {
   /** A wall of the labyrinth: drawn as a neon wall instead of a platform. */
   wall?: boolean;
+  /** Makes it a moving platform (it carries whoever stands on it). */
+  move?: PlatformMotion;
+  /** Where a moving platform started (set when the level loads). */
+  baseX?: number;
+  baseY?: number;
+  /** Where it was at the previous simulation step (the renderer interpolates). */
+  prevX?: number;
+  prevY?: number;
+}
+
+/** A spring: land on it and it throws you high. `y` is the top of the pad. */
+export interface Spring {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  /** Milliseconds left of the squashed look after a bounce. */
+  pressed: number;
 }
 
 export interface Goal extends GameObject {
@@ -120,6 +147,8 @@ export interface Boss extends DynamicObject {
   opacity?: number;
   visibilityState?: 'fadingIn' | 'visible' | 'fadingOut' | 'hidden';
   teleportTimer?: number;
+  /** 1 at full life, 2 below half, 3 below a quarter (see BOSS_PHASE_RATE). */
+  phase?: number;
 }
 
 export interface Projectile extends DynamicObject {
@@ -190,6 +219,8 @@ export interface LevelData {
   levelWidth?: number;
   levelHeight?: number;
   platforms: Omit<Platform, 'id'>[];
+  /** Springs that throw the player high (`y` is the top of the pad). */
+  springs?: { x: number; y: number; width?: number }[];
   items: Omit<Item, 'id'>[];
   enemies: Omit<Enemy, 'id' | 'state' | 'vx' | 'vy' | 'direction' | 'jumpCooldown' | 'stunTimer' | 'attackCooldown' | 'isSuperLaunched' | 'onGround' | 'launchTravel'>[];
   checkpoints?: Omit<Checkpoint, 'id' | 'activated'>[];

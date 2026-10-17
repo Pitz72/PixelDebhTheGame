@@ -10,14 +10,24 @@ import {
   Particle,
   Checkpoint,
   MusicTheme,
+  Spring,
 } from '../types';
 import { World, WorldStatus, Shockwave, FloatingText, isZeroG } from './world';
-import { collectiblesLeft } from './step';
+import { collectiblesLeft, isCollectible } from './step';
+import { comboMultiplier } from './world';
+import { GUIDE_MAX_LEFT, GUIDE_MIN_DISTANCE } from '../constants';
 
 /**
  * Immutable-ish picture of the world handed to the renderer. Moving entities are copied so that
  * memoised React components see a new reference every step.
  */
+/** Which way the nearest collectible lies (unit vector) and how far (px). */
+export interface Guide {
+  dx: number;
+  dy: number;
+  dist: number;
+}
+
 export interface Frame {
   status: WorldStatus;
   levelIndex: number;
@@ -30,6 +40,10 @@ export interface Frame {
   timeRemaining: number | null;
   damageFlash: boolean;
   collectiblesLeft: number;
+  /** The chain of defeats: how many, the multiplier it gives and how much of its window is left (ms). */
+  combo: { count: number; mult: number; timer: number };
+  /** When the last few collectibles are far away: which way the nearest one is. */
+  guide: Guide | null;
   /** Gravity-free level or arena: free movement in every direction (she walks, she does not fly). */
   zeroG: boolean;
   /** How big Debh is drawn (1 = normal). */
@@ -45,6 +59,7 @@ export interface Frame {
   enemies: Enemy[];
   items: Item[];
   platforms: Platform[];
+  springs: Spring[];
   checkpoints: Checkpoint[];
   goal: Goal | null;
   boss: Boss | null;
@@ -68,6 +83,25 @@ export interface Frame {
   time: number;
 }
 
+/** The nearest collectible, when only a few are left and it is far (so the player can find the last ones). */
+export function guideFor(w: World): Guide | null {
+  if (w.bosses.length > 0 || !w.goal || w.status !== 'playing') return null;
+  const left = collectiblesLeft(w);
+  if (left < 1 || left > GUIDE_MAX_LEFT) return null;
+  const px = w.player.x + w.player.width / 2;
+  const py = w.player.y + w.player.height / 2;
+  let best: { dx: number; dy: number; dist: number } | null = null;
+  for (const item of w.items) {
+    if (!w.maze && !isCollectible(item.type)) continue; // in the labyrinth everything has to be picked up
+    const dx = item.x + item.width / 2 - px;
+    const dy = item.y + item.height / 2 - py;
+    const dist = Math.hypot(dx, dy);
+    if (!best || dist < best.dist) best = { dx, dy, dist };
+  }
+  if (!best || best.dist < GUIDE_MIN_DISTANCE) return null;
+  return { dx: best.dx / best.dist, dy: best.dy / best.dist, dist: best.dist };
+}
+
 export function makeFrame(w: World): Frame {
   const level = w.levels[w.currentLevelIndex];
   return {
@@ -82,6 +116,8 @@ export function makeFrame(w: World): Frame {
     timeRemaining: w.timeRemaining,
     damageFlash: w.damageFlash > 0,
     collectiblesLeft: collectiblesLeft(w),
+    combo: { count: w.combo.count, mult: comboMultiplier(w.combo.count), timer: w.combo.timer },
+    guide: guideFor(w),
     zeroG: isZeroG(w),
     playerScale: w.playerScale,
     maze: w.maze !== null,
@@ -92,6 +128,7 @@ export function makeFrame(w: World): Frame {
     enemies: w.enemies.map(e => ({ ...e })),
     items: [...w.items],
     platforms: w.platforms,
+    springs: w.springs.map(s => ({ ...s })),
     checkpoints: w.checkpoints.map(c => ({ ...c })),
     goal: w.goal,
     boss: w.bosses[0] ? { ...w.bosses[0] } : null,

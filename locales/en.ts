@@ -125,6 +125,8 @@ export const en: Record<TextKey, string> = {
   'howto.tip2': 'A super throw blast takes down every enemy nearby.',
   'howto.tip3': 'In the labyrinth Debh moves freely: collect everything before time runs out.',
   'howto.tip4': 'The final fight has all three bosses together: keep moving.',
+  'howto.tip5': 'Defeats in quick succession build a chain: every third one raises the points multiplier.',
+  'howto.tip6': 'Green spring pads throw you very high, and lifts carry you up: look for the optional shelves.',
   'howto.close': 'ESC TO GO BACK',
 
   'menu.continue': 'CONTINUE',
@@ -138,6 +140,8 @@ export const en: Record<TextKey, string> = {
   'options.game.easy': 'EASY',
   'options.game.normal': 'NORMAL',
   'options.game.hard': 'HARD',
+  'options.game.guide': 'ARROW TO THE LAST ITEMS',
+  'options.game.guideHelp': 'When three items or fewer are left to collect and they are far away, an arrow shows which way they are.',
   'options.game.help': 'Easy: 5 lives, slower enemies, weaker bosses. Hard: 2 lives, faster enemies, tougher bosses. It applies from the next game.',
 
   'trophy.title': 'TROPHIES',
@@ -170,6 +174,8 @@ export const en: Record<TextKey, string> = {
   'trophy.full-set.desc': 'Collect all {n} kinds of retro gear in one game.',
   'trophy.bowling.name': 'Bowling King',
   'trophy.bowling.desc': 'Score {n} double K.O.s in one game.',
+  'trophy.combo.name': 'Endless Chain',
+  'trophy.combo.desc': 'Reach the x{n} multiplier with a chain of K.O.s.',
   'trophy.high-score.name': 'A Hundred Thousand',
   'trophy.high-score.desc': 'Reach {n} points in one game.',
   'trophy.maze-out.name': 'Out of the Labyrinth',

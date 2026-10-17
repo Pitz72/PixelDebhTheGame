@@ -1,6 +1,6 @@
 import type { LevelData, BossType } from './types';
 import type { RunStats } from './engine/stats';
-import { COLLECTIBLE_TYPES } from './constants';
+import { COLLECTIBLE_TYPES, COMBO_MAX_MULT, COMBO_STEP } from './constants';
 
 /**
  * The trophies: what they are and when they are earned. Pure data and predicates, no storage and no
@@ -45,6 +45,8 @@ export const TROPHY_SHELF_ITEMS = 100;
 export const TROPHY_HUNTER_ENEMIES = 100;
 export const TROPHY_BLAST_ENEMIES = 4;
 export const TROPHY_BOWLING_KOS = 5;
+/** The longest chain that gives the top multiplier. */
+export const TROPHY_COMBO = COMBO_STEP * (COMBO_MAX_MULT - 1);
 export const TROPHY_SCORE = 100_000;
 export const TROPHY_MAZE_SECONDS_LEFT = 360;
 export const TROPHY_LOOP = 3;
@@ -58,6 +60,7 @@ export const TROPHY_NUMBER: Record<string, number> = {
   'super-blast': TROPHY_BLAST_ENEMIES,
   'full-set': COLLECTIBLE_TYPES.length,
   bowling: TROPHY_BOWLING_KOS,
+  combo: COMBO_MAX_MULT,
   'high-score': TROPHY_SCORE,
   'maze-sprint': TROPHY_MAZE_SECONDS_LEFT / 60,
   'third-loop': TROPHY_LOOP,
@@ -128,6 +131,11 @@ export const TROPHIES: TrophyDef[] = [
     id: 'bowling',
     tier: 'rare',
     check: c => c.stats.doubleKos >= TROPHY_BOWLING_KOS,
+  },
+  {
+    id: 'combo',
+    tier: 'rare',
+    check: c => c.stats.bestCombo >= TROPHY_COMBO,
   },
   {
     id: 'high-score',

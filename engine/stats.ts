@@ -26,6 +26,8 @@ export interface RunStats {
   doubleKos: number;
   /** The most enemies one Super Throw blast has felled. */
   bestBlast: number;
+  /** The longest chain of defeats (see COMBO_WINDOW_MS). */
+  bestCombo: number;
   /** Blows the shield absorbed. */
   shieldBlocks: number;
   hits: number;
@@ -47,6 +49,7 @@ export const createStats = (): RunStats => ({
   enemiesDefeated: 0,
   doubleKos: 0,
   bestBlast: 0,
+  bestCombo: 0,
   shieldBlocks: 0,
   hits: 0,
   livesLost: 0,

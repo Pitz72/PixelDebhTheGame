@@ -18,6 +18,10 @@ interface HudProps {
   /** One health bar for each boss still standing (the final stage has three). */
   bosses?: Pick<Boss, 'type' | 'hp' | 'maxHp'>[];
   isGodMode: boolean;
+  /** The chain of defeats: how many, the multiplier and how much of its window is left (0..100). */
+  combo?: { count: number; mult: number; pct: number };
+  /** The arrow towards the last collectibles: angle in degrees (0 = right, 90 = down) and distance in metres. */
+  guide?: { angle: number; metres: number } | null;
   timeRemaining?: number | null;
   loopCount: number;
   playerX?: number;
@@ -33,6 +37,8 @@ const Hud: React.FC<HudProps> = React.memo(({
   activePowerUp,
   bosses = [],
   isGodMode,
+  combo,
+  guide,
   timeRemaining,
   loopCount,
   playerX = 0,
@@ -115,6 +121,28 @@ const Hud: React.FC<HudProps> = React.memo(({
                 ) : (
                   <span className="text-white text-2xl font-black">× {collectiblesLeft}</span>
                 )}
+                {guide && collectiblesLeft > 0 && (
+                  <span className="flex items-center space-x-1.5 pl-2 border-l border-amber-400/40" aria-hidden="true">
+                    <svg width="30" height="30" viewBox="-15 -15 30 30" style={{ transform: `rotate(${guide.angle}deg)` }}>
+                      <path d="M -11 -5 L 3 -5 L 3 -11 L 13 0 L 3 11 L 3 5 L -11 5 Z" fill="#ffd54f" stroke="#2A1810" strokeWidth="1.6" strokeLinejoin="round" />
+                    </svg>
+                    <span className="text-amber-200 text-sm font-black font-mono">{guide.metres}m</span>
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Chain of defeats */}
+            {combo && combo.count >= 2 && (
+              <div className="flex flex-col px-4 py-1 rounded-xl border border-orange-400/70 bg-[#1a0a05]/85 shadow-[0_0_16px_rgba(255,145,0,0.35)]">
+                <div className="flex items-baseline space-x-2">
+                  <span className="text-orange-300 text-sm font-extrabold tracking-widest">COMBO</span>
+                  <span className="text-white text-2xl font-black">×{combo.mult}</span>
+                  <span className="text-xs text-orange-200/80 font-bold">{combo.count} K.O.</span>
+                </div>
+                <div className="mt-0.5 h-1.5 w-full rounded-full bg-slate-900/90 overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-orange-500 to-yellow-300" style={{ width: `${combo.pct}%` }} />
+                </div>
               </div>
             )}
           </div>
