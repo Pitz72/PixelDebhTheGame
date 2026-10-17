@@ -14,9 +14,8 @@ import {
   FireballSprite,
   CDROMSprite,
 } from '../services/assetService';
-import CyclopsFrogBoss from '../components/FrogBoss';
-import ChickenEyeBoss from '../components/ChickenEyeBoss';
 import ShadowHeadBoss from '../components/ShadowHeadBoss';
+import { bakeFrog, bakeEye, type FrogTextures, type EyeTextures } from '../components/bosses/bakeBosses';
 import { mulberry32 } from '../engine/rng';
 import { PALETTES } from './palette';
 import { extractSvg, stripText, svgToCanvas } from './svgTexture';
@@ -39,7 +38,8 @@ export interface TextureSet {
   enemies: Record<string, Texture>;
   items: Record<ItemType, Texture>;
   projectiles: { bomb: Texture; egg: Texture; fireball: Texture; cdrom: Texture; shot: Texture };
-  bosses: { frog: Texture; chickenEye: Texture; chickenEyeBlink: Texture; shadowHead: Texture };
+  /** The frog and LeGallineNellOcchi come in parts so they can move; CapocciaNelBuio is one picture. */
+  bosses: { frog: FrogTextures; chickenEye: EyeTextures; shadowHead: Texture };
   goalLocked: Texture;
   goalUnlocked: Texture;
   checkpointOff: Texture;
@@ -371,17 +371,6 @@ const fakeBoss = (type: Boss['type']): Boss => ({
   opacity: 1,
 });
 
-/** ChickenEyeBoss decides "blinking" from Date.now(); pin the clock so both variants are deterministic. */
-function withClock<T>(ms: number, fn: () => T): T {
-  const real = Date.now;
-  Date.now = () => ms;
-  try {
-    return fn();
-  } finally {
-    Date.now = real;
-  }
-}
-
 let cached: Promise<TextureSet> | null = null;
 
 /** The art is rasterised once per run of the app and shared by every renderer instance (restarts, retries). */
@@ -438,11 +427,7 @@ async function buildTexturesUncached(): Promise<TextureSet> {
     art(<CheckpointSprite activated />, 48, 96, 3),
   ]);
 
-  const frog = await art(<CyclopsFrogBoss boss={fakeBoss('frog')} />, 120, 120, 5.4);
-  const chickenEye = await withClock(0, () => art(<ChickenEyeBoss boss={fakeBoss('chickenEye')} />, 140, 140, 4.6));
-  const chickenEyeBlink = await withClock((Math.PI / 2) * 1000, () =>
-    art(<ChickenEyeBoss boss={fakeBoss('chickenEye')} />, 140, 140, 4.6)
-  );
+  const [frog, chickenEye] = await Promise.all([bakeFrog(), bakeEye()]);
   const shadowHead = await art(<ShadowHeadBoss boss={fakeBoss('shadowHead')} />, 140, 140, 4.6);
 
   const themes = {} as Record<MusicTheme, ThemeTextures>;
@@ -452,7 +437,7 @@ async function buildTexturesUncached(): Promise<TextureSet> {
     enemies,
     items,
     projectiles: { bomb, egg, fireball, cdrom, shot },
-    bosses: { frog, chickenEye, chickenEyeBlink, shadowHead },
+    bosses: { frog, chickenEye, shadowHead },
     goalLocked,
     goalUnlocked,
     checkpointOff: cpOff,

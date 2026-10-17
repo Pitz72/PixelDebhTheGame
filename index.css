@@ -50,16 +50,6 @@ body {
   animation: shake 0.35s cubic-bezier(.36,.07,.19,.97) both infinite;
 }
 
-/* Boss Recoil Animation */
-.frog-boss-sprite.throwing .frog-body-group {
-  animation: frog-vector-recoil 0.45s cubic-bezier(0.22, 1, 0.36, 1);
-}
-@keyframes frog-vector-recoil {
-  0% { transform: rotate(0deg) scale(1); }
-  30% { transform: rotate(-5deg) scale(0.94); }
-  65% { transform: rotate(4deg) scale(1.05); }
-  100% { transform: rotate(0deg) scale(1); }
-}
 
 /* Projectile spin animation */
 @keyframes spin {

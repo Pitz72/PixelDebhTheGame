@@ -84,8 +84,22 @@ export interface EyePose {
 
 export const EYE_REST: EyePose = { henX: 0, step: 0, flip: false, blink: false };
 
-export const ChickenEyeBossArt: React.FC<{ pose?: EyePose; hit?: boolean }> = ({ pose = EYE_REST, hit = false }) => {
-  const hx = 120 + pose.henX * 11;
+/** Where the hen walks (art units): her middle on the pupil's floor, how far she strolls, how big she is. */
+export const HEN_FLOOR = { x: 120, y: 131 };
+export const HEN_RANGE = 11;
+export const HEN_SCALE = 1.32;
+/** Her bounding box around her own origin, and the leg positions the game bakes (`step` from -1 to 1). */
+export const HEN_BOX = [-38, -30, 72, 62] as const;
+export const HEN_STEPS = [-1, -0.66, -0.33, 0, 0.33, 0.66, 1];
+/** The pupil, as the hen's window: she is only seen inside it. */
+export const PUPIL_WINDOW = { x: 120, y: 120, r: 46 };
+
+export const ChickenEyeBossArt: React.FC<{ pose?: EyePose; hit?: boolean; hideHen?: boolean }> = ({
+  pose = EYE_REST,
+  hit = false,
+  hideHen = false,
+}) => {
+  const hx = HEN_FLOOR.x + pose.henX * HEN_RANGE;
   const bob = Math.abs(pose.step) * -1.6;
   return (
     <svg viewBox={`0 0 ${EYE_BOX} ${EYE_BOX}`} width="100%" height="100%" overflow="visible" style={hit ? { filter: 'brightness(2.2) saturate(0.7)' } : undefined}>
@@ -115,9 +129,11 @@ export const ChickenEyeBossArt: React.FC<{ pose?: EyePose; hit?: boolean }> = ({
       <g clipPath="url(#ce-pupil-clip)">
         <ellipse cx="120" cy="158" rx="42" ry="7.5" fill="#3a2d63" />
         <ellipse cx="120" cy="156" rx="37" ry="4.6" fill="#51407f" opacity="0.7" />
-        <g transform={`translate(${hx} ${131 + bob}) scale(${pose.flip ? -1.32 : 1.32} 1.32)`}>
-          <HenShape step={pose.step} />
-        </g>
+        {!hideHen && (
+          <g transform={`translate(${hx} ${HEN_FLOOR.y + bob}) scale(${pose.flip ? -HEN_SCALE : HEN_SCALE} ${HEN_SCALE})`}>
+            <HenShape step={pose.step} />
+          </g>
+        )}
       </g>
       <circle cx="120" cy="120" r={PUPIL_R} fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth="1.6" />
       <ellipse cx="92" cy="84" rx="18" ry="9.5" transform="rotate(-32 92 84)" fill="#ffffff" opacity="0.55" />

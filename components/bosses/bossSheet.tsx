@@ -1,10 +1,11 @@
 /**
  * Dev page (npm run dev, then /boss-sheet.html): the two redrawn bosses in several poses, to judge the art.
+ * These are the same pieces the game bakes into textures and moves (see renderer/bossRigs.ts).
  * `?size=240` changes how big they are drawn.
  */
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { FrogBossArt, FROG_REST, type FrogPose, type FrogVariant } from './FrogArt';
+import { FrogBossArt, FROG_REST, type FrogPose } from './FrogArt';
 import { ChickenEyeBossArt, EYE_REST, type EyePose } from './ChickenEyeArt';
 
 const size = Number(new URLSearchParams(location.search).get('size') ?? 240);
@@ -55,15 +56,13 @@ const Row: React.FC<{ title: string; children: React.ReactNode }> = ({ title, ch
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <div style={{ padding: 18 }}>
-    {(['a', 'b'] as FrogVariant[]).map(v => (
-      <Row key={v} title={v === 'a' ? 'Rana Ciclope, variante A: bordo che sfuma sul rosso, arti verdi' : 'Rana Ciclope, variante B: piu\' rossa, arti rosso mattone'}>
-        {FROG_POSES.map(p => (
-          <Cell key={p.label} label={p.label}>
-            <FrogBossArt variant={v} pose={p.pose} hit={p.hit} />
-          </Cell>
-        ))}
-      </Row>
-    ))}
+    <Row title="Rana Ciclope: occhio e braccia verdi, bordo e zampette che sfumano sul rosso">
+      {FROG_POSES.map(p => (
+        <Cell key={p.label} label={p.label}>
+          <FrogBossArt pose={p.pose} hit={p.hit} />
+        </Cell>
+      ))}
+    </Row>
     <Row title="LeGallineNellOcchi: la gallina passeggia nella pupilla">
       {EYE_POSES.map(p => (
         <Cell key={p.label} label={p.label}>

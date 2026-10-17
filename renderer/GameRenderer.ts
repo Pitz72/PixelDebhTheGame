@@ -7,6 +7,7 @@ import { Boss, Enemy, Item, ItemType, Platform, Projectile, PlayerProjectile, Pl
 import { Frame } from '../engine/frame';
 import { GAME_HEIGHT, GAME_WIDTH } from '../constants';
 import { buildTextures, TextureSet } from './textures';
+import { BossArt, FrogArt, EyeArt, SpriteArt } from './bossRigs';
 import { bakeDebh, DebhTextures } from '../characters/debh/bake';
 import { DebhRig, RIG_HEIGHT, STAND_GROUND_Y, HIP } from '../characters/debh/rig';
 import { DebhAnimator } from '../characters/debh/anim';
@@ -335,19 +336,19 @@ class PlayerView {
 
 class BossView {
   readonly root = new Container();
-  private body: Sprite;
-  private flash: Sprite;
+  private art: BossArt;
   private glow: Sprite;
   private throwAnim = 0;
-  constructor(boss: Boss, private tex: TextureSet) {
-    const t =
-      boss.type === 'frog' ? tex.bosses.frog : boss.type === 'chickenEye' ? tex.bosses.chickenEye : tex.bosses.shadowHead;
+  constructor(boss: Boss, tex: TextureSet) {
     this.glow = glowSprite(tex.glow, boss.width * 2.1, BOSS_COLOR[boss.type]);
-    this.body = sized(t, boss.width, boss.height);
-    this.flash = sized(t, boss.width, boss.height);
-    this.flash.blendMode = 'add';
-    this.flash.visible = false;
-    this.root.addChild(this.glow, this.body, this.flash);
+    this.art =
+      boss.type === 'frog'
+        ? new FrogArt(tex.bosses.frog)
+        : boss.type === 'chickenEye'
+          ? new EyeArt(tex.bosses.chickenEye)
+          : new SpriteArt(tex.bosses.shadowHead);
+    this.art.flash.visible = false;
+    this.root.addChild(this.glow, this.art.body, this.art.flash);
   }
   update(b: Boss, a: number, now: number, dtF: number) {
     const x = ix(b, a);
@@ -359,20 +360,16 @@ class BossView {
     else bob = Math.sin(now / 520) * 8;
     if (b.isThrowing) this.throwAnim = 1;
     this.throwAnim = Math.max(0, this.throwAnim - dtF * 0.07);
-    const bw = b.width / this.body.texture.width;
-    const bh = b.height / this.body.texture.height;
     const sx = 1 + 0.08 * this.throwAnim;
     const sy = 1 - 0.08 * this.throwAnim;
-    this.body.scale.set(bw * sx, bh * sy);
-    this.flash.scale.copyFrom(this.body.scale);
-    if (b.type === 'chickenEye') {
-      this.body.texture = Math.sin(now / 1000) > 0.95 ? this.tex.bosses.chickenEyeBlink : this.tex.bosses.chickenEye;
-    }
+    this.art.body.scale.set((b.width / this.art.box) * sx, (b.height / this.art.box) * sy);
+    this.art.flash.scale.copyFrom(this.art.body.scale);
+    this.art.update(b, now, dtF, this.throwAnim);
     this.root.position.set(x + b.width / 2, y + b.height / 2 + bob);
     const opacity = b.opacity ?? 1;
     this.root.alpha = defeated ? 0.55 + Math.sin(now / 45) * 0.45 : opacity;
-    this.flash.visible = b.isHit || defeated;
-    this.flash.alpha = defeated ? 0.5 + Math.sin(now / 60) * 0.3 : 0.75;
+    this.art.flash.visible = b.isHit || defeated;
+    this.art.flash.alpha = defeated ? 0.5 + Math.sin(now / 60) * 0.3 : 0.75;
     this.glow.alpha = 0.3 + Math.sin(now / 350) * 0.1 + (b.isHit ? 0.4 : 0);
     this.root.rotation = defeated ? Math.sin(now / 33) * 0.03 : 0;
   }

@@ -1,6 +1,6 @@
 [package]
 name = "pixeldebh"
-version = "1.8.0"
+version = "1.9.0"
 description = "PixelDebh: Retro-Rescue! - arcade platformer"
 authors = ["Pixel Debh"]
 license = ""
