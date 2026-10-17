@@ -39,6 +39,16 @@ body {
   animation: vectorFloat 2.2s ease-in-out infinite;
 }
 
+/* Invincibility blink of the DOM player: a CSS animation, so nothing in render reads the clock */
+@keyframes invincible {
+  0% { opacity: 0.45; }
+  50% { opacity: 1; }
+  100% { opacity: 0.45; }
+}
+.animate-invincible {
+  animation: invincible 0.18s steps(1, end) infinite;
+}
+
 /* Enemy Stun Shake Animation */
 @keyframes shake {
   10%, 90% { transform: translate3d(-2px, 0, 0) scaleX(var(--direction-scale, 1)); }

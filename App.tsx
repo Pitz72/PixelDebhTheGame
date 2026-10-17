@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { bakeParade } from './characters/debh/paradeFrames';
 import { useGameScale } from './hooks/useGameScale';
 import StartScreen, { type StartChoice } from './components/StartScreen';

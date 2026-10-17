@@ -90,5 +90,3 @@ export const PALETTES: Record<MusicTheme, ThemePalette> = {
     motes: [0xff1744, 0xff6d00, 0xffd180],
   },
 };
-
-export const colorToNumber = (hex: string): number => parseInt(hex.replace('#', ''), 16);

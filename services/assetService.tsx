@@ -1,4 +1,3 @@
-import React from 'react';
 import { EnemyArt } from './enemyArt';
 
 // ============================================================================
@@ -14,22 +13,12 @@ import { EnemyArt } from './enemyArt';
  * - Holding her signature dark brown wireless gamepad (#3D2B22)
  * - Exact 54x74 viewBox matching PLAYER_WIDTH (54) x PLAYER_HEIGHT (74) for 1:1 hitbox accuracy!
  */
-/** Static poses (SVG transforms) used to bake the character into textures for the WebGL renderer. */
+/** A static pose of the old DOM sprite (SVG transforms). */
 export interface PlayerPose {
   body: string;
   legL: string;
   legR: string;
 }
-
-export const PLAYER_POSES: Record<string, PlayerPose> = {
-  idle: { body: '', legL: '', legR: '' },
-  run0: { body: '', legL: 'rotate(-24 23 54)', legR: 'rotate(22 31 54)' },
-  run1: { body: 'translate(0, -2.5)', legL: 'rotate(-4 23 54)', legR: 'rotate(4 31 54)' },
-  run2: { body: '', legL: 'rotate(22 23 54)', legR: 'rotate(-24 31 54)' },
-  run3: { body: 'translate(0, -2.5)', legL: 'rotate(4 23 54)', legR: 'rotate(-4 31 54)' },
-  jump: { body: 'translate(0, -2)', legL: 'rotate(-18 22 54) translate(0, -2)', legR: 'rotate(16 31 54) translate(0, -3)' },
-  fall: { body: 'translate(0, -1)', legL: 'rotate(12 22 54)', legR: 'rotate(-14 31 54)' },
-};
 
 export const PlayerSprite = ({
   direction,

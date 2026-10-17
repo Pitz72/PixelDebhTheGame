@@ -50,7 +50,6 @@ export interface DebhOut {
 }
 
 const THROW_MS = 260;
-const HURT_MS = 420;
 const LAND_MS = 130;
 const FLIP_MS = 460;
 

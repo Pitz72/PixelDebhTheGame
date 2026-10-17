@@ -26,5 +26,3 @@ export const C = {
   green: "#123B32",
   white: "#FFF6E6",
 } as const;
-
-export const INK_W = 7; // spessore contorno personaggio (unita' locali)

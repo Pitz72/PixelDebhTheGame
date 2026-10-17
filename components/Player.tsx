@@ -53,10 +53,9 @@ const Player: React.FC<PlayerProps> = React.memo(({ player }) => {
 
       {/* Main HD Vector Player Sprite */}
       <div
-        className="absolute left-0 right-0 bottom-0"
+        className={`absolute left-0 right-0 bottom-0${player.isInvincible ? ' animate-invincible' : ''}`}
         style={{
           height: 74,
-          opacity: player.isInvincible && Math.floor(Date.now() / 90) % 2 === 0 ? 0.45 : 1,
           filter: speedBoostActive ? 'saturate(1.4) brightness(1.15)' : 'none',
         }}
       >

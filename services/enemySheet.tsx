@@ -2,7 +2,6 @@
  * Dev page (npm run dev, then /enemy-sheet.html): every enemy sprite in every state side by side, big, to judge the art.
  * `?size=80` shows them at about the size they have in the game (50 px, a bit bigger so it can be read).
  */
-import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { EnemySprite } from './assetService';
 

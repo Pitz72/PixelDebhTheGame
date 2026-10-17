@@ -256,7 +256,7 @@ class EnemyView {
   private spin = 0;
   private bsx: number;
   private bsy: number;
-  constructor(private e: Enemy, private tex: TextureSet) {
+  constructor(e: Enemy, private tex: TextureSet) {
     this.glow = glowSprite(tex.glow, e.width * 2.4, ENEMY_COLOR[e.type] ?? 0xffffff);
     this.body = sized(tex.enemies[`${e.type}:active`] ?? tex.enemies['base:active'], e.width, e.height);
     this.bsx = Math.abs(this.body.scale.x);
@@ -343,7 +343,7 @@ class PlayerView {
   feetY = 0;
   facing = 1;
   /** Where the gamepad / muzzle is, in game pixels relative to the hitbox centre (set while aiming). */
-  constructor(private tex: TextureSet, debh: DebhTextures) {
+  constructor(tex: TextureSet, debh: DebhTextures) {
     this.rig = new DebhRig(debh);
     this.aura = glowSprite(tex.glow, 200, 0xffea00);
     this.aura.visible = false;

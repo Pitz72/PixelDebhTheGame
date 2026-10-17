@@ -801,7 +801,7 @@ function bossFar(p: ThemePalette, rng: Rng): HTMLCanvasElement {
   return c;
 }
 
-function bossNear(p: ThemePalette, rng: Rng): { near: HTMLCanvasElement; lights: HTMLCanvasElement } {
+function bossNear(rng: Rng): { near: HTMLCanvasElement; lights: HTMLCanvasElement } {
   const [near, n] = canvas(NEAR_W, NEAR_H, ART_SCALE);
   const [lights, l] = canvas(NEAR_W, NEAR_H, ART_SCALE);
   const slots = row(rng, NEAR_W, 110, 200, 0);
@@ -1121,7 +1121,7 @@ export function makeWorldLayers(theme: MusicTheme, p: ThemePalette, seed: number
     return { sky: skyCanvas, sun: sunCanvas, far: etherealFar(p, mulberry32(seed + 31)), near, lights };
   }
   if (theme === 'boss') {
-    const { near, lights } = bossNear(p, rng);
+    const { near, lights } = bossNear(rng);
     return { sky: skyCanvas, sun: sunCanvas, far: bossFar(p, mulberry32(seed + 31)), near, lights };
   }
   const { near, lights } = adventureNear(p, rng);

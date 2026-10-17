@@ -10,7 +10,6 @@
 // Gradient ids carry the enemy and the state: SVG ids are document-global, so a shared id would make two sprites
 // on one page pick up each other's colours (the sheet page and the DOM fallback show several at once).
 // ============================================================================
-import React from 'react';
 
 type State = 'active' | 'captured' | 'stunned';
 const asState = (s: string): State => (s === 'captured' ? 'captured' : s === 'stunned' ? 'stunned' : 'active');

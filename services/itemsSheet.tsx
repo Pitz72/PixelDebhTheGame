@@ -2,7 +2,6 @@
  * Dev page (npm run dev, then /items-sheet.html): every item sprite side by side, big, to judge the art.
  * `?size=80` shows them at the size they have in the game.
  */
-import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ItemSprite } from './assetService';
 

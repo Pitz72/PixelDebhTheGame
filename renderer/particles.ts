@@ -29,7 +29,7 @@ export class ParticleLayer {
   private used = 0;
   private maxFx: number;
 
-  constructor(private glow: Texture, maxFx = 900) {
+  constructor(glow: Texture, maxFx = 900) {
     this.maxFx = maxFx;
     for (let i = 0; i < POOL_SIZE; i++) {
       const s = new Sprite(glow);

@@ -71,7 +71,6 @@ export const LAUNCH_MAX_DISTANCE = 1000; // a launched enemy pops after travelli
 export const BOMB_WIDTH = 26;
 export const BOMB_HEIGHT = 26;
 export const BOMB_INITIAL_VY = -15;
-export const BOMB_HORIZONTAL_SPEED_MULTIPLIER = 0.09; // legacy, no longer used (bombs are now aimed ballistically)
 export const BOMB_MAX_HORIZONTAL_SPEED = 16;
 export const BOMB_AIM_SPREAD = 0.12; // +/- 6% random error on the horizontal speed
 
@@ -119,7 +118,6 @@ export const COLLECTIBLE_POINTS = 100;
 export const ENEMY_DEFEAT_POINTS = 500;
 export const CHECKPOINT_POINTS = 250;
 export const EXTRA_LIFE_SCORE_START = 20000;
-export const EXTRA_LIFE_SCORE_MULTIPLIER = 2;
 
 // Game settings
 export const INITIAL_LIVES = 3;

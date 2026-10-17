@@ -8,7 +8,6 @@ import React from 'react';
 export const EYE_BOX = 240;
 const OUT = '#2A1810';
 
-export const EYE_CENTER = { x: 120, y: 120 };
 export const PUPIL_R = 47;
 
 export const EyeDefs: React.FC = () => (
