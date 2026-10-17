@@ -2,24 +2,36 @@
 
 ```
 Riprendiamo il lavoro su PixelDebh: Retro-Rescue! (repo C:\Users\Utente\Documents\GitHub\PIXELDEBH, branch main, remoto Pitz72/PixelDebhTheGame).
-Leggi prima: docs/NEXT_SESSION.md, docs/AUDIT.md, docs/MUSIC_BRIEF.md, README.md, log/1.3.0.md e la memoria del progetto.
+Leggi prima: docs/NEXT_SESSION.md, log/1.6.0.md, log/1.5.0.md, log/1.4.0.md, log/1.3.0.md, README.md e la memoria del progetto (project_pixeldebh_todo.md, project_pixeldebh_game_tauri.md).
 
-Stato: Fasi 1-4 pubblicate su main (v1.2.0); Fase 5 audio (v1.3.0); livello mancante e riordino (v1.4.0); labirinto vero con zoom (v1.5.0); sei nuovi collezionabili (v1.6.0). Fase 5 (audio) fatta e pubblicata su main (v1.3.0, commit 442fc1b): motore audio, 24 effetti sintetici, pannello `O`, caricamento musica da file con loop e crossfade, strumento tools/audio/prepare_music.py. Musica: 8 brani di Lyria inseriti (title, 3 mondi, 3 boss, highscore; nessuno ascoltato da Claude). Vittoria e game over usano i jingle sintetici di audio/sfx.ts: i pezzi da 59 s di Lyria sono stati scartati dall'utente.
-- Fase 1: motore di gioco puro in engine/ (timestep fisso 60 Hz) + bug gravissimi/gravi corretti + 76 test (npm test).
-- Fase 2: app desktop Tauri v2 (src-tauri/), sempre a schermo intero, salvataggi in save.json, installatore Windows NSIS, pacchetti Linux (deb/rpm/AppImage) verificati in WSL2.
-- Fase 3: renderer PixiJS/WebGL (renderer/) con luci dinamiche, bloom, particelle, parallasse, interpolazione; il vecchio DOM resta come ripiego.
-- Fase 4: Debh vettoriale HD fedele al logo (characters/debh/), alta 122 px, hitbox 54x90, animazioni procedurali complete.
+Stato (ultimo commit 8ef26b1, tutto pubblicato su main):
+- v1.2.0 Fasi 1-4: motore puro a 60 Hz, app Tauri a schermo intero, renderer PixiJS, Debh vettoriale.
+- v1.3.0 Fase 5 audio: motore audio, 24 effetti sintetici, pannello `O`, 8 brani di Lyria (vittoria e game over = jingle sintetici).
+- v1.4.0: livello mancante "Level 11: The Phantom Reach" e riordino: tre mondi da tre livelli e un boss, poi il labirinto (13 livelli).
+- v1.5.0: labirinto vero (mazeGen.ts, 36x22 celle, zoom 1,6, movimento secco, tutti gli oggetti da raccogliere, timer 16:00).
+- v1.6.0: sei nuovi collezionabili (cassetta, gettone, TV a tubo, webcam, microfono, ring light), debutti progressivi.
+- Concept dei due boss ridisegnati (components/bosses/, boss-sheet.html), NON ancora nel gioco, in attesa di approvazione.
+- 335 test (npm test). Provato su exe di release: il labirinto con un robot (tools/dev/maze_walk.ts) a 60 fps.
 
-Richieste fisse dell'utente: gioco desktop Windows+Linux che parte SEMPRE a schermo intero; stile vettoriale HD (niente pixel art); musiche e suoni retrogaming; trovare e correggere criticita' (gravissime/gravi/medie/lievi).
+DA RISOLVERE PER PRIMO: l'utente ha segnalato, a fine sessione, "un problema importante sullo sprite di Debh per quel che riguarda il labirinto finale, che influenza anche altri livelli". NON ne ha dato i dettagli. Chiedigli di descriverlo (o di mostrare un'immagine) prima di toccare qualunque cosa. Cosa si sa, senza averlo verificato come causa:
+ - nel labirinto (vista dall'alto, zoom 1,6, gravita' zero, movimento secco in 4 direzioni) Debh e' lo sprite di profilo con la posa "a gravita' zero" (in volo, inclinata); negli screenshot appariva in diagonale, come se cadesse o nuotasse, anche quando va dritta;
+ - lo stesso rig/posa e' usato nell'arena del boss 3 (gravita' zero) e c'e' la hitbox 54x90 (alta) usata ovunque; "altri livelli" potrebbe riguardare la posa, la scala, la hitbox o l'animazione;
+ - sono ipotesi da controllare con l'utente, non fatti. Strumenti: characters/debh/ (rig, anim, bake), character-sheet.html, la sonda window.__pdGame (load/warp/god/state) e tools/dev/maze_walk.ts per vedere Debh nel labirinto dell'exe, screenshot con `node cap.mjs` via debug port o `msedge --headless=new --screenshot`.
 
-Da fare ora, in ordine (decisioni dell'utente del 2026-10-17, piano completo nella memoria del progetto):
-1. Boss ridisegnati. FATTO IL CONCEPT, in attesa dell'approvazione dell'utente: `components/bosses/FrogArt.tsx` (Rana Ciclope: sfera lucida = occhio ciclope con pupilla a fessura e una rana pallida dentro, bordo che sfuma sul rosso, braccine esili e zampette palmate; due varianti: A arti verdi con giunture rosse, B piu' rossa con arti rosso mattone), `components/bosses/ChickenEyeArt.tsx` (occhio con iride a fibre, la gallina che passeggia nella pupilla, lente d'ingrandimento, palpebra per il battito) e la pagina di prova `boss-sheet.html` (con `npm run dev`; per un'immagine a piena risoluzione: `msedge --headless=new --window-size=1500,960 --screenshot=out.png http://localhost:3000/boss-sheet.html?size=230`). Resta da fare dopo l'approvazione: scegliere la variante, cuocere le parti (corpo, 2 braccia, 2 gambe; occhio, gallina) in texture, un `BossView` a parti con animazione procedurale (braccia e gambe che oscillano con la velocita' del boss, la gallina che cammina avanti e indietro nella pupilla girandosi), sostituire i vecchi `FrogBoss.tsx` e `ChickenEyeBoss.tsx` (usati anche dal ripiego DOM) tenendo hitbox 320x320 e 300x300. CapocciaNelBuio NON si tocca.
-2. I tre boss anche dentro il labirinto, in stanze chiuse (idea: ognuno custodisce un collezionabile necessario al portale); il motore oggi gestisce un boss solo.
-3. Sistema di trofei: almeno 15, tra normali, rari, difficili e di completamento.
-4. Il resto: Fase 6 meccaniche (guida collezionabili, combo, telegrafi nemici, boss a fasi, molle, piattaforme mobili), nemici e sfondi HD, verifiche in gioco (capriola, gravita' zero, danno, pollice alzato, 4K/144 Hz, Linux nativo, classifica in Tauri), rifinitura (gamepad/rimappa tasti, localizzazione, firma installatore, npm audit, audit M4,M7,M8,L4,L8,L9,L10).
-Audio ancora da far ascoltare all'utente (log/1.3.0.md e memoria del progetto: loop dei 4 brani con dissolvenza lunga, bilanciamento, Orbital_Lockdown non assegnato, licenza).
+DA DEFINIRE CON L'UTENTE (nell'ordine in cui servono):
+ 1. Il problema dello sprite di Debh (sopra).
+ 2. Boss ridisegnati: quale variante della Rana Ciclope (A arti verdi, B piu' rossa, o una via di mezzo), la gallina di LeGallineNellOcchi e' abbastanza grande?, la lente d'ingrandimento (richiamo a Sherlock) resta?; poi integrazione con animazione (braccia e gambe della rana che oscillano con la velocita', la gallina che cammina nella pupilla). CapocciaNelBuio NON si tocca.
+ 3. Il labirinto provato a mano: sensazione dei comandi, velocita' di Debh e dei nemici, zoom 1,6, larghezza dei corridoi, timer 16:00 (stimato a numeri), sprite di Debh piu' piccolo o no, musica (il vecchio log lo voleva silenzioso, oggi suona "etereo"), labirinto fisso o nuovo a ogni LOOP.
+ 4. I tre boss dentro il labirinto, in stanze chiuse a quattro pareti: ognuno custodisce un collezionabile necessario al portale? boss indeboliti? timer sospeso nelle stanze? Il motore oggi gestisce un boss solo, va generalizzato.
+ 5. Sistema di trofei: almeno 15 tra normali, rari, difficili e di completamento. Da decidere: elenco dei trofei (Claude ne propone una lista), dove si vedono (schermata nel menu? notifica in gioco?), salvataggio in save.json.
+ 6. Livello 11 giocato a mano (difficolta' e ritmo non tarati) e i nuovi collezionabili guardati alla dimensione di gioco.
+ 7. Audio da far ascoltare: i 4 loop con dissolvenza lunga (world-adventure, boss-frog, boss-shadow-head, boss-chicken-eye), bilanciamento musica/effetti dal pannello `O`, `Orbital_Lockdown.mp3` non assegnato, licenza dei brani Lyria prima di distribuire.
 
-Regole di lavoro: testa SEMPRE l'exe di release (la CSP stretta nasconde problemi che `tauri dev` non mostra); strumenti di test in tools/dev/ (CDP, screenshot, strisce di fotogrammi, script WSL); regola fissa dell'utente: ogni fase si chiude con commit E push su main (nessuna conferma da chiedere), con tutte le verifiche fatte prima; merge di altri rami e force push solo se l'utente lo chiede; dichiara cio' che non hai potuto verificare (audio, FPS su hardware diverso).
+POI, il resto del piano: Fase 6 meccaniche (guida ai collezionabili, combo, telegrafi dei nemici, boss a fasi, molle, piattaforme mobili), nemici e sfondi potenziati in vettoriale HD, verifiche in gioco ancora mancanti (capriola, gravita' zero, danno, pollice alzato, 4K/144 Hz, Linux nativo con GPU e audio, classifica da interfaccia in Tauri), rifinitura (opzioni/gamepad/rimappa tasti, localizzazione IT/EN, firma dell'installatore, npm audit, audit M4, M7, M8, L4, L8, L9, L10).
+
+Richieste fisse dell'utente: gioco desktop Windows+Linux che parte SEMPRE a schermo intero; stile vettoriale HD (niente pixel art); musiche e suoni retrogaming; trovare e correggere criticita'.
+
+Regole di lavoro: testa SEMPRE l'exe di release (la CSP stretta nasconde problemi che `tauri dev` non mostra); regola fissa dell'utente: ogni fase si chiude con commit E push su main (nessuna conferma da chiedere), con tutte le verifiche fatte prima; merge di altri rami e force push solo se l'utente lo chiede; dichiara cio' che non hai potuto verificare (audio, sensazione dei comandi, difficolta', FPS su altro hardware); non toccare docs/MUSIC_BRIEF.md (l'utente ha chiesto di lasciarlo com'e').
 ```
 
 ## Comandi utili
@@ -28,17 +40,17 @@ Regole di lavoro: testa SEMPRE l'exe di release (la CSP stretta nasconde problem
 npm install
 npm run dev            # Vite
 npm run desktop        # app Tauri in finestra (dev), hot reload
-npm test               # 76 test (motore, input, dati livelli)
+npm test               # 335 test (motore, input, livelli, raggiungibilita', labirinto, audio, oggetti)
 npm run typecheck
-npx tauri build --no-bundle        # exe di release (Windows)
+npx tauri build --no-bundle        # exe di release (Windows), circa 1-3 minuti
 npx tauri build --bundles nsis     # installatore Windows
 ```
 
-- Pagina delle pose: `npm run dev` poi `/character-sheet.html` (`?big=0,3,17` ingrandisce).
-- Tasti di gioco: `F`/`F11`/`Alt+Enter` finestra, `M` muto, `Q` qualita', `F3` prestazioni. Tasti debug solo in dev: `0` god mode, `L` salta livello, `9` boss finale.
-- Test con debug remoto WebView2: avviare l'app con `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=9333`, poi `node tools/dev/cdp2.mjs 9333 "<js>" 3` (console, `window.__pdPerf`, `window.__pdPlayer`).
+- Pagine di prova (con `npm run dev`): `/character-sheet.html` (pose di Debh, `?big=0,3,17` ingrandisce), `/items-sheet.html` (tutti gli oggetti, `?size=80`), `/boss-sheet.html` (concept dei boss, `?size=230`). Immagine a piena risoluzione senza aprire un browser: `msedge --headless=new --disable-gpu --window-size=1500,960 --virtual-time-budget=4000 --screenshot=out.png <url>`.
+- Tasti di gioco: `F`/`F11`/`Alt+Enter` finestra, `M` muto, `O` pannello audio, `Q` qualita', `F3` prestazioni. Tasti debug solo in dev: `0` god mode, `L` salta livello (i boss 1 e 2 "prestano" vite: saltarli lascia molte vite), `9` boss finale.
+- Test sull'app vera con debug remoto WebView2: avviare l'exe con `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS='--remote-debugging-port=9333 --autoplay-policy=no-user-gesture-required'`. Sonde nella pagina: `window.__pdPerf` (fps, cpu), `window.__pdPlayer`, `window.__pdAudio` (stato audio, brano, livello d'uscita), `window.__pdGame` (`load(i)`, `warp(x,y)`, `god(on)`, `state()`). Script: `tools/dev/cdp2.mjs`, `tools/dev/maze_walk.ts` (guida Debh nel labirinto; si compila con esbuild, vedi il commento in testa), `tools/audio/` (effetti in WAV, preparazione dei brani). I tasti sintetici vanno inviati a `document.body`, non a `window`.
 
 ## Dove sta cosa
 
-- `engine/` simulazione pura; `renderer/` PixiJS; `characters/debh/` personaggio; `components/` HUD e schermate React; `services/` audio, salvataggi, piattaforma; `src-tauri/` guscio desktop; `tests/` e `engine/*.test.ts`.
-- Audio attuale (da sostituire in Fase 5): `services/soundService.ts` (oscillatori con `setTimeout`, melodie di 6-10 note).
+- `engine/` simulazione pura (`mazeGrid.ts` griglia del labirinto); `renderer/` PixiJS; `characters/debh/` personaggio; `components/` HUD, schermate e `components/bosses/` (concept dei nuovi boss); `services/` audio, salvataggi, piattaforma, `assetService.tsx` (sprite degli oggetti); `audio/` sintetizzatore e effetti; `mazeGen.ts` generatore del labirinto; `levels.ts` livelli; `src-tauri/` guscio desktop; `tests/` e `engine/*.test.ts`; `public/audio/music/` brani e manifest.
+- Un file di log per versione in `log/` (1.3.0-1.6.0 per questa tornata) con cosa e' stato fatto, verificato e non verificato.
