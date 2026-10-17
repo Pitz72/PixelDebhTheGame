@@ -35,6 +35,7 @@ export interface DebhInput {
   throwAnim: number;
   hurtAnim: number;
   cheer: boolean;
+  /** Free-movement level or arena: no gravity, but she still walks (she does not fly or float). */
   zeroG: boolean;
 }
 
@@ -191,17 +192,6 @@ export const TUCK: DebhPose = {
   pad: null,
 };
 
-export const FLOAT = (t: number, vx: number): DebhPose => ({
-  lean: clamp(vx * 1.6, -14, 14),
-  legN: { a1: -20 + Math.sin(t * 1.6) * 6, a2: -38, foot: 12 },
-  legF: { a1: -34 + Math.sin(t * 1.6 + 1) * 6, a2: -22, foot: 8 },
-  armN: { a1: 62 + Math.sin(t * 1.3) * 8, a2: 28, hand: 'open' },
-  armF: { a1: -40 + Math.sin(t * 1.3 + 1) * 8, a2: 12, hand: 'open' },
-  head: 'smile',
-  headDy: Math.sin(t * 1.4) * 3,
-  pad: null,
-});
-
 export const HURT: DebhPose = {
   lean: -15,
   legN: { a1: 22, a2: -26, foot: 10 },
@@ -285,7 +275,6 @@ export class DebhAnimator {
   private blinkFor = 0;
   private winkIn = 8 + Math.random() * 4;
   private winkFor = 0;
-  private drift = 0;
   private groundSmooth = STAND_GROUND_Y;
 
   reset() {
@@ -299,37 +288,38 @@ export class DebhAnimator {
     const dt = clamp(dtSec, 0.001, 0.05);
     this.idleClock += dt;
 
-    const speed = clamp(Math.abs(s.vx) / 9, 0, 1.6);
-    const moving = Math.abs(s.vx) > 0.6;
+    // With free movement (no gravity) she walks in every direction, up and down included, with
+    // the same side-view stride; only her speed counts, not which way it points.
+    const grounded = s.onGround || s.zeroG;
+    const pace = s.zeroG ? Math.hypot(s.vx, s.vy) : Math.abs(s.vx);
+    const speed = clamp(pace / 9, 0, 1.6);
+    const moving = pace > 0.6;
 
     // landing / jump bookkeeping
-    if (s.onGround && !this.wasOnGround && this.lastVy > 7) {
+    if (grounded && !this.wasOnGround && this.lastVy > 7) {
       this.landT = LAND_MS / 1000;
       this.squash = clamp(this.lastVy / 22, 0.35, 1);
     }
-    if (!s.onGround && s.jumpCount === 2 && this.lastJumpCount < 2) this.flipT = FLIP_MS / 1000;
-    this.wasOnGround = s.onGround;
-    this.lastVy = s.vy;
+    if (!grounded && s.jumpCount === 2 && this.lastJumpCount < 2) this.flipT = FLIP_MS / 1000;
+    this.wasOnGround = grounded;
+    this.lastVy = s.zeroG ? 0 : s.vy;
     this.lastJumpCount = s.jumpCount;
     this.landT = Math.max(0, this.landT - dt);
     this.flipT = Math.max(0, this.flipT - dt);
     this.squash = Math.max(0, this.squash - dt * 5.5);
-    if (s.onGround) this.flipT = 0;
+    if (grounded) this.flipT = 0;
 
     // base pose from locomotion
     let target: DebhPose;
     let spin = 0;
-    const flipping = this.flipT > 0 && !s.onGround;
-    if (s.zeroG) {
-      this.drift += dt;
-      target = FLOAT(this.drift, s.vx);
-    } else if (!s.onGround) {
+    const flipping = this.flipT > 0 && !grounded;
+    if (!grounded) {
       target = flipping ? TUCK : s.vy < -5 ? JUMP_UP : s.vy < 5 ? JUMP_APEX : FALL;
       if (flipping) spin = (1 - this.flipT / (FLIP_MS / 1000)) * Math.PI * 2 * (s.direction === 'right' ? 1 : 1);
     } else if (this.landT > 0) {
       target = LAND;
     } else if (moving) {
-      this.runPhase += (Math.abs(s.vx) * dt * 60) / 150 * (s.speedBoost ? 1.1 : 1);
+      this.runPhase += (pace * dt * 60) / 150 * (s.speedBoost ? 1.1 : 1);
       target = runPose(this.runPhase, speed, s.speedBoost);
     } else {
       target = idlePose(this.idleClock);
@@ -359,7 +349,7 @@ export class DebhAnimator {
         this.blinkIn = 2.6 + Math.random() * 3.4;
         this.blinkFor = 0.11;
       }
-      if (this.winkIn <= 0 && s.onGround && !moving) {
+      if (this.winkIn <= 0 && grounded && !moving) {
         this.winkIn = 9 + Math.random() * 6;
         this.winkFor = 0.5;
       }
@@ -368,21 +358,21 @@ export class DebhAnimator {
     }
 
     // smooth towards the target (fast enough to keep the stride crisp)
-    const k = s.onGround && moving ? 1 - Math.exp(-dt * 48) : 1 - Math.exp(-dt * 26);
+    const k = grounded && moving ? 1 - Math.exp(-dt * 48) : 1 - Math.exp(-dt * 26);
     this.current = lerpPose(this.current, target, k);
 
     // squash & stretch
-    const stretch = s.onGround || s.zeroG ? 0 : clamp(-s.vy * 0.004, -0.05, 0.07);
+    const stretch = grounded ? 0 : clamp(-s.vy * 0.004, -0.05, 0.07);
     const sy = 1 + stretch - this.squash * 0.15;
     const sx = 1 - stretch * 0.6 + this.squash * 0.1;
 
-    // keep the planted foot on the ground while running; in the air hang from the standing reference
-    const wantGround = s.onGround && !s.zeroG ? groundLineY(this.current) : STAND_GROUND_Y;
+    // keep the planted foot on the ground while she walks; in the air hang from the standing reference
+    const wantGround = grounded ? groundLineY(this.current) : STAND_GROUND_Y;
     this.groundSmooth += (wantGround - this.groundSmooth) * (1 - Math.exp(-dt * 30));
 
     return {
       pose: this.current,
-      spin: s.zeroG ? clamp(s.vy * 0.02, -0.35, 0.35) * (s.direction === 'right' ? 1 : -1) : spin,
+      spin,
       squashX: sx,
       squashY: sy,
       groundY: this.groundSmooth,

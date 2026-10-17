@@ -26,7 +26,6 @@ import {
   COLLECTIBLE_POINTS,
   ENEMY_DEFEAT_POINTS,
   CHECKPOINT_POINTS,
-  PLAYER_HEIGHT,
   PLAYER_PROJECTILE_SPEED,
   PLAYER_PROJECTILE_WIDTH,
   PLAYER_PROJECTILE_HEIGHT,
@@ -51,6 +50,7 @@ import {
   GAME_WIDTH,
   GAME_HEIGHT,
   COLLECTIBLE_TYPES,
+  MAZE_PICKUP_MARGIN,
 } from '../constants';
 import {
   World,
@@ -340,8 +340,8 @@ function updatePlayerShooting(w: World): void {
   p.shootAnim = p.shootCooldown * 0.9 + 140;
 
   // Shots leave from the gamepad she holds out: shoulder height, a bit along the aim direction.
-  const muzzleX = p.x + p.width / 2 + (p.aimX ?? 1) * MUZZLE_REACH;
-  const muzzleY = p.y + p.height - SHOULDER_HEIGHT + (p.aimY ?? 0) * MUZZLE_REACH;
+  const muzzleX = p.x + p.width / 2 + (p.aimX ?? 1) * MUZZLE_REACH * w.playerScale;
+  const muzzleY = p.y + p.height - SHOULDER_HEIGHT * w.playerScale + (p.aimY ?? 0) * MUZZLE_REACH * w.playerScale;
   const spawnX = muzzleX - PLAYER_PROJECTILE_WIDTH / 2;
   const spawnY = muzzleY - PLAYER_PROJECTILE_HEIGHT / 2;
   spawnParticles(w, spawnX + 10, spawnY + 10, '#00e5ff', 3);
@@ -630,9 +630,10 @@ function checkPlayerDamage(w: World): void {
   const p = w.player;
   if (p.isInvincible) return;
   let hit = false;
+  const k = w.playerScale; // a smaller Debh keeps the same proportion of forgiveness
 
   w.projectiles = w.projectiles.filter(proj => {
-    if (areHurtboxesColliding(p, proj, 8, 6, 4, 4)) {
+    if (areHurtboxesColliding(p, proj, 8 * k, 6 * k, 4, 4)) {
       hit = true;
       return false;
     }
@@ -641,7 +642,7 @@ function checkPlayerDamage(w: World): void {
 
   if (!hit && !w.boss) {
     for (const en of w.enemies) {
-      if (en.state === 'active' && areHurtboxesColliding(p, en, 9, 7, 7, 6)) {
+      if (en.state === 'active' && areHurtboxesColliding(p, en, 9 * k, 7 * k, 7, 6)) {
         hit = true;
         break;
       }
@@ -1321,7 +1322,7 @@ function updateCheckpoints(w: World): void {
   for (const cp of w.checkpoints) {
     if (!cp.activated && areRectsColliding(p, cp)) {
       cp.activated = true;
-      w.respawnPoint = { x: cp.x, y: cp.y + cp.height - PLAYER_HEIGHT - 4 };
+      w.respawnPoint = { x: cp.x, y: cp.y + cp.height - p.height - 4 };
       const cx = cp.x + cp.width / 2;
       const cy = cp.y + 20;
       sound(w, 'checkpoint');
@@ -1333,11 +1334,20 @@ function updateCheckpoints(w: World): void {
   }
 }
 
+/** What touches items and the exit: in the labyrinth her small footprint is widened a little. */
+function pickupRect(w: World): Rect {
+  const p = w.player;
+  if (!w.maze) return p;
+  const m = MAZE_PICKUP_MARGIN;
+  return { x: p.x - m, y: p.y - m, width: p.width + m * 2, height: p.height + m * 2 };
+}
+
 function updateItems(w: World): void {
   const p = w.player;
   if (w.boss) return;
+  const reach = pickupRect(w);
   w.items = w.items.filter(item => {
-    if (!areRectsColliding(p, item)) return true;
+    if (!areRectsColliding(reach, item)) return true;
     const ix = item.x + item.width / 2;
     const iy = item.y + item.height / 2;
     addScore(w, COLLECTIBLE_POINTS);
@@ -1377,7 +1387,7 @@ export function collectiblesLeft(w: World): number {
 
 function updateGoal(w: World): void {
   if (!w.goal || w.boss || w.status !== 'playing') return;
-  if (collectiblesLeft(w) !== 0 || !areRectsColliding(w.player, w.goal)) return;
+  if (collectiblesLeft(w) !== 0 || !areRectsColliding(pickupRect(w), w.goal)) return;
 
   const gx = w.goal.x + w.goal.width / 2;
   const gy = w.goal.y + w.goal.height / 2;

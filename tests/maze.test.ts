@@ -14,8 +14,17 @@ import {
   isOpen,
   mulberry32,
   pathBetween,
+  areHurtboxesColliding,
 } from '../engine';
-import { PLAYER_WIDTH, PLAYER_HEIGHT, MAZE_PLAYER_SPEED } from '../constants';
+import {
+  PLAYER_WIDTH,
+  PLAYER_HEIGHT,
+  MAZE_PLAYER_SPEED,
+  MAZE_PLAYER_SCALE,
+  MAZE_PLAYER_WIDTH,
+  MAZE_PLAYER_HEIGHT,
+  MAZE_PICKUP_MARGIN,
+} from '../constants';
 import { GAME_WIDTH, GAME_HEIGHT } from '../constants';
 import type { LevelData } from '../types';
 
@@ -90,6 +99,84 @@ describe('maze generator', () => {
   });
 });
 
+describe('Debh in the labyrinth', () => {
+  const m = labyrinth.maze as NonNullable<LevelData['maze']>;
+  const c = corridor(m);
+  const k = MAZE_PLAYER_SCALE;
+  // the same padding the engine uses for walkers touching her (checkPlayerDamage)
+  const touches = (p: { x: number; y: number; width: number; height: number }, pk: number, e: { x: number; y: number; width: number; height: number }) =>
+    areHurtboxesColliding(p, e, 9 * pk, 7 * pk, 7, 6);
+
+  it('is drawn smaller and has a low footprint, centred where the start cell is', () => {
+    const w = createWorld({ levels: [labyrinth], rng: mulberry32(1) });
+    expect(w.playerScale).toBe(MAZE_PLAYER_SCALE);
+    expect(w.player.width).toBe(MAZE_PLAYER_WIDTH);
+    expect(w.player.height).toBe(MAZE_PLAYER_HEIGHT);
+    expect(makeFrame(w).playerScale).toBe(MAZE_PLAYER_SCALE);
+    const start = cellCenter(m, 0, 0);
+    expect(w.player.x + w.player.width / 2).toBeCloseTo(start.x, 6);
+    expect(w.player.y + w.player.height / 2).toBeCloseTo(start.y, 6);
+
+    const plain = createWorld({ rng: mulberry32(1) }); // every other level keeps the full body
+    expect(plain.playerScale).toBe(1);
+    expect(plain.player.width).toBe(PLAYER_WIDTH);
+    expect(plain.player.height).toBe(PLAYER_HEIGHT);
+  });
+
+  it('can slip past a walker that sits in the middle of a horizontal corridor', () => {
+    const walker = { x: 0, y: (c - 50) / 2, width: 50, height: 50 }; // walkers re-centre in every cell
+    const flyer = { x: 0, y: (c - 44) / 2, width: 60, height: 44 };
+    for (const e of [walker, flyer]) {
+      const top = { x: 0, y: 0, width: MAZE_PLAYER_WIDTH, height: MAZE_PLAYER_HEIGHT };
+      const bottom = { ...top, y: c - MAZE_PLAYER_HEIGHT };
+      expect(touches(top, k, e)).toBe(false);
+      expect(touches(bottom, k, e)).toBe(false);
+      // and with room to spare: at least 20 px between the two hurtboxes
+      const gap = e.y + 6 - (top.y + top.height - 7 * k);
+      expect(gap).toBeGreaterThanOrEqual(20);
+    }
+  });
+
+  it('could not before: the old 54x90 body filled a 200 px corridor next to a walker', () => {
+    const walker = { x: 0, y: (c - 50) / 2, width: 50, height: 50 };
+    const top = { x: 0, y: 0, width: PLAYER_WIDTH, height: PLAYER_HEIGHT };
+    const bottom = { ...top, y: c - PLAYER_HEIGHT };
+    expect(touches(top, 1, walker) && touches(bottom, 1, walker)).toBe(true);
+  });
+
+  it('picks up items and takes the exit a little before the footprint touches them', () => {
+    const w = createWorld({ levels: [labyrinth], rng: mulberry32(1) });
+    w.enemies = [];
+    const item = w.items.find(i => i.type === 'joystick')!;
+    const gap = MAZE_PICKUP_MARGIN - 4;
+    w.player.x = item.x - w.player.width - gap; // clear of the item, but inside the margin
+    w.player.y = item.y + (item.height - w.player.height) / 2;
+    const before = w.items.length;
+    step(w);
+    expect(w.items.length).toBe(before - 1);
+
+    const far = createWorld({ levels: [labyrinth], rng: mulberry32(1) });
+    far.enemies = [];
+    const other = far.items.find(i => i.type === 'floppy')!;
+    far.player.x = other.x - far.player.width - MAZE_PICKUP_MARGIN - 6; // just outside the margin
+    far.player.y = other.y + (other.height - far.player.height) / 2;
+    const n = far.items.length;
+    step(far);
+    expect(far.items.length).toBe(n);
+  });
+
+  it('shoots from her (smaller) gamepad: the muzzle sits at her shoulder height, scaled', () => {
+    const w = createWorld({ levels: [labyrinth], rng: mulberry32(1) });
+    w.enemies = [];
+    w.input = { ...w.input, shoot: true };
+    step(w);
+    const shot = w.playerProjectiles[0];
+    expect(shot).toBeDefined();
+    const feet = w.player.y + w.player.height;
+    expect(feet - (shot.y + shot.height / 2)).toBeCloseTo(78 * k, 6); // shoulder: 78 px above her feet at full size
+  });
+});
+
 describe('the labyrinth level', () => {
   it('is the last level and has a corridor wide enough for the player', () => {
     expect(labyrinthIndex).toBe(levels.length - 1);
@@ -99,7 +186,7 @@ describe('the labyrinth level', () => {
   });
 
   it('zooms in so the map stays hidden, and gives a sane time limit', () => {
-    expect(labyrinth.zoom).toBeGreaterThanOrEqual(1.4);
+    expect(labyrinth.zoom).toBeGreaterThanOrEqual(1.2);
     expect(labyrinth.timeLimit).toBeGreaterThanOrEqual(600);
     expect(labyrinth.timeLimit).toBeLessThanOrEqual(1800);
   });

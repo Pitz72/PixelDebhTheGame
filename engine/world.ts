@@ -20,6 +20,9 @@ import {
   PLAYER_WIDTH,
   PLAYER_HEIGHT,
   PLAYER_LEGACY_HEIGHT,
+  MAZE_PLAYER_SCALE,
+  MAZE_PLAYER_WIDTH,
+  MAZE_PLAYER_HEIGHT,
   BOSS_INITIAL_VX,
   BOSS_INITIAL_VY,
   FLYER_SPEED,
@@ -104,6 +107,8 @@ export interface World {
   maze: MazeData | null;
   /** Camera zoom on the player: 1 shows the whole screen, more shows less of the map. */
   zoom: number;
+  /** How big Debh is drawn (1 = normal); the labyrinth uses a smaller one with a smaller body. */
+  playerScale: number;
   /** Increments every time a level is (re)loaded, so renderers know when to rebuild static content. */
   levelSerial: number;
 
@@ -202,6 +207,7 @@ export function createWorld(opts: CreateWorldOptions = {}): World {
     levelHeight: GAME_HEIGHT,
     maze: null,
     zoom: 1,
+    playerScale: 1,
     levelSerial: 0,
     isGodMode: false,
     timeRemaining: null,
@@ -371,15 +377,31 @@ export function loadLevel(w: World, levelIndex: number): void {
   w.levelHeight = height;
   w.maze = levelData.maze ?? null;
   w.zoom = levelData.zoom ?? 1;
-  const startY = levelData.playerStart.y - (PLAYER_HEIGHT - PLAYER_LEGACY_HEIGHT);
-  w.respawnPoint = { x: levelData.playerStart.x, y: startY };
+  // playerStart is for the legacy body; the labyrinth swaps it for the smaller footprint, same centre
+  let spawn = {
+    x: levelData.playerStart.x,
+    y: levelData.playerStart.y - (PLAYER_HEIGHT - PLAYER_LEGACY_HEIGHT),
+    width: PLAYER_WIDTH,
+    height: PLAYER_HEIGHT,
+  };
+  w.playerScale = 1;
+  if (w.maze) {
+    w.playerScale = MAZE_PLAYER_SCALE;
+    spawn = {
+      x: spawn.x + (PLAYER_WIDTH - MAZE_PLAYER_WIDTH) / 2,
+      y: spawn.y + (PLAYER_HEIGHT - MAZE_PLAYER_HEIGHT) / 2,
+      width: MAZE_PLAYER_WIDTH,
+      height: MAZE_PLAYER_HEIGHT,
+    };
+  }
+  w.respawnPoint = { x: spawn.x, y: spawn.y };
   const cam = cameraFor(w, levelData.playerStart.x, levelData.playerStart.y);
   w.cameraX = cam.x;
   w.cameraY = cam.y;
   w.prevCameraX = w.cameraX;
   w.prevCameraY = w.cameraY;
 
-  w.player = { ...emptyPlayer(), x: levelData.playerStart.x, y: startY };
+  w.player = { ...emptyPlayer(), x: spawn.x, y: spawn.y, width: spawn.width, height: spawn.height };
 
   w.platforms = levelData.platforms;
   w.checkpoints = (levelData.checkpoints || []).map((cp, idx) => ({

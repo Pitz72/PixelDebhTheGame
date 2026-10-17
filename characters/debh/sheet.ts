@@ -13,7 +13,6 @@ import {
   HURT,
   CARRY,
   CHEER,
-  FLOAT,
   throwPose,
   aimPose,
 } from './anim';
@@ -43,7 +42,6 @@ const cells: Array<[string, DebhPose]> = [
   ['shoot up', aimPose(idlePose(0), 0.7, -0.7)],
   ['shoot down', aimPose(idlePose(0), 0.7, 0.7)],
   ['cheer', CHEER(0.3)],
-  ['zero-g', FLOAT(0.5, 0)],
 ];
 
 async function main() {

@@ -297,6 +297,8 @@ class PlayerView {
 
     this.rig.apply(out.pose);
     this.root.position.set(this.cx, this.feetY);
+    // the whole figure (aura and shield too) shrinks about her feet, which sit on the body's bottom
+    this.root.scale.set(frame.playerScale);
     this.holder.scale.set(dir * RIG_SCALE * out.squashX, RIG_SCALE * out.squashY);
     // rotate about the hip (somersault), keeping the planted foot where it is
     this.shifted.pivot.set(HIP[0], HIP[1]);

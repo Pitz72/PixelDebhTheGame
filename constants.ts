@@ -27,7 +27,17 @@ export const PLAYER_RAPID_SHOOT_COOLDOWN = 80; // in ms for Boss 3
 // Labyrinth (final level): crisp four-way movement, camera zoomed on the player
 export const MAZE_PLAYER_SPEED = 9;
 export const MAZE_PLAYER_FAST_SPEED = 14;
-export const MAZE_ZOOM = 1.6;
+export const MAZE_ZOOM = 1.3;
+/**
+ * In the labyrinth Debh is drawn smaller and collides with a low footprint at her feet (like a
+ * top-down adventure): the sprite may overhang the walls above her, so she has room to dodge in a
+ * 200 px corridor. A 54x90 body left about 2 px between her and a walker in the middle of it.
+ */
+export const MAZE_PLAYER_SCALE = 0.8;
+export const MAZE_PLAYER_WIDTH = 44;
+export const MAZE_PLAYER_HEIGHT = 56;
+/** Items and the exit are picked up a bit before the footprint touches them. */
+export const MAZE_PICKUP_MARGIN = 14;
 
 // Player Projectile
 export const PLAYER_PROJECTILE_WIDTH = 24;

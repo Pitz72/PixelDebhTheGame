@@ -30,8 +30,10 @@ export interface Frame {
   timeRemaining: number | null;
   damageFlash: boolean;
   collectiblesLeft: number;
-  /** Gravity-free level or arena: the character floats instead of running. */
+  /** Gravity-free level or arena: free movement in every direction (she walks, she does not fly). */
   zeroG: boolean;
+  /** How big Debh is drawn (1 = normal). */
+  playerScale: number;
   /** A labyrinth: crisp movement, walls drawn as neon walls, no progress bar. */
   maze: boolean;
   /** Camera zoom on the player. */
@@ -77,6 +79,7 @@ export function makeFrame(w: World): Frame {
     damageFlash: w.damageFlash > 0,
     collectiblesLeft: collectiblesLeft(w),
     zeroG: isZeroG(w),
+    playerScale: w.playerScale,
     maze: w.maze !== null,
     zoom: w.zoom,
 
