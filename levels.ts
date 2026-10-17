@@ -63,6 +63,12 @@ interface ExpansionConfig {
   collectibleInterval: number;
   /** Kinds of collectible the generated sectors hand out, in turn. Default: joystick, floppy, cartridge. */
   collectibleTypes?: CollectibleType[];
+  /**
+   * Where the checkpoint of the original section stands: its x and the top of the platform it stands on (both
+   * as they end up in the built level). By default it stands on the floor at x 2600 (or 300 before the end of
+   * the section), which is only right when the floor is there: a level with a pit at that spot sets this.
+   */
+  baseCheckpoint?: { x: number; platformY: number };
 }
 
 /**
@@ -122,8 +128,8 @@ function buildExponentialExtension(
 
   // Checkpoint at the end of the original base section
   checkpoints.push({
-    x: Math.min(cfg.baseEndX - 300, 2600),
-    y: floorY - 96,
+    x: cfg.baseCheckpoint?.x ?? Math.min(cfg.baseEndX - 300, 2600),
+    y: (cfg.baseCheckpoint?.platformY ?? floorY) - 96,
     width: 48,
     height: 96,
   });
@@ -456,6 +462,9 @@ const level3 = buildExponentialExtension(introduce(rawLevel3, 'token'), {
   allowPits: true,
   allowedEnemies: ['base', 'jumper'],
   collectibleInterval: 2,
+  // The floor has a pit from 2250 to 3300, so the default spot (x 2600 on the floor) hung in the void: the
+  // checkpoint stands on the middle platform of the crossing (x 2850-3190, top at 900 once the level is built).
+  baseCheckpoint: { x: 2990, platformY: 900 },
 });
 
 // --- LEVEL 4 — BOSS 1: Cyclops Frog (Arena Expanded +40%: 2688 x 1200 px) ---

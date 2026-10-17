@@ -145,6 +145,43 @@ describe('platform levels are completable', () => {
   });
 });
 
+describe('the checkpoints of the platform levels', () => {
+  levels.forEach((level, i) => {
+    if (level.boss || level.isZeroG || !level.checkpoints?.length) return;
+    describe(`#${i + 1} ${level.name}`, () => {
+      const spots = spotsOf(level);
+      const reach = reachablePlatforms(level, true);
+
+      level.checkpoints!.forEach((cp, n) => {
+        const bottom = cp.y + cp.height;
+        // the platform it stands on: its top is at the checkpoint's feet and it spans the whole checkpoint
+        const supports = spots.map((s, idx) => ({ s, idx })).filter(({ s }) => Math.abs(s.y - bottom) <= 2 && s.x <= cp.x && s.x + s.width >= cp.x + cp.width);
+
+        it(`checkpoint ${n + 1} (x ${cp.x}) stands on a platform, not in the air`, () => {
+          expect(supports.length).toBeGreaterThan(0);
+        });
+
+        it(`checkpoint ${n + 1} (x ${cp.x}) stands on a platform the player can reach`, () => {
+          expect(supports.some(({ idx }) => reach.has(idx))).toBe(true);
+        });
+
+        it(`checkpoint ${n + 1} (x ${cp.x}) switches on when she stands there`, () => {
+          const w = worldOf(i);
+          w.enemies.length = 0; // a walker may start right on the spot (level 11's first one does): this checks the checkpoint, not the fight
+          const p = w.player;
+          p.x = cp.x;
+          p.y = bottom - p.height;
+          p.vx = 0;
+          p.vy = 0;
+          p.isOnGround = true;
+          step(w);
+          expect(w.checkpoints[n].activated).toBe(true);
+        });
+      });
+    });
+  });
+});
+
 // ---------------------------------------------------------------------------
 // The optional routes, played by a robot on the real engine
 // ---------------------------------------------------------------------------
