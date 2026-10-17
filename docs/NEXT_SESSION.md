@@ -43,6 +43,7 @@ npm run desktop        # app Tauri in finestra (dev), hot reload
 npm test               # 385 test (motore, input, livelli, raggiungibilita', labirinto, audio, oggetti)
 npm run typecheck
 npx tauri build --no-bundle        # exe di release (Windows), circa 1-3 minuti
+npm run exe                        # come sopra, poi copia l'exe in exe/PixelDebh-<versione>.exe (cartella nella root, fuori da git)
 npx tauri build --bundles nsis     # installatore Windows
 ```
 

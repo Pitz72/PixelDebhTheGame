@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# The release exes, copied here by `npm run exe` to hand out (never committed)
+exe/
