@@ -1,18 +1,22 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useGameScale } from './hooks/useGameScale';
 import StartScreen from './components/StartScreen';
 import GameScreen from './GameScreen';
 import CompletedScreen from './components/CompletedScreen';
 import GameoverScreen from './components/GameoverScreen';
 import PixelArcadeIntro from './components/PixelArcadeIntro';
+import BootIntros from './components/BootIntros';
+import AiNotice from './components/AiNotice';
 import HighscoreScreen from './components/HighscoreScreen';
 import EnterHighscoreScreen from './components/EnterHighscoreScreen';
 import AudioOptions from './components/AudioOptions';
 import TrophyScreen from './components/TrophyScreen';
+import UpdateBanner, { UpdateStatus } from './components/UpdateBanner';
 import { GameState } from './types';
 import { GAME_WIDTH, GAME_HEIGHT } from './constants';
 import * as highscoreService from './services/highscoreService';
 import * as soundService from './services/soundService';
+import { checkForUpdate, openPage, UpdateInfo } from './services/updateService';
 import { isTauri, setFullscreen, toggleFullscreen } from './services/platform';
 
 interface Carry {
@@ -21,7 +25,7 @@ interface Carry {
 }
 
 function App() {
-  const [gameState, setGameState] = useState<GameState>('intro');
+  const [gameState, setGameState] = useState<GameState>('boot');
   const [attractScreen, setAttractScreen] = useState<'start' | 'highscore'>('start');
   const [gameId, setGameId] = useState(1);
   const [finalScore, setFinalScore] = useState(0);
@@ -30,6 +34,10 @@ function App() {
   const [carry, setCarry] = useState<Carry>({ score: 0 });
   const [showOptions, setShowOptions] = useState(false);
   const [showTrophies, setShowTrophies] = useState(false);
+  // A newer version on GitHub (looked for once, when the title screen first appears)
+  const [update, setUpdate] = useState<UpdateInfo | null>(null);
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>('available');
+  const [updateError, setUpdateError] = useState('');
   const { dimensions, margins } = useGameScale();
 
   // The desktop app always starts fullscreen (window config), so nothing to request there.
@@ -42,6 +50,32 @@ function App() {
   const toggleAppFullscreen = useCallback(() => {
     void toggleFullscreen();
   }, []);
+
+  // Look for a newer version once, the first time a title screen shows (never during a game).
+  const updateChecked = useRef(false);
+  useEffect(() => {
+    if (updateChecked.current || (gameState !== 'start' && gameState !== 'highscore')) return;
+    updateChecked.current = true;
+    void checkForUpdate().then(found => {
+      if (found) setUpdate(found);
+    });
+  }, [gameState]);
+
+  // U: install the update (installed copies) or open its page (portable copies and packages).
+  const runUpdate = useCallback(async (found: UpdateInfo) => {
+    if (!found.canInstall) {
+      void openPage(found.releaseUrl);
+      return;
+    }
+    if (updateStatus === 'installing') return;
+    setUpdateStatus('installing');
+    try {
+      await found.install(); // restarts the game when it is done
+    } catch (error) {
+      setUpdateError(error instanceof Error ? error.message : String(error));
+      setUpdateStatus('failed');
+    }
+  }, [updateStatus]);
 
   // Global keys: F / F11 / Alt+Enter toggle fullscreen, M toggles mute
   // (F and M are ignored while typing initials).
@@ -64,13 +98,19 @@ function App() {
         setShowOptions(true);
       } else if (key === 't' && (gameState === 'start' || gameState === 'highscore')) {
         setShowTrophies(true);
+      } else if (key === 'u' && update && (gameState === 'start' || gameState === 'highscore')) {
+        runUpdate(update);
       } else if (gameState === 'intro') {
         requestAppFullscreen();
       }
     };
     window.addEventListener('keydown', handleGlobalKey);
     return () => window.removeEventListener('keydown', handleGlobalKey);
-  }, [gameState, requestAppFullscreen, toggleAppFullscreen]);
+  }, [gameState, requestAppFullscreen, toggleAppFullscreen, update, runUpdate]);
+
+  // After the intros (Runtime, Pixel Debh) comes the note on the AI, then the game's own intro.
+  const handleBootDone = useCallback(() => setGameState('notice'), []);
+  const handleNoticeDone = useCallback(() => setGameState('intro'), []);
 
   const handleIntroComplete = useCallback(() => {
     requestAppFullscreen();
@@ -163,6 +203,8 @@ function App() {
 
   const renderContent = () => {
     switch (gameState) {
+      case 'notice':
+        return <AiNotice onDone={handleNoticeDone} />;
       case 'intro':
         return <PixelArcadeIntro onIntroComplete={handleIntroComplete} />;
       case 'start':
@@ -207,6 +249,9 @@ function App() {
     }
   };
 
+  // The intros are sized on the window, not on the 1920x1080 stage: they sit outside it.
+  if (gameState === 'boot') return <BootIntros onDone={handleBootDone} />;
+
   return (
     <div
       className="flex justify-center items-center w-screen h-screen bg-black"
@@ -232,6 +277,9 @@ function App() {
           {renderContent()}
           {showOptions && <AudioOptions onClose={() => setShowOptions(false)} />}
           {showTrophies && <TrophyScreen onClose={() => setShowTrophies(false)} />}
+          {update && (gameState === 'start' || gameState === 'highscore') && (
+            <UpdateBanner update={update} status={updateStatus} error={updateError} />
+          )}
         </div>
       </div>
     </div>

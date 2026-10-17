@@ -63,9 +63,14 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 -   **Mute:** `M`
 -   **Audio settings (volume, music, effects, mute):** `O` on the start screen and in the pause menu
 -   **Trophies:** `T` on the title screen and in the pause menu
+-   **Update:** `U` on the title screen when a new version is announced (updates an installed copy, opens the download page for a portable one)
 -   **Fullscreen / window:** `F`, `F11` or `Alt+Enter`
 -   **Graphics quality:** `Q` switches between High (dynamic lights, bloom) and Low; the game drops to Low by itself if it cannot hold 40 fps
 -   **Performance overlay:** `F3` (renderer, fps, quality, particle count)
+
+## Start-up
+
+The game opens on half a second of black, then the animated logo of **Runtime Multimedia** (a TV that turns on and writes the mark; code and score imported from *Il Relitto Silente*, `intro/`), half a second of black, the animated intro of the Pixel Debh channel (`public/intro/pixeldebh-intro.webm`, 28 s, rendered from the Remotion project), a note on how the game was made (the work of the author, with AI as a tool) and then the game's own title. Esc, Enter, Space or a click skip each of them. The title screens carry the credit **By Simone Pizzi - Runtime Multimedia**.
 
 ## Developer Features
 
@@ -99,7 +104,7 @@ npx tauri build --bundles deb,appimage  # Linux packages (build this on Linux)
 - Linux packages: `.deb`, `.rpm` and an `.AppImage`. The AppImage bundles GStreamer, which WebKitGTK needs for Web Audio; the `.deb` depends on the GStreamer base and good plugins.
 - Linux status: build, tests, launch (fullscreen), keyboard input and save file were checked on Ubuntu 24.04 (WSL2 with WSLg); the WebGL renderer runs on WebKitGTK there, but WSLg has no GPU acceleration (software GL, about 23 fps at 1080p, so the game switched itself to Low quality). It has not been tried yet on a native desktop with a real GPU, and audio has not been listened to. If the window comes up blank (seen with some NVIDIA/Wayland setups on WebKitGTK), the usual workaround is to start it with `WEBKIT_DISABLE_DMABUF_RENDERER=1`; that was not needed in the checks above.
 - The app always starts **fullscreen**, as a console-style desktop game should. `F`, `F11` or `Alt+Enter` drop to a 16:9 window (and back) for the current session only; it is not remembered. `npm run desktop` (dev mode) starts windowed so it does not take over your screen while you work.
-- The `Desktop build` GitHub workflow (`.github/workflows/desktop.yml`, run by hand or on a `v*` tag) builds the Windows installer and the Linux packages and uploads them as artifacts.
+- **Releases and updates.** The `Build and release` GitHub workflow (`.github/workflows/release.yml`) never runs by itself: it starts only when you run it from the Actions tab, and builds the Windows installer and portable exe and the Linux `.deb`, `.rpm` and AppImage (a draft release by default). The installed game (and the AppImage) look for a newer release on GitHub when the title screen first shows and update themselves with `U`; the portable exe and the Linux packages only show a notice with the link. How to publish a version, and the signing key it needs: `docs/RILASCIO.md`.
 
 Rendering is done by PixiJS (WebGL) in `renderer/`: parallax backdrops per world, dynamic 2D lights (an ambient light map multiplied over the scene, with soft lights on the player, items, enemies, projectiles, bosses and explosions), bloom, GPU particles, and interpolation between simulation steps so motion stays smooth on 144 Hz screens. The existing SVG art is rasterised into textures at start-up. If WebGL is not available the game falls back to the original DOM renderer (`components/DomScene.tsx`) and says so on screen for a few seconds (F3 shows the reason); adding `?dom` to the URL forces it for testing. The desktop app runs with a strict Content-Security-Policy, so Pixi is loaded with its CSP-safe build (`pixi.js/unsafe-eval`, no `eval` needed).
 

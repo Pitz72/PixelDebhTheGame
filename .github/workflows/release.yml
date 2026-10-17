@@ -1,0 +1,168 @@
+# Build and release PixelDebh: Retro-Rescue!
+#
+# THIS WORKFLOW NEVER RUNS BY ITSELF: no push, no tag and no schedule starts it. It starts only when you
+# decide, from the "Actions" tab of the repository -> "Build and release" -> "Run workflow" (or with
+# `gh workflow run release.yml -f mode=draft`).
+#
+# The version being built is the one in package.json (and src-tauri/tauri.conf.json, src-tauri/Cargo.toml: the
+# first job checks that the three agree). Pick what to do with `mode`:
+#   build-only  builds Windows and Linux and keeps the files as downloadable artifacts of the run. Nothing is
+#               published; use it to try the build.
+#   draft       also creates (or updates) a DRAFT release `v<version>` with every file and the update manifest
+#               `latest.json`. A draft is invisible to players and to the games that look for updates: read
+#               it, then press "Publish release" on GitHub when you are happy.
+#   publish     same, but the release is published straight away: it becomes the "Latest" release and every
+#               installed game that looks for updates will offer it.
+#
+# What is built:
+#   Windows  the installer (NSIS, the file ending in `-setup.exe`) and the portable exe
+#            (`PixelDebh-<version>-portable.exe`, no installation)
+#   Linux    .deb, .rpm and AppImage
+# The files that update the installed games are signed with the private key kept in the repository secrets
+# `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` (the public key is in tauri.conf.json).
+# The games installed with the setup program (and the AppImage) update themselves; the portable exe and the
+# .deb / .rpm packages only show a notice with the link to the release (see services/updateService.ts).
+name: Build and release
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'What to do: build only, create a draft release, or publish the release'
+        type: choice
+        default: draft
+        options:
+          - build-only
+          - draft
+          - publish
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-22.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: The three version numbers agree
+        id: version
+        run: |
+          V=$(node -p "require('./package.json').version")
+          T=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          C=$(grep -m1 '^version' src-tauri/Cargo.toml | sed -E 's/version *= *"([^"]+)"/\1/')
+          echo "package.json=$V tauri.conf.json=$T Cargo.toml=$C"
+          test "$V" = "$T" && test "$V" = "$C" || { echo "::error::The version differs between package.json, tauri.conf.json and Cargo.toml"; exit 1; }
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+      - name: A release needs its own log file
+        if: inputs.mode != 'build-only'
+        run: test -f "log/${{ steps.version.outputs.version }}.md" || { echo "::error::log/${{ steps.version.outputs.version }}.md is missing"; exit 1; }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+  build:
+    needs: check
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            label: windows
+            bundles: nsis
+          - os: ubuntu-22.04
+            label: linux
+            bundles: deb,rpm,appimage
+    runs-on: ${{ matrix.os }}
+    env:
+      VERSION: ${{ needs.check.outputs.version }}
+      RELEASING: ${{ inputs.mode != 'build-only' }}
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+      APPIMAGE_EXTRACT_AND_RUN: 1
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Linux system libraries
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev \
+            libayatana-appindicator3-dev librsvg2-dev patchelf \
+            libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
+            gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - run: npm ci
+
+      # Build only: the files stay on the run page, nothing is published and nothing is signed.
+      - name: Build (no release)
+        if: inputs.mode == 'build-only'
+        run: npx tauri build --bundles ${{ matrix.bundles }}
+
+      # Release: tauri-action builds, signs the update files, creates the release `v<version>` and uploads
+      # the installers and `latest.json` (the manifest the installed games read).
+      - name: Build and release
+        if: inputs.mode != 'build-only'
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v${{ needs.check.outputs.version }}
+          releaseName: 'PixelDebh: Retro-Rescue! v${{ needs.check.outputs.version }}'
+          releaseBody: |
+            PixelDebh: Retro-Rescue! v${{ needs.check.outputs.version }}
+
+            What is new: https://github.com/${{ github.repository }}/blob/v${{ needs.check.outputs.version }}/log/${{ needs.check.outputs.version }}.md
+
+            Windows: install with the file ending in `-setup.exe` (the game then updates itself), or use the portable `PixelDebh-${{ needs.check.outputs.version }}-portable.exe` (no installation; it only tells you when a new version is out).
+            Linux: `.AppImage` (portable, updates itself), `.deb` or `.rpm`.
+
+            The unsigned installer may show a SmartScreen warning on Windows ("More info" -> "Run anyway").
+          releaseDraft: ${{ inputs.mode == 'draft' }}
+          prerelease: ${{ contains(needs.check.outputs.version, '-') }}
+          includeUpdaterJson: true
+          args: --bundles ${{ matrix.bundles }} --config src-tauri/tauri.release.conf.json
+
+      # The portable Windows exe: the bare program, copied next to the installer in the release.
+      - name: Portable exe (Windows)
+        if: matrix.os == 'windows-latest' && inputs.mode != 'build-only'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp src-tauri/target/release/pixeldebh.exe "PixelDebh-${VERSION}-portable.exe"
+          gh release upload "v${VERSION}" "PixelDebh-${VERSION}-portable.exe" --clobber
+
+      # Build only: keep the files on the run page.
+      - uses: actions/upload-artifact@v4
+        if: inputs.mode == 'build-only'
+        with:
+          name: pixeldebh-${{ matrix.label }}
+          if-no-files-found: error
+          path: |
+            src-tauri/target/release/bundle/nsis/*.exe
+            src-tauri/target/release/bundle/deb/*.deb
+            src-tauri/target/release/bundle/rpm/*.rpm
+            src-tauri/target/release/bundle/appimage/*.AppImage
+            src-tauri/target/release/pixeldebh.exe

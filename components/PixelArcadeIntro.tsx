@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import * as soundService from '../services/soundService';
+import CreditLine from './CreditLine';
 
 interface PixelArcadeIntroProps {
   onIntroComplete: () => void;
@@ -195,9 +196,7 @@ const PixelArcadeIntro: React.FC<PixelArcadeIntroProps> = ({ onIntroComplete }) 
         </p>
       </div>
 
-      <div className="absolute bottom-3 text-cyan-300/60 text-xs tracking-widest font-bold z-20">
-        V.{__APP_VERSION__} — OFFICIAL LOGO EDITION • ULTRA HD VECTOR ENGINE &amp; VISUAL FX
-      </div>
+      <CreditLine version />
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import * as highscoreService from '../services/highscoreService';
 import * as soundService from '../services/soundService';
+import CreditLine from './CreditLine';
 import { HighscoreEntry } from '../types';
 
 interface HighscoreScreenProps {
@@ -67,6 +68,7 @@ const HighscoreScreen: React.FC<HighscoreScreenProps> = ({ onStart }) => {
       <p className="text-3xl font-extrabold text-cyan-300 animate-blink mt-12 tracking-widest">
         PRESS ENTER TO START
       </p>
+      <CreditLine />
     </div>
   );
 };

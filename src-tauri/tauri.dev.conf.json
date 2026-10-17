@@ -12,7 +12,8 @@
         "center": true,
         "resizable": true,
         "fullscreen": false,
-        "backgroundColor": "#04010c"
+        "backgroundColor": "#04010c",
+        "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --autoplay-policy=no-user-gesture-required"
       }
     ]
   }

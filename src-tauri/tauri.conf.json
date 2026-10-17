@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "PixelDebh Retro-Rescue",
-  "version": "1.11.0",
+  "version": "1.12.0",
   "identifier": "com.pixeldebh.retrorescue",
   "build": {
     "frontendDist": "../dist",
@@ -21,7 +21,8 @@
         "center": true,
         "resizable": true,
         "fullscreen": true,
-        "backgroundColor": "#04010c"
+        "backgroundColor": "#04010c",
+        "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --autoplay-policy=no-user-gesture-required"
       }
     ],
     "security": {
@@ -29,10 +30,18 @@
       "devCsp": null
     }
   },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDNFMTgwRjNGNkY3QzgwNTIKUldSU2dIeHZQdzhZUGxDekV3amFuejNmQ0ZRR2lDeit0blZsbUdxcVcvQ1BBQ3NHckNBT2pXdmwK",
+      "endpoints": ["https://github.com/Pitz72/PixelDebhTheGame/releases/latest/download/latest.json"],
+      "windows": { "installMode": "passive" }
+    }
+  },
   "bundle": {
     "active": true,
     "targets": "all",
-    "publisher": "Pixel Debh",
+    "publisher": "Simone Pizzi - Runtime Multimedia",
+    "copyright": "© 2026 Simone Pizzi - Runtime Multimedia",
     "category": "Game",
     "shortDescription": "PixelDebh: Retro-Rescue! - arcade platformer",
     "longDescription": "PixelDebh: Retro-Rescue! is a retro arcade platformer: capture enemies, throw them at the others, collect the retro gear and beat three bosses.",

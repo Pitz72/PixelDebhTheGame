@@ -2,6 +2,7 @@ import React, { useEffect, useCallback, useState } from 'react';
 import { PlayerSprite, EnemySprite } from '../services/assetService';
 import * as soundService from '../services/soundService';
 import { trophyProgress } from '../services/trophyService';
+import CreditLine from './CreditLine';
 import { EnemyType } from '../types';
 
 interface StartScreenProps {
@@ -149,6 +150,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart }) => {
           </div>
         )}
       </div>
+      <CreditLine />
     </div>
   );
 };

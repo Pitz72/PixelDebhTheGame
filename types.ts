@@ -209,7 +209,7 @@ export interface LevelData {
   enemySpawns?: Omit<EnemySpawnPoint, 'timer'>[];
 }
 
-export type GameState = 'intro' | 'start' | 'playing' | 'level-cleared' | 'completed' | 'gameover' | 'highscore' | 'enter-highscore';
+export type GameState = 'boot' | 'notice' | 'intro' | 'start' | 'playing' | 'level-cleared' | 'completed' | 'gameover' | 'highscore' | 'enter-highscore';
 
 export interface HighscoreEntry {
   name: string;
