@@ -29,6 +29,17 @@ export async function setFullscreen(on: boolean): Promise<void> {
   }
 }
 
+/** Closes the game (the desktop app; a browser tab cannot close itself, so there it does nothing). */
+export async function quitApp(): Promise<void> {
+  if (!isTauri()) return;
+  try {
+    const { exit } = await import('@tauri-apps/plugin-process');
+    await exit(0);
+  } catch {
+    // nothing to do: the window stays open
+  }
+}
+
 export async function toggleFullscreen(): Promise<boolean> {
   const next = !(await isFullscreen());
   await setFullscreen(next);

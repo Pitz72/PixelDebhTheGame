@@ -425,6 +425,9 @@ export class GameRenderer {
   private themeTex: TextureSet['themes']['adventure'];
   private arena = false;
   private flashAlpha = 0;
+  /** The player's comfort settings: how much the screen shakes (0..1) and whether the boss-defeat flash shows. */
+  private shakeScale = 1;
+  private flashesOn = true;
   private bossFlashDone = -1;
   private lastNow = 0;
   private quality: Quality;
@@ -537,6 +540,13 @@ export class GameRenderer {
     return this.quality;
   }
 
+  /** What the player chose in the options, which can change while playing. */
+  setPreferences(p: { autoQuality: boolean; shake: number; flashes: boolean }): void {
+    this.opts.autoQuality = p.autoQuality;
+    this.shakeScale = Math.max(0, Math.min(1, p.shake));
+    this.flashesOn = p.flashes;
+  }
+
   setDebug(on: boolean): void {
     this.debug = on;
     this.debugText.visible = on;
@@ -599,7 +609,7 @@ export class GameRenderer {
 
     const camX = frame.prevCameraX + (frame.cameraX - frame.prevCameraX) * alpha;
     const camY = frame.prevCameraY + (frame.cameraY - frame.prevCameraY) * alpha;
-    const shake = frame.screenShake > 0.2 ? frame.screenShake * 1.8 : 0;
+    const shake = frame.screenShake > 0.2 ? frame.screenShake * 1.8 * this.shakeScale : 0;
     const shx = shake ? (Math.random() - 0.5) * shake : 0;
     const shy = shake ? (Math.random() - 0.5) * shake : 0;
     this.applyZoom(frame.zoom);
@@ -625,7 +635,7 @@ export class GameRenderer {
     const bossDown = frame.status === 'level-cleared' && frame.bosses.length > 0 && frame.bosses.every(b => b.hp <= 0);
     if (bossDown && this.bossFlashDone !== frame.levelSerial) {
       this.bossFlashDone = frame.levelSerial;
-      this.flashAlpha = 0.9;
+      this.flashAlpha = this.flashesOn ? 0.9 : 0;
     }
     this.flashAlpha = Math.max(0, this.flashAlpha - dt * 0.0022);
     this.flash.alpha = this.flashAlpha;

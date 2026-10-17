@@ -8,13 +8,14 @@
 //  It starts after half a second of black (`NERO_MS`), counted from when this component appears; the
 //  first 0.58 s of the logo's own timeline are black too, so they are skipped (`SALTO`) to make the
 //  black before the TV line really half a second.
-//  Esc, Enter, Space or a click skip it. With the system setting "reduce motion" it is not shown.
+//  Esc, Enter, Space or a click skip it. With "reduced motion" (the option, or the system asking for it) it is not shown.
 //  It is drawn in units of the window (vw / vh), so it must sit outside the scaled 1920x1080 stage.
 // ====================================================================
 import React, { useCallback, useEffect, useRef } from 'react';
 import LogoRuntime, { DURATA_RUNTIME, type Animabile } from './LogoRuntime';
 import { SuonoRuntime } from './runtimeSound';
 import * as soundService from '../services/soundService';
+import { reduceMotion } from '../services/settings';
 
 export const NERO_MS = 500;
 const SALTO = 0.58;
@@ -36,7 +37,7 @@ const RuntimeIntro: React.FC<RuntimeIntroProps> = ({ onDone }) => {
   }, []);
 
   useEffect(() => {
-    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+    if (reduceMotion()) {
       chiudi();
       return;
     }

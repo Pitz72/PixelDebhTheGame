@@ -1,14 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import * as highscoreService from '../services/highscoreService';
 import * as soundService from '../services/soundService';
-import CreditLine from './CreditLine';
+import { t, useLanguage } from '../services/i18n';
 import { HighscoreEntry } from '../types';
+import CreditLine from './CreditLine';
 
 interface HighscoreScreenProps {
+  /** Enter, Space, Escape or a click: back to the title menu (or, in `closing` mode, close the page). */
   onStart: () => void;
+  /** Shown as a page over the menu: it takes the keys it uses so the menu underneath stays still. */
+  closing?: boolean;
 }
 
-const HighscoreScreen: React.FC<HighscoreScreenProps> = ({ onStart }) => {
+const HighscoreScreen: React.FC<HighscoreScreenProps> = ({ onStart, closing = false }) => {
+  useLanguage();
   const [scores, setScores] = useState<HighscoreEntry[]>([]);
 
   useEffect(() => {
@@ -23,21 +28,27 @@ const HighscoreScreen: React.FC<HighscoreScreenProps> = ({ onStart }) => {
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
+      const k = e.key.toLowerCase();
+      if (k === 'enter' || k === ' ' || (closing && k === 'escape')) {
+        if (closing) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          if (e.repeat) return;
+        }
         handleStart();
       }
     },
-    [handleStart]
+    [handleStart, closing]
   );
 
   useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
+    window.addEventListener('keydown', handleKeyDown, closing);
+    return () => window.removeEventListener('keydown', handleKeyDown, closing);
+  }, [handleKeyDown, closing]);
 
   return (
     <div
-      className="w-full h-full bg-gradient-to-b from-[#050114] via-[#12062c] to-[#240a46] flex flex-col justify-center items-center text-center p-8 cursor-pointer"
+      className="relative w-full h-full bg-gradient-to-b from-[#050114] via-[#12062c] to-[#240a46] flex flex-col justify-center items-center text-center p-8 cursor-pointer"
       onClick={handleStart}
     >
       <h1
@@ -61,13 +72,11 @@ const HighscoreScreen: React.FC<HighscoreScreenProps> = ({ onStart }) => {
             </div>
           ))
         ) : (
-          <p className="text-3xl text-gray-400 py-8">Nessun punteggio registrato!</p>
+          <p className="text-3xl text-gray-400 py-8">{t('highscore.empty')}</p>
         )}
       </div>
 
-      <p className="text-3xl font-extrabold text-cyan-300 animate-blink mt-12 tracking-widest">
-        PRESS ENTER TO START
-      </p>
+      <p className="text-3xl font-extrabold text-cyan-300 animate-blink mt-12 tracking-widest">{t('highscore.back')}</p>
       <CreditLine />
     </div>
   );

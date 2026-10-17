@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Hud from './components/Hud';
 import DomScene from './components/DomScene';
-import AudioOptions from './components/AudioOptions';
-import TrophyScreen from './components/TrophyScreen';
+import ScreenOverlay, { type OverlayKind } from './components/ScreenOverlay';
+import MenuList from './components/MenuList';
 import TrophyToast, { TOAST_MS } from './components/TrophyToast';
 import * as soundService from './services/soundService';
-import * as storage from './services/storage';
+import { getSettings, updateSettings, useSettings } from './services/settings';
+import { padControls, padStart } from './engine/gamepad';
+import { readPad, suppressMenuPad } from './services/gamepadService';
+import { t, useLanguage } from './services/i18n';
 import { createTrophyTracker, TrophyTracker } from './services/trophyService';
 import type { TrophyDef } from './trophies';
 import { levels } from './levels';
@@ -26,6 +29,8 @@ import { Boss, ItemType } from './types';
 interface GameScreenProps {
   onGameOver: (score: number) => void;
   onCompleted: (score: number, lives: number) => void;
+  /** The player leaves the game from the pause menu. */
+  onQuit: (score: number) => void;
   loopCount: number;
   /** Score / lives carried over from the previous loop (New Game+). */
   initialScore?: number;
@@ -33,7 +38,6 @@ interface GameScreenProps {
 }
 
 const MAX_STEPS_PER_FRAME = 5;
-const QUALITY_KEY = 'pixelDebhQuality';
 
 type RenderMode = 'loading' | 'webgl' | 'dom';
 
@@ -99,6 +103,7 @@ const sameHud = (a: HudData, b: HudData): boolean =>
 const GameScreen: React.FC<GameScreenProps> = ({
   onGameOver,
   onCompleted,
+  onQuit,
   loopCount,
   initialScore = 0,
   initialLives,
@@ -108,7 +113,11 @@ const GameScreen: React.FC<GameScreenProps> = ({
     worldRef.current = createWorld({ loopCount, score: initialScore, lives: initialLives });
   }
   const inputRef = useRef<InputController | null>(null);
-  if (inputRef.current === null) inputRef.current = new InputController();
+  if (inputRef.current === null) {
+    inputRef.current = new InputController(getSettings().bindings);
+    inputRef.current.syncPad(padControls(readPad()));
+  }
+  const setPausedRef = useRef<(paused: boolean) => void>(() => {});
 
   const frameRef = useRef<Frame | null>(null);
   if (frameRef.current === null) frameRef.current = makeFrame(worldRef.current);
@@ -120,8 +129,13 @@ const GameScreen: React.FC<GameScreenProps> = ({
   const [hud, setHud] = useState<HudData>(() => deriveHud(frameRef.current as Frame));
   const [domFrame, setDomFrame] = useState<Frame>(() => frameRef.current as Frame);
   const [isPaused, setIsPaused] = useState(false);
-  const [showOptions, setShowOptions] = useState(false);
-  const [showTrophies, setShowTrophies] = useState(false);
+  // The page open over the pause menu (options, trophies, how to play), and the "leave the game?" question
+  const [overlay, setOverlay] = useState<OverlayKind | null>(null);
+  const [confirmQuit, setConfirmQuit] = useState(false);
+  const settings = useSettings();
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+  useLanguage();
   // Trophies earned and not yet announced: the banner shows them one at a time.
   const [toasts, setToasts] = useState<TrophyDef[]>([]);
   const trackerRef = useRef<TrophyTracker | null>(null);
@@ -132,15 +146,13 @@ const GameScreen: React.FC<GameScreenProps> = ({
   const [renderError, setRenderError] = useState<string | null>(null);
   const [showCompat, setShowCompat] = useState(true);
   const pausedRef = useRef(false);
-  const [quality, setQualityState] = useState<Quality>(() =>
-    storage.getItem(QUALITY_KEY) === 'low' ? 'low' : 'high'
-  );
+  const quality: Quality = settings.quality;
   const qualityRef = useRef<Quality>(quality);
   const debugRef = useRef(false);
   const showCompatRef = useRef(true);
 
-  const callbacksRef = useRef({ onGameOver, onCompleted });
-  callbacksRef.current = { onGameOver, onCompleted };
+  const callbacksRef = useRef({ onGameOver, onCompleted, onQuit });
+  callbacksRef.current = { onGameOver, onCompleted, onQuit };
 
   // Test probe, like window.__pdPerf: the scripts in tools/dev use it to jump to a level and read the
   // state in the release build, where the developer keys do not exist.
@@ -200,12 +212,31 @@ const GameScreen: React.FC<GameScreenProps> = ({
     setMode(m);
   };
 
-  const applyQuality = (q: Quality, persist = true) => {
+  const applyQuality = (q: Quality) => {
     qualityRef.current = q;
-    setQualityState(q);
     rendererRef.current?.setQuality(q);
-    if (persist) storage.setItem(QUALITY_KEY, q);
+    if (getSettings().quality !== q) updateSettings({ quality: q });
   };
+
+  // The settings, live: quality, the comfort options (shake, flashes), and the keys.
+  useEffect(() => {
+    qualityRef.current = settings.quality;
+    rendererRef.current?.setQuality(settings.quality);
+    rendererRef.current?.setPreferences({
+      autoQuality: settings.autoQuality,
+      shake: settings.shake / 100,
+      flashes: settings.flashes,
+    });
+  }, [settings.quality, settings.autoQuality, settings.shake, settings.flashes, mode]);
+  useEffect(() => {
+    inputRef.current?.setBindings(settings.bindings);
+  }, [settings.bindings]);
+
+  // While the game runs the pad belongs to it; in the pause menu it drives the menus again.
+  useEffect(() => {
+    suppressMenuPad(!isPaused);
+    return () => suppressMenuPad(false);
+  }, [isPaused]);
 
   // --- WebGL renderer ---------------------------------------------------------
   useEffect(() => {
@@ -227,7 +258,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
       ? Promise.reject(new Error('DOM renderer requested with ?dom'))
       : GameRenderer.create(mount, {
           quality: qualityRef.current,
-          autoQuality: true,
+          autoQuality: settingsRef.current.autoQuality,
           onQualityChange: q => applyQuality(q),
         })
     )
@@ -286,12 +317,16 @@ const GameScreen: React.FC<GameScreenProps> = ({
         soundService.pauseMusic();
         soundService.playSound('pause');
       } else {
-        setShowOptions(false);
-        setShowTrophies(false);
+        setOverlay(null);
+        setConfirmQuit(false);
+        // a button still down from the menu (the A that chose "resume") must not turn into a jump
+        input.syncPad(padControls(readPad()));
         soundService.resumeMusic();
         soundService.playSound('resume');
       }
     };
+
+    setPausedRef.current = setPaused;
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -314,14 +349,20 @@ const GameScreen: React.FC<GameScreenProps> = ({
         return;
       }
 
-      if (e.key.toLowerCase() === 'o' && pausedRef.current) {
-        if (!e.repeat) setShowOptions(true);
-        return;
-      }
-
-      if (e.key.toLowerCase() === 't' && pausedRef.current) {
-        if (!e.repeat) setShowTrophies(true);
-        return;
+      if (pausedRef.current && !e.repeat) {
+        const k = e.key.toLowerCase();
+        if (k === 'o') {
+          setOverlay('options');
+          return;
+        }
+        if (k === 't') {
+          setOverlay('trophies');
+          return;
+        }
+        if (k === 'h') {
+          setOverlay('howto');
+          return;
+        }
       }
 
       // Developer shortcuts exist only in dev builds (never in a shipped game).
@@ -391,6 +432,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
     let alpha = 0;
     let hitStopUntil = 0;
     let slowUntil = 0;
+    let startWasDown = padStart(readPad());
 
     const dispatchEvents = () => {
       const events = w.events.splice(0, w.events.length);
@@ -400,8 +442,10 @@ const GameScreen: React.FC<GameScreenProps> = ({
           case 'sound':
             soundService.playSound(e.name);
             // a few frames of hit-stop on damage, slow motion when a boss falls
-            if (e.name === 'damage') hitStopUntil = now + 80;
-            else if (e.name === 'bossDefeat') slowUntil = now + 1400;
+            if (settingsRef.current.hitStop) {
+              if (e.name === 'damage') hitStopUntil = now + 80;
+              else if (e.name === 'bossDefeat') slowUntil = now + 1400;
+            }
             break;
           case 'jingle':
             soundService.playJingle(e.name);
@@ -423,8 +467,15 @@ const GameScreen: React.FC<GameScreenProps> = ({
       const delta = Math.min(ts - last, 100);
       last = ts;
 
+      // the pad: Start pauses; the rest becomes the same controls as the keys
+      const pad = readPad();
+      const startDown = padStart(pad);
+      if (startDown && !startWasDown && !pausedRef.current) setPausedRef.current(true);
+      startWasDown = startDown;
+
       const live = w.status === 'playing' || w.status === 'level-cleared';
       if (live && !pausedRef.current && modeRef.current !== 'loading') {
+        input.setPad(padControls(pad));
         const now = performance.now();
         const scale = now < hitStopUntil ? 0 : now < slowUntil ? 0.3 : 1;
         acc += delta * scale;
@@ -471,7 +522,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
       <div ref={mountRef} className="absolute inset-0 z-0" />
       {mode === 'dom' && <DomScene frame={domFrame} />}
 
-      {hud.damageFlash && <div className="absolute inset-0 bg-red-600/45 z-50 pointer-events-none" />}
+      {hud.damageFlash && settings.flashes && <div className="absolute inset-0 bg-red-600/45 z-50 pointer-events-none" />}
 
       <Hud
         score={hud.score}
@@ -505,41 +556,63 @@ const GameScreen: React.FC<GameScreenProps> = ({
         </div>
       )}
 
-      {/* Pause Overlay */}
-      {isPaused && (
+      {/* Pause menu */}
+      {isPaused && !overlay && (
         <div className="absolute inset-0 bg-[#050114]/85 backdrop-blur-sm z-50 flex flex-col justify-center items-center text-white">
           <h2
-            className="text-7xl font-black tracking-widest text-cyan-300 mb-6"
+            className="text-7xl font-black tracking-widest text-cyan-300 mb-8"
             style={{ textShadow: '0 0 25px #00e5ff' }}
           >
-            PAUSA
+            {confirmQuit ? t('pause.quitAsk') : t('pause.title')}
           </h2>
-          <p className="text-2xl font-bold text-yellow-300 animate-blink mt-4">
-            PREMI ESC PER CONTINUARE
-          </p>
-          <div className="mt-12 bg-white/5 border border-cyan-500/30 rounded-2xl px-8 py-4 text-sm text-gray-300 space-y-1 text-center">
-            <p>
-              <strong className="text-cyan-400">[M]</strong> Muto •{' '}
-              <strong className="text-cyan-400">[O]</strong> Audio •{' '}
-              <strong className="text-cyan-400">[T]</strong> Trofei •{' '}
-              <strong className="text-cyan-400">[F]</strong> Schermo intero / finestra •{' '}
-              <strong className="text-cyan-400">[Q]</strong> Qualità grafica:{' '}
-              <span className="text-yellow-300">{quality === 'high' ? 'ALTA' : 'BASSA'}</span> •{' '}
-              <strong className="text-cyan-400">[F3]</strong> Prestazioni
+          {confirmQuit ? (
+            <MenuList
+              key="quit"
+              size="lg"
+              width={620}
+              initialId="no"
+              items={[
+                { id: 'no', label: t('pause.quitNo') },
+                { id: 'yes', label: t('pause.quitYes') },
+              ]}
+              onSelect={id => {
+                if (id === 'yes') callbacksRef.current.onQuit(worldRef.current?.score ?? 0);
+                else setConfirmQuit(false);
+              }}
+              onBack={() => setConfirmQuit(false)}
+            />
+          ) : (
+            <MenuList
+              key="pause"
+              size="lg"
+              width={620}
+              items={[
+                { id: 'resume', label: t('pause.resume') },
+                { id: 'options', label: t('menu.options') },
+                { id: 'trophies', label: t('menu.trophies') },
+                { id: 'howto', label: t('menu.howto') },
+                { id: 'quit', label: t('pause.quit') },
+              ]}
+              onSelect={id => {
+                if (id === 'resume') setPausedRef.current(false);
+                else if (id === 'quit') setConfirmQuit(true);
+                else setOverlay(id as OverlayKind);
+              }}
+              onBack={() => setPausedRef.current(false)}
+            />
+          )}
+          <p className="mt-10 text-sm text-gray-300">{t('pause.keys')}</p>
+          {import.meta.env.DEV && (
+            <p className="mt-2 text-sm text-gray-400">
+              DEBUG: <strong className="text-cyan-400">[L]</strong> skip level •{' '}
+              <strong className="text-cyan-400">[0]</strong> god mode •{' '}
+              <strong className="text-cyan-400">[9]</strong> final boss
             </p>
-            {import.meta.env.DEV && (
-              <p>
-                DEBUG: <strong className="text-cyan-400">[L]</strong> Salta Livello •{' '}
-                <strong className="text-cyan-400">[0]</strong> God Mode •{' '}
-                <strong className="text-cyan-400">[9]</strong> Boss Finale
-              </p>
-            )}
-          </div>
+          )}
         </div>
       )}
 
-      {isPaused && showOptions && <AudioOptions onClose={() => setShowOptions(false)} />}
-      {isPaused && showTrophies && <TrophyScreen onClose={() => setShowTrophies(false)} />}
+      {isPaused && overlay && <ScreenOverlay kind={overlay} onClose={() => setOverlay(null)} />}
 
       {toasts.length > 0 && <TrophyToast key={toasts[0].id} trophy={toasts[0]} />}
 

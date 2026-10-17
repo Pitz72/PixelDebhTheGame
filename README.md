@@ -54,6 +54,8 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 
 ## Controls
 
+The keys below are the defaults; every control can be given other keys (two each) in **Options > Controls**.
+
 -   **Move Left:** `A` or `Left Arrow`
 -   **Move Right:** `D` or `Right Arrow`
 -   **Jump:** `Spacebar` (Press twice for Double Jump)
@@ -61,8 +63,10 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 -   **Shoot (Boss Battles / Zero-G):** `Left Shift` (Hold movement keys to aim in 8 directions)
 -   **Pause:** `ESC` (the game also pauses by itself when the window loses focus)
 -   **Mute:** `M`
--   **Audio settings (volume, music, effects, mute):** `O` on the start screen and in the pause menu
--   **Trophies:** `T` on the title screen and in the pause menu
+-   **Options (audio, graphics, controls, language, accessibility):** `O` on the title screen and in the pause menu, or from the menus
+
+**Gamepad** (the standard layout: Xbox, PlayStation and most modern pads; it works in the menus too): `A` jump (and confirm), `X` or `Y` capture / launch, `B`, `RB`, `RT` or `LT` shoot, D-pad or left stick move and aim, `Start` pause, `B` back.
+-   **Trophies:** `T` on the title screen and in the pause menu (also in the menus)
 -   **Update:** `U` on the title screen when a new version is announced (updates an installed copy, opens the download page for a portable one)
 -   **Fullscreen / window:** `F`, `F11` or `Alt+Enter`
 -   **Graphics quality:** `Q` switches between High (dynamic lights, bloom) and Low; the game drops to Low by itself if it cannot hold 40 fps

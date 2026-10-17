@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useGameScale } from './hooks/useGameScale';
-import StartScreen from './components/StartScreen';
+import StartScreen, { type StartChoice } from './components/StartScreen';
 import GameScreen from './GameScreen';
 import CompletedScreen from './components/CompletedScreen';
 import GameoverScreen from './components/GameoverScreen';
@@ -9,15 +9,15 @@ import BootIntros from './components/BootIntros';
 import AiNotice from './components/AiNotice';
 import HighscoreScreen from './components/HighscoreScreen';
 import EnterHighscoreScreen from './components/EnterHighscoreScreen';
-import AudioOptions from './components/AudioOptions';
-import TrophyScreen from './components/TrophyScreen';
+import ScreenOverlay, { type OverlayKind } from './components/ScreenOverlay';
 import UpdateBanner, { UpdateStatus } from './components/UpdateBanner';
 import { GameState } from './types';
 import { GAME_WIDTH, GAME_HEIGHT } from './constants';
 import * as highscoreService from './services/highscoreService';
 import * as soundService from './services/soundService';
 import { checkForUpdate, openPage, UpdateInfo } from './services/updateService';
-import { isTauri, setFullscreen, toggleFullscreen } from './services/platform';
+import { isTauri, quitApp, setFullscreen, toggleFullscreen } from './services/platform';
+import { startMenuPad } from './services/gamepadService';
 
 interface Carry {
   score: number;
@@ -32,8 +32,8 @@ function App() {
   const [loopCount, setLoopCount] = useState(1);
   // Score and lives travel with the player from one loop (New Game+) to the next.
   const [carry, setCarry] = useState<Carry>({ score: 0 });
-  const [showOptions, setShowOptions] = useState(false);
-  const [showTrophies, setShowTrophies] = useState(false);
+  // The page open over the title (options, trophies, credits, how to play, the leaderboard), if any
+  const [overlay, setOverlay] = useState<OverlayKind | null>(null);
   // A newer version on GitHub (looked for once, when the title screen first appears)
   const [update, setUpdate] = useState<UpdateInfo | null>(null);
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>('available');
@@ -95,9 +95,9 @@ function App() {
         soundService.toggleMuted();
       } else if (key === 'o' && (gameState === 'start' || gameState === 'highscore')) {
         soundService.initAudio();
-        setShowOptions(true);
+        setOverlay('options');
       } else if (key === 't' && (gameState === 'start' || gameState === 'highscore')) {
-        setShowTrophies(true);
+        setOverlay('trophies');
       } else if (key === 'u' && update && (gameState === 'start' || gameState === 'highscore')) {
         runUpdate(update);
       } else if (gameState === 'intro') {
@@ -168,20 +168,68 @@ function App() {
     setGameState('start');
   }, []);
 
-  // Attract Mode Logic
+  // The pad drives the menus by sending them the keys they know (the game reads it itself while playing).
+  useEffect(() => startMenuPad(), []);
+
+  // Attract mode: left alone on the title, the game shows the leaderboard for a while and goes back. Any key,
+  // click or move of the pad brings the menu back and starts the waiting again.
+  const lastActivity = useRef(performance.now());
   useEffect(() => {
-    let attractTimer: number | null = null;
-    if (gameState === 'start') {
-      attractTimer = window.setInterval(() => {
-        setAttractScreen(current => (current === 'start' ? 'highscore' : 'start'));
-      }, 10000);
-    }
-    return () => {
-      if (attractTimer) {
-        clearInterval(attractTimer);
-      }
+    const touch = () => {
+      lastActivity.current = performance.now();
     };
-  }, [gameState]);
+    window.addEventListener('keydown', touch, true);
+    window.addEventListener('pointerdown', touch, true);
+    window.addEventListener('mousemove', touch, true);
+    return () => {
+      window.removeEventListener('keydown', touch, true);
+      window.removeEventListener('pointerdown', touch, true);
+      window.removeEventListener('mousemove', touch, true);
+    };
+  }, []);
+  useEffect(() => {
+    if (gameState !== 'start' || overlay) return;
+    lastActivity.current = performance.now();
+    const timer = window.setInterval(() => {
+      const idle = performance.now() - lastActivity.current;
+      setAttractScreen(current => {
+        if (current === 'start' && idle > 20000) {
+          lastActivity.current = performance.now();
+          return 'highscore';
+        }
+        if (current === 'highscore' && idle > 10000) {
+          lastActivity.current = performance.now();
+          return 'start';
+        }
+        return current;
+      });
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [gameState, overlay]);
+
+  /** A choice made in the title menu. */
+  const handleTitleChoice = useCallback(
+    (choice: StartChoice) => {
+      switch (choice) {
+        case 'new':
+          handleStart();
+          break;
+        case 'quit':
+          void quitApp();
+          break;
+        default:
+          setOverlay(choice);
+      }
+    },
+    [handleStart]
+  ),
+  handleLeaveGame = useCallback(
+    (score: number) => {
+      finishRun(score, 'start');
+      setAttractScreen('start');
+    },
+    [finishRun]
+  );
 
   // Music of the screens outside the game (the levels start their own from the engine events).
   useEffect(() => {
@@ -208,10 +256,10 @@ function App() {
       case 'intro':
         return <PixelArcadeIntro onIntroComplete={handleIntroComplete} />;
       case 'start':
-        if (attractScreen === 'highscore') {
-          return <HighscoreScreen onStart={handleStart} />;
+        if (attractScreen === 'highscore' && !overlay) {
+          return <HighscoreScreen onStart={() => setAttractScreen('start')} />;
         }
-        return <StartScreen onStart={handleStart} />;
+        return <StartScreen onSelect={handleTitleChoice} active={!overlay} />;
       case 'playing':
       case 'level-cleared':
         return (
@@ -219,6 +267,7 @@ function App() {
             key={gameId}
             onGameOver={handleGameOver}
             onCompleted={handleGameCompleted}
+            onQuit={handleLeaveGame}
             loopCount={loopCount}
             initialScore={carry.score}
             initialLives={carry.lives}
@@ -234,9 +283,9 @@ function App() {
           />
         );
       case 'gameover':
-        return <GameoverScreen onRestart={startFresh} />;
+        return <GameoverScreen onRestart={startFresh} onTitle={() => setGameState('start')} />;
       case 'highscore':
-        return <HighscoreScreen onStart={handleStart} />;
+        return <HighscoreScreen onStart={() => setGameState('start')} />;
       case 'enter-highscore':
         return (
           <EnterHighscoreScreen
@@ -245,7 +294,7 @@ function App() {
           />
         );
       default:
-        return <StartScreen onStart={handleStart} />;
+        return <StartScreen onSelect={handleTitleChoice} active={!overlay} />;
     }
   };
 
@@ -275,8 +324,7 @@ function App() {
           }}
         >
           {renderContent()}
-          {showOptions && <AudioOptions onClose={() => setShowOptions(false)} />}
-          {showTrophies && <TrophyScreen onClose={() => setShowTrophies(false)} />}
+          {overlay && <ScreenOverlay kind={overlay} onClose={() => setOverlay(null)} />}
           {update && (gameState === 'start' || gameState === 'highscore') && (
             <UpdateBanner update={update} status={updateStatus} error={updateError} />
           )}
