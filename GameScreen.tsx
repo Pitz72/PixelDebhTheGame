@@ -255,9 +255,10 @@ const GameScreen: React.FC<GameScreenProps> = ({
       // Developer shortcuts exist only in dev builds (never in a shipped game).
       if (import.meta.env.DEV && !e.repeat) {
         const k = e.key.toLowerCase();
-        if (e.key === '9' && levels.length > 10) {
+        const finalBoss = levels.findIndex(l => l.boss?.type === 'shadowHead');
+        if (e.key === '9' && finalBoss >= 0) {
           soundService.playSound('powerup');
-          loadLevel(w, 10);
+          loadLevel(w, finalBoss);
           return;
         }
         if (k === 'l') {

@@ -28,7 +28,7 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 -   **Revamped Level Design:** Advanced levels (The Gauntlet, The Ascent, The Drop) have been audited and redesigned to provide a fair, populated, and challenging experience.
 -   **New: Standalone & Optimized:** The game engine has been refactored for maximum performance and is now completely standalone, with no external API dependencies.
 -   **Custom Pixel Art Intro:** A unique, animated intro sequence featuring a custom pixel-art avatar of the protagonist surrounded by orbiting gaming gear (webcam, cat, phone), set against a synthwave grid horizon.
--   **Structured Game Progression:** A full adventure across 12 levels (three of them boss fights), with a carefully designed difficulty curve. Each standard level is progressively longer than the last, mixing horizontal and vertical platforming challenges.
+-   **Structured Game Progression:** A full adventure across 13 levels: three worlds of three levels and a boss each, then the final labyrinth, with a carefully designed difficulty curve. Each standard level is progressively longer than the last, mixing horizontal and vertical platforming challenges.
 -   **Gradual Enemy Introduction:** New enemy types are introduced gradually, giving players time to learn their patterns:
     -   **Globby (Base):** The standard ground enemy.
     -   **Hoppy (Jumper):** An unpredictable jumping foe.

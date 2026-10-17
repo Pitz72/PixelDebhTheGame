@@ -249,7 +249,7 @@ function buildExponentialExtension(
 }
 
 // ============================================================================
-// EXPONENTIAL +40% PROGRESSIVE LEVEL DEFINITIONS (LEVELS 1 TO 12)
+// EXPONENTIAL +40% PROGRESSIVE LEVEL DEFINITIONS (LEVELS 1 TO 13)
 // Formula: W(k) = 4500 * (1.40 ^ k)
 // ============================================================================
 
@@ -527,9 +527,9 @@ const level6 = buildExponentialExtension(rawLevel6, {
   collectibleInterval: 3,
 });
 
-// --- LEVEL 7 — BOSS 2: LeGallineNellOcchi (Arena Expanded +40%: 2688 x 1250 px) ---
+// --- LEVEL 8 — BOSS 2: LeGallineNellOcchi (Arena Expanded +40%: 2688 x 1250 px) ---
 const bossLevel2: LevelData = {
-  name: "Level 7 — BOSS: LeGallineNellOcchi",
+  name: "Level 8 — BOSS: LeGallineNellOcchi",
   musicTheme: 'boss',
   musicTrack: 'bossChickenEye',
   levelWidth: 2688,
@@ -552,9 +552,9 @@ const bossLevel2: LevelData = {
   },
 };
 
-// --- LEVEL 8: The Gauntlet (4500 * 1.4^6 = 33,880 px) ---
-const rawLevel8: LevelData = {
-  name: "Level 8: The Gauntlet",
+// --- LEVEL 7: The Gauntlet (4500 * 1.4^6 = 33,880 px) ---
+const rawLevel7: LevelData = {
+  name: "Level 7: The Gauntlet",
   musicTheme: 'industrial',
   playerStart: { x: 60, y: GAME_HEIGHT - 120 },
   platforms: [
@@ -601,7 +601,7 @@ const rawLevel8: LevelData = {
   ],
 };
 
-const level8 = buildExponentialExtension(rawLevel8, {
+const level7 = buildExponentialExtension(rawLevel7, {
   seed: 808,
   baseEndX: 7500,
   targetWidth: 33880,
@@ -723,9 +723,92 @@ const level10 = buildExponentialExtension(rawLevel10, {
   collectibleInterval: 5,
 });
 
-// --- LEVEL 11 — BOSS 3: CapocciaNelBuio (Zero-G Arena Expanded +40%: 2688 x 1512 px) ---
+// --- LEVEL 11: The Phantom Reach (4500 * 1.4^9 = 92,960 px) ---
+// The third level of the ethereal world: ghosts over broken ground, then a long elevated
+// causeway, then an arena of floating islands. Every hop is a single jump (see tests/reachability).
+const F11 = GAME_HEIGHT - 40; // top of the ground
+const rawLevel11: LevelData = {
+  name: "Level 11: The Phantom Reach",
+  musicTheme: 'ethereal',
+  playerStart: { x: 60, y: GAME_HEIGHT - 120 },
+  platforms: [
+    // Ground, broken by three jumpable pits
+    { x: 0, y: F11, width: 1500, height: 40 },
+    { x: 1720, y: F11, width: 1680, height: 40 },
+    { x: 3600, y: F11, width: 2600, height: 40 },
+    { x: 6400, y: F11, width: 4100, height: 40 },
+    // Act I: a stair up to the high ledge, then a ridge walking back down
+    { x: 800, y: F11 - 170, width: 260, height: 30 },
+    { x: 1160, y: F11 - 330, width: 240, height: 30 },
+    { x: 1500, y: F11 - 490, width: 300, height: 30 },
+    { x: 1900, y: F11 - 380, width: 300, height: 30 },
+    { x: 2300, y: F11 - 250, width: 260, height: 30 },
+    { x: 2700, y: F11 - 370, width: 300, height: 30 },
+    { x: 3100, y: F11 - 250, width: 240, height: 30 },
+    // Act II: onto the causeway, a long walkway in the air with a gap every few hundred pixels
+    { x: 3620, y: F11 - 210, width: 220, height: 30 },
+    { x: 3820, y: F11 - 420, width: 640, height: 30 },
+    { x: 4640, y: F11 - 420, width: 600, height: 30 },
+    { x: 5420, y: F11 - 420, width: 700, height: 30 },
+    { x: 6320, y: F11 - 420, width: 600, height: 30 },
+    // Act III: the arena of floating islands
+    { x: 7300, y: F11 - 200, width: 300, height: 30 },
+    { x: 7800, y: F11 - 340, width: 300, height: 30 },
+    { x: 8300, y: F11 - 210, width: 300, height: 30 },
+    { x: 8800, y: F11 - 350, width: 300, height: 30 },
+    { x: 9300, y: F11 - 220, width: 320, height: 30 },
+    { x: 9800, y: F11 - 360, width: 300, height: 30 },
+    { x: 10200, y: F11 - 240, width: 260, height: 30 },
+  ],
+  items: [
+    { type: 'joystick', x: 1625, y: F11 - 555, width: 50, height: 50 },
+    { type: 'shield', x: 2000, y: F11 - 445, width: 50, height: 50 },
+    { type: 'floppy', x: 2450, y: F11 - 65, width: 50, height: 50 },
+    { type: 'cartridge', x: 2800, y: F11 - 435, width: 50, height: 50 },
+    { type: 'speed-boost', x: 3900, y: F11 - 65, width: 50, height: 50 },
+    { type: 'joystick', x: 4900, y: F11 - 485, width: 50, height: 50 },
+    { type: 'super-throw', x: 5700, y: F11 - 485, width: 50, height: 50 },
+    { type: 'floppy', x: 6500, y: F11 - 485, width: 50, height: 50 },
+    { type: 'speed-boost', x: 6900, y: F11 - 65, width: 50, height: 50 },
+    { type: 'cartridge', x: 7900, y: F11 - 405, width: 50, height: 50 },
+    { type: 'floppy', x: 8900, y: F11 - 415, width: 50, height: 50 },
+    { type: 'shield', x: 9400, y: F11 - 285, width: 50, height: 50 },
+    { type: 'joystick', x: 9900, y: F11 - 425, width: 50, height: 50 },
+  ],
+  enemies: [
+    { type: 'phaser', x: 1000, y: F11 - 400, width: 50, height: 50, originalX: 1000, originalY: F11 - 400 },
+    { type: 'flyer', x: 2000, y: F11 - 560, width: 60, height: 44, originalX: 2000, originalY: F11 - 560 },
+    { type: 'jumper', x: 2600, y: F11 - 50, width: 50, height: 50, originalX: 2600, originalY: F11 - 50 },
+    { type: 'base', x: 3050, y: F11 - 50, width: 50, height: 50, originalX: 3050, originalY: F11 - 50 },
+    { type: 'phaser', x: 3700, y: F11 - 300, width: 50, height: 50, originalX: 3700, originalY: F11 - 300 },
+    { type: 'base', x: 4300, y: F11 - 50, width: 50, height: 50, originalX: 4300, originalY: F11 - 50 },
+    { type: 'bomber', x: 4700, y: F11 - 470, width: 50, height: 50, originalX: 4700, originalY: F11 - 470 },
+    { type: 'flyer', x: 5200, y: F11 - 560, width: 60, height: 44, originalX: 5200, originalY: F11 - 560 },
+    { type: 'jumper', x: 5600, y: F11 - 50, width: 50, height: 50, originalX: 5600, originalY: F11 - 50 },
+    { type: 'flyer', x: 6000, y: F11 - 520, width: 60, height: 44, originalX: 6000, originalY: F11 - 520 },
+    { type: 'bomber', x: 6800, y: F11 - 50, width: 50, height: 50, originalX: 6800, originalY: F11 - 50 },
+    { type: 'jumper', x: 7000, y: F11 - 50, width: 50, height: 50, originalX: 7000, originalY: F11 - 50 },
+    { type: 'phaser', x: 7500, y: F11 - 300, width: 50, height: 50, originalX: 7500, originalY: F11 - 300 },
+    { type: 'phaser', x: 8600, y: F11 - 300, width: 50, height: 50, originalX: 8600, originalY: F11 - 300 },
+    { type: 'flyer', x: 9100, y: F11 - 540, width: 60, height: 44, originalX: 9100, originalY: F11 - 540 },
+    { type: 'bomber', x: 9850, y: F11 - 410, width: 50, height: 50, originalX: 9850, originalY: F11 - 410 },
+    { type: 'phaser', x: 10000, y: F11 - 150, width: 50, height: 50, originalX: 10000, originalY: F11 - 150 },
+  ],
+};
+
+const level11 = buildExponentialExtension(rawLevel11, {
+  seed: 1111,
+  baseEndX: 10500,
+  targetWidth: 92960,
+  levelHeight: 2250,
+  allowPits: true,
+  allowedEnemies: ['jumper', 'flyer', 'bomber', 'phaser'],
+  collectibleInterval: 6,
+});
+
+// --- LEVEL 12 — BOSS 3: CapocciaNelBuio (Zero-G Arena Expanded +40%: 2688 x 1512 px) ---
 const bossLevel3: LevelData = {
-  name: "Level 11 — BOSS: CapocciaNelBuio",
+  name: "Level 12 — BOSS: CapocciaNelBuio",
   musicTheme: 'boss',
   musicTrack: 'bossShadowHead',
   isZeroG: true,
@@ -745,12 +828,12 @@ const bossLevel3: LevelData = {
   },
 };
 
-// --- LEVEL 12: The Labyrinth (ZERO-G MAZE — EXPANDED EXPONENTIALLY TO 14,000 x 8,400 px) ---
+// --- LEVEL 13: The Labyrinth (ZERO-G MAZE — EXPANDED EXPONENTIALLY TO 14,000 x 8,400 px) ---
 const MAZE_WIDTH = 14000;
 const MAZE_HEIGHT = 8400;
 
 const finalLevel: LevelData = {
-  name: "Level 12: The Labyrinth",
+  name: "Level 13: The Labyrinth",
   musicTheme: 'ethereal',
   isZeroG: true,
   timeLimit: 600, // 10 Minutes for the expanded 6-sector Mega-Labyrinth
@@ -874,16 +957,21 @@ const finalLevel: LevelData = {
 };
 
 export const levels: LevelData[] = [
+  // World 1
   level1,
   level2,
   level3,
   bossLevel1,
+  // World 2
   level5,
   level6,
+  level7,
   bossLevel2,
-  level8,
+  // World 3
   level9,
   level10,
+  level11,
   bossLevel3,
+  // The finale
   finalLevel,
 ];

@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { levels } from '../levels';
+import { createWorld, loadLevel, step } from '../engine';
+import { mulberry32 } from '../engine/rng';
 import { PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_LEGACY_HEIGHT } from '../constants';
 
 const overlap = (
@@ -40,3 +42,36 @@ describe('level data sanity', () => {
     });
   });
 });
+
+describe('the order of the game', () => {
+  it('is three worlds of three levels and a boss, then the labyrinth', () => {
+    expect(levels).toHaveLength(13);
+    const bosses = levels.flatMap((l, i) => (l.boss ? [i] : []));
+    expect(bosses).toEqual([3, 7, 11]);
+    const last = levels[levels.length - 1];
+    expect(last.boss).toBeUndefined();
+    expect(last.isZeroG).toBe(true);
+    expect(last.goal).toBeDefined();
+  });
+
+  it('numbers the levels in the order they are played', () => {
+    levels.forEach((l, i) => expect(l.name.startsWith(`Level ${i + 1}:`) || l.name.startsWith(`Level ${i + 1} `), `#${i + 1} ${l.name}`).toBe(true));
+  });
+
+  it('keeps the three bosses in order: frog, chicken eye, shadow head', () => {
+    expect(levels.filter(l => l.boss).map(l => l.boss?.type)).toEqual(['frog', 'chickenEye', 'shadowHead']);
+  });
+});
+
+describe('every level loads and runs', () => {
+  levels.forEach((level, i) => {
+    it(`#${i + 1} ${level.name}`, () => {
+      const w = createWorld({ rng: mulberry32(1) });
+      loadLevel(w, i);
+      for (let n = 0; n < 180; n++) step(w); // three seconds with nobody at the controls
+      expect(w.currentLevelIndex).toBe(i);
+      expect(Number.isFinite(w.player.x) && Number.isFinite(w.player.y)).toBe(true);
+    });
+  });
+});
+
