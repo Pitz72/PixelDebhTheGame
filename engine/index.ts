@@ -6,3 +6,4 @@ export * from './frame';
 export * from './rng';
 export * from './mazeGrid';
 export * from './stats';
+export * from './clock';

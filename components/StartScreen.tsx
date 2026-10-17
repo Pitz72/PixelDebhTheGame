@@ -8,6 +8,7 @@ import { t, useLanguage } from '../services/i18n';
 import CreditLine from './CreditLine';
 import MenuList, { type MenuItem } from './MenuList';
 import { EnemyType } from '../types';
+import { bakeParade, paradeIfReady, PARADE_RUN_FRAMES, type DebhParadeFrames } from '../characters/debh/paradeFrames';
 
 /** What the title menu can ask for. */
 export type StartChoice = 'continue' | 'levels' | 'new' | 'leaderboard' | 'trophies' | 'options' | 'howto' | 'credits' | 'quit';
@@ -17,6 +18,52 @@ interface StartScreenProps {
   /** False while a page (options, trophies...) is open above: the menu keeps still. */
   active?: boolean;
 }
+
+/** The size of a cell of the parade: every character, Debh too, is drawn in a square of this many px. */
+const CELL = 72;
+/** The picture of her fades out at the bottom, where she is cut off. */
+const FADE = 'linear-gradient(to bottom, #000 78%, transparent 100%)';
+
+/**
+ * Debh in the parade, from the chest up: the same skeleton and parts as in the game, baked into pictures (the title
+ * screen is plain HTML). She marches while she walks in, then stands and breathes. The old drawn sprite shows only if the
+ * pictures cannot be made.
+ */
+const DebhFigure: React.FC = () => {
+  const [frames, setFrames] = useState<DebhParadeFrames | null>(paradeIfReady);
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    let on = true;
+    if (!frames) bakeParade().then(f => on && setFrames(f)).catch(() => undefined);
+    const id = setTimeout(() => setSettled(true), 560);
+    return () => {
+      on = false;
+      clearTimeout(id);
+    };
+  }, [frames]);
+  if (!frames) {
+    return (
+      <div className="w-14 h-20">
+        <PlayerSprite direction="right" isInvincible={false} isMoving={true} />
+      </div>
+    );
+  }
+  const mask = { WebkitMaskImage: FADE, maskImage: FADE } as React.CSSProperties;
+  return settled ? (
+    <img src={frames.idle} alt="" draggable={false} className="animate-vector-float" style={{ width: CELL, height: CELL, ...mask }} />
+  ) : (
+    <div
+      style={{
+        width: CELL,
+        height: CELL,
+        backgroundImage: `url(${frames.run})`,
+        backgroundSize: `${CELL * PARADE_RUN_FRAMES}px ${CELL}px`,
+        animation: `debh-parade-run 0.5s steps(${PARADE_RUN_FRAMES}) infinite`,
+        ...mask,
+      }}
+    />
+  );
+};
 
 const StartScreen: React.FC<StartScreenProps> = ({ onSelect, active = true }) => {
   useLanguage();
@@ -64,9 +111,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onSelect, active = true }) =>
   ];
 
   const getSprite = (type: 'player' | EnemyType) => {
-    if (type === 'player') {
-      return <PlayerSprite direction="right" isInvincible={false} isMoving={true} />;
-    }
+    if (type === 'player') return <DebhFigure />;
     return <EnemySprite type={type} state="active" />;
   };
 
@@ -120,7 +165,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onSelect, active = true }) =>
                 animation: 'parade-walk-in 0.45s cubic-bezier(0.25, 1, 0.5, 1) forwards',
               }}
             >
-              <div className={char.type === 'player' ? 'w-14 h-20' : undefined} style={char.type === 'player' ? undefined : { width: 72, height: 72 }}>
+              <div style={{ width: CELL, height: CELL }}>
                 {getSprite(char.type)}
               </div>
               <span className="text-xs font-bold tracking-wider text-cyan-300 mt-1 uppercase">{char.label}</span>

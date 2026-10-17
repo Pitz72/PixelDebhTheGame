@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { bakeParade } from './characters/debh/paradeFrames';
 import { useGameScale } from './hooks/useGameScale';
 import StartScreen, { type StartChoice } from './components/StartScreen';
 import GameScreen from './GameScreen';
@@ -59,6 +60,12 @@ function App() {
   // F / F11 / Alt+Enter can still drop to a window for the current session (not remembered).
   const toggleAppFullscreen = useCallback(() => {
     void toggleFullscreen();
+  }, []);
+
+  // Bake Debh's pictures for the title parade while the intros play, so the parade has them the moment it opens.
+  useEffect(() => {
+    const id = setTimeout(() => void bakeParade().catch(() => undefined), 900);
+    return () => clearTimeout(id);
   }, []);
 
   // Look for a newer version once, the first time a title screen shows (never during a game).

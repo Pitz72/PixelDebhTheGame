@@ -22,7 +22,7 @@ import {
   loadLevel,
   step,
   makeFrame,
-  STEP_MS,
+  fixedSteps,
 } from './engine';
 import { GameRenderer, Quality } from './renderer/GameRenderer';
 import { Boss, Difficulty, ItemType } from './types';
@@ -46,7 +46,6 @@ interface GameScreenProps {
   initialLives?: number;
 }
 
-const MAX_STEPS_PER_FRAME = 5;
 
 type RenderMode = 'loading' | 'webgl' | 'dom';
 
@@ -281,12 +280,25 @@ const GameScreen: React.FC<GameScreenProps> = ({
     let cancelled = false;
     let renderer: GameRenderer | null = null;
     let observer: ResizeObserver | null = null;
+    let refitFrame = 0;
 
     const fit = () => {
       if (!renderer || !mount) return;
       const rect = mount.getBoundingClientRect();
       renderer.resize(rect.width / GAME_WIDTH || 1, window.devicePixelRatio || 1);
     };
+
+    // The stage is a 1920x1080 box that the page scales with a CSS transform, and a ResizeObserver does not see a
+    // transform change: when the window is resized (a drag, F11, a move to another screen) the canvas would keep the
+    // resolution it had and go soft on a bigger screen. So the window's own resize event refits it too, a couple of frames
+    // later, once React has applied the new scale.
+    const refit = () => {
+      cancelAnimationFrame(refitFrame);
+      refitFrame = requestAnimationFrame(() => {
+        refitFrame = requestAnimationFrame(fit);
+      });
+    };
+    window.addEventListener('resize', refit);
 
     // `?dom` forces the fallback renderer (for testing it without breaking WebGL)
     const forceDom = new URLSearchParams(window.location.search).has('dom');
@@ -322,6 +334,8 @@ const GameScreen: React.FC<GameScreenProps> = ({
 
     return () => {
       cancelled = true;
+      window.removeEventListener('resize', refit);
+      cancelAnimationFrame(refitFrame);
       observer?.disconnect();
       rendererRef.current = null;
       renderer?.destroy();
@@ -529,17 +543,15 @@ const GameScreen: React.FC<GameScreenProps> = ({
         input.setPad(padControls(pad));
         const now = performance.now();
         const scale = now < hitStopUntil ? 0 : now < slowUntil ? 0.3 : 1;
-        acc += delta * scale;
-        let steps = 0;
-        while (acc >= STEP_MS && steps < MAX_STEPS_PER_FRAME) {
+        const clock = fixedSteps(acc + delta * scale);
+        const steps = clock.steps;
+        for (let i = 0; i < steps; i++) {
           w.input = input.state();
           for (const a of input.drainActions()) w.actions.push(a);
           step(w);
-          acc -= STEP_MS;
-          steps++;
         }
-        if (steps === MAX_STEPS_PER_FRAME) acc = 0; // never try to catch up a long stall
-        alpha = Math.min(1, acc / STEP_MS);
+        acc = clock.acc;
+        alpha = clock.alpha;
         // before the events: a game over or a victory leaves the screen in dispatchEvents
         if (steps > 0) trackerRef.current?.update();
         dispatchEvents();

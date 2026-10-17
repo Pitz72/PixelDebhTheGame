@@ -72,6 +72,12 @@ body {
   }
 }
 
+/* Debh's run cycle in the title parade: a strip of 8 frames (72 px each) played with steps() */
+@keyframes debh-parade-run {
+  from { background-position-x: 0; }
+  to { background-position-x: -576px; }
+}
+
 /* Trophy notification: rises from below, stays, then slips away */
 @keyframes trophy-toast {
   0% { transform: translate(-50%, 140px); opacity: 0; }
