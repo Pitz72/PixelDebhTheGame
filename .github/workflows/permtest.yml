@@ -1,0 +1,29 @@
+# TEMPORARY diagnostic: can the workflow token create a (draft) release? Removed right after the test.
+name: Permission test (temporary)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Try to create and delete a draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          echo "--- create draft release (full response with headers) ---"
+          gh api -i -X POST "repos/${{ github.repository }}/releases" \
+            -f tag_name=permtest-do-not-use -f name="permission test" -F draft=true \
+            -f target_commitish="${{ github.sha }}" 2>&1 | head -c 2500
+          echo
+          echo "--- look for it among the releases ---"
+          ID=$(gh api "repos/${{ github.repository }}/releases" --jq '.[]|select(.tag_name=="permtest-do-not-use")|.id' 2>&1 | head -1)
+          echo "id=$ID"
+          if [ -n "$ID" ] && [ "$ID" -eq "$ID" ] 2>/dev/null; then
+            gh api -X DELETE "repos/${{ github.repository }}/releases/$ID" && echo "test release deleted"
+          fi
