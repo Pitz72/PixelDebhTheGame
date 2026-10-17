@@ -3,6 +3,7 @@ import { GAME_HEIGHT, GAME_WIDTH } from '../constants';
 import { MusicTheme } from '../types';
 import { PALETTES } from './palette';
 import { TextureSet } from './textures';
+import { ART_SCALE, FAR_H, NEAR_H } from './worldArt';
 
 /** Layered parallax backdrop in screen space (it sits under the world container). */
 export class Background {
@@ -38,18 +39,22 @@ export class Background {
     this.sun.anchor.set(0.5);
     this.sun.position.set(1420, 420);
 
-    this.mountains = new TilingSprite({ texture: t.mountains, width: GAME_WIDTH + 8, height: 340 });
-    this.mountains.position.set(0, GAME_HEIGHT - 112 - 340 + 20);
+    // the far and near strips are drawn at ART_SCALE times their size, so they stay sharp on a big screen
+    this.mountains = new TilingSprite({ texture: t.mountains, width: GAME_WIDTH + 8, height: FAR_H });
+    this.mountains.tileScale.set(1 / ART_SCALE);
+    this.mountains.position.set(0, GAME_HEIGHT - 112 - FAR_H + 20);
 
     this.fog = new TilingSprite({ texture: t.fog, width: GAME_WIDTH + 8, height: 256 });
     this.fog.position.set(0, GAME_HEIGHT - 256);
     this.fog.blendMode = 'add';
 
-    this.skyline = new TilingSprite({ texture: t.skyline, width: GAME_WIDTH + 8, height: 240 });
-    this.skyline.position.set(0, GAME_HEIGHT - 240);
+    this.skyline = new TilingSprite({ texture: t.skyline, width: GAME_WIDTH + 8, height: NEAR_H });
+    this.skyline.tileScale.set(1 / ART_SCALE);
+    this.skyline.position.set(0, GAME_HEIGHT - NEAR_H);
 
-    this.skylineLights = new TilingSprite({ texture: t.skylineLights, width: GAME_WIDTH + 8, height: 240 });
-    this.skylineLights.position.set(0, GAME_HEIGHT - 240);
+    this.skylineLights = new TilingSprite({ texture: t.skylineLights, width: GAME_WIDTH + 8, height: NEAR_H });
+    this.skylineLights.tileScale.set(1 / ART_SCALE);
+    this.skylineLights.position.set(0, GAME_HEIGHT - NEAR_H);
     this.skylineLights.blendMode = 'add';
 
     this.starsNear = new TilingSprite({ texture: t.starsNear, width: GAME_WIDTH + 8, height: GAME_HEIGHT + 8 });

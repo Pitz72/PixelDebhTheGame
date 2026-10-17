@@ -21,6 +21,7 @@ import { drawVaultWall, drawVaultShelves, drawVaultLight, drawVaultFloor } from 
 import { mulberry32 } from '../engine/rng';
 import { PALETTES } from './palette';
 import { extractSvg, stripText, svgToCanvas } from './svgTexture';
+import { makeWorldLayers } from './worldArt';
 
 export interface ThemeTextures {
   sky: Texture;
@@ -109,17 +110,6 @@ function makeVignette(): HTMLCanvasElement {
   return c;
 }
 
-function makeSky(skyTop: string, skyMid: string, skyBot: string): HTMLCanvasElement {
-  const [c, ctx] = canvas2d(4, 540);
-  const g = ctx.createLinearGradient(0, 0, 0, 540);
-  g.addColorStop(0, skyTop);
-  g.addColorStop(0.58, skyMid);
-  g.addColorStop(1, skyBot);
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 4, 540);
-  return c;
-}
-
 function makeStarsFar(seed: number): HTMLCanvasElement {
   const rng = mulberry32(seed);
   const [c, ctx] = canvas2d(512, 512);
@@ -153,126 +143,9 @@ function makeStarsNear(neon: string, seed: number): HTMLCanvasElement {
   return c;
 }
 
-function makeSun(p: (typeof PALETTES)['adventure']): HTMLCanvasElement {
-  const [c, ctx] = canvas2d(800, 800);
-  const glow = ctx.createRadialGradient(400, 400, 0, 400, 400, 360);
-  glow.addColorStop(0, hexA(p.sunBot, 0.5));
-  glow.addColorStop(1, hexA(p.sunBot, 0));
-  ctx.fillStyle = glow;
-  ctx.fillRect(0, 0, 800, 800);
-
-  const [discCanvas, dctx] = canvas2d(800, 800);
-  const disc = dctx.createLinearGradient(0, 210, 0, 590);
-  disc.addColorStop(0, p.sunTop);
-  disc.addColorStop(1, p.sunBot);
-  dctx.fillStyle = disc;
-  dctx.beginPath();
-  dctx.arc(400, 400, 190, 0, Math.PI * 2);
-  dctx.fill();
-
-  // retro cut lines through the lower half of the sun
-  const cuts: Array<[number, number, string]> = [
-    [35, 8, p.skyMid],
-    [62, 12, p.skyMid],
-    [92, 16, p.skyMid],
-    [126, 22, p.skyBot],
-    [164, 28, p.skyBot],
-  ];
-  dctx.globalCompositeOperation = 'destination-out';
-  for (const [dy, h] of cuts) dctx.fillRect(200, 400 + dy, 400, h);
-  ctx.globalAlpha = 0.92;
-  ctx.drawImage(discCanvas, 0, 0);
-  ctx.globalAlpha = 1;
-  return c;
-}
-
 function hexA(hex: string, a: number): string {
   const n = parseInt(hex.slice(1), 16);
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
-}
-
-function makeMountains(p: (typeof PALETTES)['adventure']): HTMLCanvasElement {
-  const [c, ctx] = canvas2d(960, 340);
-  ctx.translate(0, 20);
-  ctx.beginPath();
-  const pts = [
-    [0, 320],
-    [0, 210],
-    [140, 90],
-    [290, 220],
-    [460, 50],
-    [640, 200],
-    [810, 110],
-    [960, 210],
-    [960, 320],
-  ];
-  pts.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)));
-  ctx.closePath();
-  ctx.fillStyle = p.mountain;
-  ctx.fill();
-  ctx.shadowColor = p.neon;
-  ctx.shadowBlur = 10;
-  ctx.strokeStyle = hexA(p.neon, 0.55);
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  ctx.shadowBlur = 0;
-  ctx.strokeStyle = hexA(p.neon, 0.25);
-  ctx.lineWidth = 1;
-  for (const [x1, y1, x2, y2] of [
-    [140, 90, 180, 320],
-    [460, 50, 430, 320],
-    [810, 110, 840, 320],
-  ]) {
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.stroke();
-  }
-  return c;
-}
-
-const BUILDINGS: Array<[number, number, number, number, string, number]> = [
-  [10, 90, 75, 150, '#090416', 0.3],
-  [95, 45, 90, 195, '#0c051d', 0.35],
-  [200, 110, 70, 130, '#090416', 0],
-  [280, 25, 110, 215, '#0e0622', 0.4],
-  [405, 75, 85, 165, '#090416', 0],
-  [505, 55, 120, 185, '#0c051d', 0.3],
-];
-
-function makeSkyline(p: (typeof PALETTES)['adventure']): HTMLCanvasElement {
-  const [c, ctx] = canvas2d(640, 240);
-  for (const [x, y, w, h, fill, edge] of BUILDINGS) {
-    ctx.fillStyle = fill;
-    ctx.fillRect(x, y, w, h);
-    if (edge > 0) {
-      ctx.strokeStyle = hexA(p.neon, edge);
-      ctx.lineWidth = 1.2;
-      ctx.strokeRect(x, y, w, h);
-    }
-  }
-  return c;
-}
-
-function makeSkylineLights(p: (typeof PALETTES)['adventure'], seed: number): HTMLCanvasElement {
-  const rng = mulberry32(seed);
-  const [c, ctx] = canvas2d(640, 240);
-  const palette = [p.neon, '#ff0055', '#ffea00'];
-  for (const [x, y, w, h] of BUILDINGS) {
-    const cols = Math.max(2, Math.floor(w / 16));
-    const rows = Math.max(2, Math.floor(h / 22));
-    for (let r = 0; r < rows; r++) {
-      for (let k = 0; k < cols; k++) {
-        if (rng() < 0.55) continue;
-        const wx = x + 6 + k * ((w - 12) / cols);
-        const wy = y + 8 + r * ((h - 16) / rows);
-        ctx.fillStyle = palette[Math.floor(rng() * palette.length)];
-        ctx.globalAlpha = 0.35 + rng() * 0.5;
-        ctx.fillRect(wx, wy, 7, 4);
-      }
-    }
-  }
-  return c;
 }
 
 function makeFog(neon: string, seed: number): HTMLCanvasElement {
@@ -338,13 +211,14 @@ function makeRailGlow(): HTMLCanvasElement {
 function buildTheme(theme: MusicTheme): ThemeTextures {
   const p = PALETTES[theme];
   const seed = theme.length * 977;
+  const world = makeWorldLayers(theme, p, seed);
   return {
-    sky: tex(makeSky(p.skyTop, p.skyMid, p.skyBot)),
+    sky: tex(world.sky),
     starsFar: tex(makeStarsFar(seed + 1), { repeat: true }),
-    sun: tex(makeSun(p), { mipmaps: true }),
-    mountains: tex(makeMountains(p), { repeat: true }),
-    skyline: tex(makeSkyline(p), { repeat: true }),
-    skylineLights: tex(makeSkylineLights(p, seed + 2), { repeat: true }),
+    sun: tex(world.sun, { mipmaps: true }),
+    mountains: tex(world.far, { repeat: true, mipmaps: true }),
+    skyline: tex(world.near, { repeat: true, mipmaps: true }),
+    skylineLights: tex(world.lights, { repeat: true, mipmaps: true }),
     starsNear: tex(makeStarsNear(p.neon, seed + 3), { repeat: true }),
     fog: tex(makeFog(p.neon, seed + 4), { repeat: true }),
     platformBody: tex(makePlatformBody(p.platformTop, p.platformBot)),
@@ -445,8 +319,27 @@ async function buildTexturesUncached(): Promise<TextureSet> {
   const [frog, chickenEye] = await Promise.all([bakeFrog(), bakeEye()]);
   const shadowHead = await art(<ShadowHeadBoss boss={fakeBoss('shadowHead')} />, 140, 140, 4.6);
 
+  // Each world's scenery is big (several megabytes of canvas), so a world is drawn the first time it is asked for. The first
+  // world is ready now; the others are drawn in the background a little later, so no level starts with a pause.
   const themes = {} as Record<MusicTheme, ThemeTextures>;
-  for (const t of Object.keys(PALETTES) as MusicTheme[]) themes[t] = buildTheme(t);
+  const built = new Map<MusicTheme, ThemeTextures>();
+  const names = Object.keys(PALETTES) as MusicTheme[];
+  for (const t of names) {
+    Object.defineProperty(themes, t, {
+      enumerable: true,
+      get: () => {
+        let v = built.get(t);
+        if (!v) {
+          v = buildTheme(t);
+          built.set(t, v);
+        }
+        return v;
+      },
+    });
+  }
+  void themes.adventure;
+  names.filter(t => t !== 'adventure').forEach((t, i) => setTimeout(() => void themes[t], 2000 + 700 * i));
+
 
   return {
     enemies,
