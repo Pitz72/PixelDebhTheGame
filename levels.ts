@@ -21,10 +21,12 @@ const isCollectibleType = (t: ItemType): t is CollectibleType => (COLLECTIBLE_TY
 /** Collectibles a level may hand out, cumulative: joystick, floppy and cartridge, then one more per level. */
 const TYPES_LEVEL_2 = [...COLLECTIBLE_TYPES.slice(0, 3), 'cassette'] as CollectibleType[];
 const TYPES_LEVEL_3 = [...TYPES_LEVEL_2, 'token'] as CollectibleType[];
-const TYPES_LEVEL_5 = [...TYPES_LEVEL_3, 'webcam'] as CollectibleType[];
-const TYPES_LEVEL_6 = [...TYPES_LEVEL_5, 'microphone'] as CollectibleType[];
+const TYPES_LEVEL_5 = [...TYPES_LEVEL_3, 'atari2600'] as CollectibleType[];
+const TYPES_LEVEL_6 = [...TYPES_LEVEL_5, 'amiga500'] as CollectibleType[];
 const TYPES_LEVEL_7 = [...TYPES_LEVEL_6, 'crt'] as CollectibleType[];
-const TYPES_ALL = [...TYPES_LEVEL_7, 'ringlight'] as CollectibleType[];
+const TYPES_LEVEL_9 = [...TYPES_LEVEL_7, 'cdrom'] as CollectibleType[];
+const TYPES_LEVEL_10 = [...TYPES_LEVEL_9, 'nes'] as CollectibleType[];
+const TYPES_ALL = [...TYPES_LEVEL_10, 'sega'] as CollectibleType[];
 
 /** The hand-placed collectibles of a level, left to right. */
 const collectibleIndexes = (level: LevelData, minX: number): number[] =>
@@ -515,7 +517,7 @@ const rawLevel5: LevelData = {
   ],
 };
 
-const level5 = buildExponentialExtension(introduce(rawLevel5, 'webcam'), {
+const level5 = buildExponentialExtension(introduce(rawLevel5, 'atari2600'), {
   seed: 505,
   collectibleTypes: TYPES_LEVEL_5,
   baseEndX: 5200,
@@ -567,7 +569,7 @@ const rawLevel6: LevelData = {
   ],
 };
 
-const level6 = buildExponentialExtension(introduce(rawLevel6, 'microphone'), {
+const level6 = buildExponentialExtension(introduce(rawLevel6, 'amiga500'), {
   seed: 606,
   collectibleTypes: TYPES_LEVEL_6,
   baseEndX: 6000,
@@ -704,9 +706,9 @@ const rawLevel9: LevelData = {
   ],
 };
 
-const level9 = buildExponentialExtension(introduce(rawLevel9, 'ringlight'), {
+const level9 = buildExponentialExtension(introduce(rawLevel9, 'cdrom'), {
   seed: 909,
-  collectibleTypes: TYPES_ALL,
+  collectibleTypes: TYPES_LEVEL_9,
   baseEndX: 9500,
   targetWidth: 47430,
   levelHeight: 1850,
@@ -765,9 +767,9 @@ const rawLevel10: LevelData = {
   ],
 };
 
-const level10 = buildExponentialExtension(spreadTypes(rawLevel10, TYPES_ALL), {
+const level10 = buildExponentialExtension(introduce(spreadTypes(rawLevel10, TYPES_LEVEL_10), 'nes'), {
   seed: 1010,
-  collectibleTypes: TYPES_ALL,
+  collectibleTypes: TYPES_LEVEL_10,
   baseEndX: 11000,
   targetWidth: 66400,
   levelHeight: 2050,
@@ -850,7 +852,7 @@ const rawLevel11: LevelData = {
   ],
 };
 
-const level11 = buildExponentialExtension(spreadTypes(rawLevel11, TYPES_ALL), {
+const level11 = buildExponentialExtension(introduce(spreadTypes(rawLevel11, TYPES_ALL), 'sega'), {
   seed: 1111,
   collectibleTypes: TYPES_ALL,
   baseEndX: 10500,
@@ -899,10 +901,12 @@ const labyrinth = generateMaze({
     cartridge: 2,
     cassette: 2,
     token: 2,
+    atari2600: 2,
+    amiga500: 2,
     crt: 2,
-    webcam: 2,
-    microphone: 2,
-    ringlight: 2,
+    cdrom: 2,
+    nes: 2,
+    sega: 2,
     'speed-boost': 2,
     shield: 2,
     'super-throw': 2,

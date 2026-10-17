@@ -8,7 +8,7 @@ import { ItemSprite } from './assetService';
 
 const GROUPS: { title: string; types: string[] }[] = [
   { title: 'Retro gear', types: ['joystick', 'floppy', 'cartridge', 'cassette', 'token', 'crt'] },
-  { title: "Debh's streaming setup", types: ['webcam', 'microphone', 'ringlight'] },
+  { title: 'Consoles, computers and discs', types: ['atari2600', 'amiga500', 'nes', 'sega', 'cdrom'] },
   { title: 'Power-ups', types: ['speed-boost', 'shield', 'super-throw'] },
 ];
 

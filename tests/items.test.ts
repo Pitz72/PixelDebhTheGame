@@ -11,7 +11,19 @@ const POWER_UPS: ItemType[] = ['speed-boost', 'shield', 'super-throw'];
 const ALL_ITEMS: ItemType[] = [...COLLECTIBLE_TYPES, ...POWER_UPS];
 
 /** The level where each new collectible makes its debut. */
-const DEBUT: Record<string, number> = { cassette: 2, token: 3, webcam: 5, microphone: 6, crt: 7, ringlight: 9 };
+const DEBUT: Record<string, number> = {
+  cassette: 2,
+  token: 3,
+  atari2600: 5,
+  amiga500: 6,
+  crt: 7,
+  cdrom: 9,
+  nes: 10,
+  sega: 11,
+};
+
+/** Debh collects retro gaming gear: nothing from a streamer's desk. */
+const RETIRED_TYPES = ['webcam', 'microphone', 'ringlight'];
 
 const levelNumber = (l: LevelData) => Number(/^Level (\d+)/.exec(l.name)?.[1]);
 
@@ -33,10 +45,23 @@ describe('item sprites', () => {
 });
 
 describe('collectibles', () => {
-  it('are the nine things to collect, and the power-ups are not among them', () => {
-    expect(COLLECTIBLE_TYPES).toHaveLength(9);
+  it('are the eleven things to collect, and the power-ups are not among them', () => {
+    expect(COLLECTIBLE_TYPES).toHaveLength(11);
     for (const t of POWER_UPS) expect(isCollectible(t)).toBe(false);
     for (const t of COLLECTIBLE_TYPES) expect(isCollectible(t)).toBe(true);
+  });
+
+  it('are all retro gaming gear: the streaming-desk objects are gone', () => {
+    for (const t of RETIRED_TYPES) {
+      expect(COLLECTIBLE_TYPES as string[]).not.toContain(t);
+      for (const level of levels) expect(level.items.some(it => (it.type as string) === t), `${t} in ${level.name}`).toBe(false);
+    }
+  });
+
+  it('come in the order they debut: the three classics first', () => {
+    expect(COLLECTIBLE_TYPES.slice(0, 3)).toEqual(['joystick', 'floppy', 'cartridge']);
+    const debuts = COLLECTIBLE_TYPES.slice(3).map(t => DEBUT[t]);
+    expect(debuts).toEqual([...debuts].sort((a, b) => a - b));
   });
 
   it('are all counted by the engine to open the exit, power-ups are not', () => {
@@ -76,6 +101,6 @@ describe('collectibles', () => {
       expect(maze.items.filter(it => it.type === t), t).toHaveLength(2);
     }
     expect(maze.items.filter(it => POWER_UPS.includes(it.type))).toHaveLength(6);
-    expect(maze.items).toHaveLength(24);
+    expect(maze.items).toHaveLength(COLLECTIBLE_TYPES.length * 2 + 6);
   });
 });

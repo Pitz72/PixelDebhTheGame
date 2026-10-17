@@ -743,76 +743,239 @@ export const ItemSprite = ({ type }: { type: string }) => {
         </svg>
       );
 
-    case 'webcam':
+    case 'atari2600':
       return (
         <svg viewBox="0 0 64 64" className="w-full h-full animate-vector-float">
           <defs>
-            <radialGradient id="cam-lens" cx="38%" cy="34%" r="70%">
-              <stop offset="0%" stopColor="#80d8ff" />
-              <stop offset="45%" stopColor="#1565c0" />
-              <stop offset="100%" stopColor="#0a1a3a" />
-            </radialGradient>
-            <linearGradient id="cam-body" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#90a4ae" />
+            <linearGradient id="atari-wood" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#d9954a" />
+              <stop offset="50%" stopColor="#9a5b26" />
+              <stop offset="100%" stopColor="#5d3a1a" />
+            </linearGradient>
+            <linearGradient id="atari-lid" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#56646b" />
+              <stop offset="100%" stopColor="#1c262b" />
+            </linearGradient>
+            <linearGradient id="atari-cart" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#78909c" />
               <stop offset="100%" stopColor="#37474f" />
             </linearGradient>
           </defs>
-          <circle cx="32" cy="30" r="28" fill="rgba(179, 136, 255, 0.15)" />
-          <path d="M 14 52 L 50 52 L 50 56 C 50 59, 14 59, 14 56 Z" fill="#37474f" stroke="#2A1810" strokeWidth="2" strokeLinejoin="round" />
-          <rect x="26" y="43" width="12" height="9" rx="1.5" fill="#455a64" stroke="#2A1810" strokeWidth="1.6" />
-          <circle cx="32" cy="26" r="19" fill="url(#cam-body)" stroke="#2A1810" strokeWidth="2.2" />
-          <circle cx="32" cy="26" r="13.5" fill="#263238" stroke="#2A1810" strokeWidth="1.6" />
-          <circle cx="32" cy="26" r="9.5" fill="url(#cam-lens)" stroke="#2A1810" strokeWidth="1.4" />
-          <ellipse cx="28.5" cy="22.5" rx="3.2" ry="2" fill="#ffffff" opacity="0.85" transform="rotate(-30 28.5 22.5)" />
-          <circle cx="32" cy="10.5" r="1.8" fill="#ff1744" />
-        </svg>
-      );
-
-    case 'microphone':
-      return (
-        <svg viewBox="0 0 64 64" className="w-full h-full animate-vector-float">
-          <defs>
-            <linearGradient id="mic-metal" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#eceff1" />
-              <stop offset="50%" stopColor="#b0bec5" />
-              <stop offset="100%" stopColor="#546e7a" />
-            </linearGradient>
-          </defs>
-          <circle cx="32" cy="32" r="28" fill="rgba(255, 82, 82, 0.15)" />
-          <path d="M 17 24 C 17 42, 47 42, 47 24" fill="none" stroke="#2A1810" strokeWidth="5.4" strokeLinecap="round" />
-          <path d="M 17 24 C 17 42, 47 42, 47 24" fill="none" stroke="#607d8b" strokeWidth="3" strokeLinecap="round" />
-          <rect x="30" y="39" width="4" height="13" fill="#546e7a" stroke="#2A1810" strokeWidth="1.5" />
-          <rect x="19" y="51" width="26" height="6" rx="3" fill="#37474f" stroke="#2A1810" strokeWidth="2" />
-          <rect x="23" y="5" width="18" height="32" rx="9" fill="url(#mic-metal)" stroke="#2A1810" strokeWidth="2.2" />
-          <g stroke="#2A1810" strokeWidth="1" opacity="0.4">
-            <line x1="26" y1="11" x2="38" y2="11" />
-            <line x1="26" y1="15" x2="38" y2="15" />
-            <line x1="26" y1="26" x2="38" y2="26" />
-            <line x1="26" y1="30" x2="38" y2="30" />
+          <circle cx="32" cy="34" r="28" fill="rgba(217, 149, 74, 0.17)" />
+          <rect x="22" y="4" width="20" height="14" rx="2" fill="url(#atari-cart)" stroke="#2A1810" strokeWidth="2" />
+          <rect x="25" y="7" width="14" height="7" rx="1" fill="#FF9E2C" stroke="#2A1810" strokeWidth="1.1" />
+          <path d="M 15 16 L 49 16 L 58 36 L 6 36 Z" fill="url(#atari-lid)" stroke="#2A1810" strokeWidth="2.2" strokeLinejoin="round" />
+          <g stroke="#0d1317" strokeWidth="1.5" strokeLinecap="round" opacity="0.85">
+            <line x1="17" y1="20" x2="47" y2="20" />
+            <line x1="15" y1="24" x2="49" y2="24" />
+            <line x1="13" y1="28" x2="51" y2="28" />
           </g>
-          <rect x="23" y="19" width="18" height="3.6" fill="#ff1744" opacity="0.92" />
-          <path d="M 27 9 L 27 17" stroke="#ffffff" strokeWidth="2" opacity="0.65" strokeLinecap="round" />
+          <g fill="#eceff1" stroke="#2A1810" strokeWidth="1">
+            <rect x="12" y="31" width="4.4" height="3.4" rx="0.8" />
+            <rect x="18.6" y="31" width="4.4" height="3.4" rx="0.8" />
+            <rect x="41" y="31" width="4.4" height="3.4" rx="0.8" />
+            <rect x="47.6" y="31" width="4.4" height="3.4" rx="0.8" />
+          </g>
+          <path
+            d="M 6 36 L 58 36 L 58 51 Q 58 54.5 54.5 54.5 L 9.5 54.5 Q 6 54.5 6 51 Z"
+            fill="url(#atari-wood)"
+            stroke="#2A1810"
+            strokeWidth="2.2"
+            strokeLinejoin="round"
+          />
+          <g fill="none" stroke="#4a2c12" strokeWidth="1.2" strokeLinecap="round" opacity="0.6">
+            <path d="M 10 41 C 22 39, 34 44, 54 41" />
+            <path d="M 10 47 C 24 45, 36 49, 54 46.5" />
+          </g>
+          <path d="M 9 38.4 L 55 38.4" stroke="#ffd9a0" strokeWidth="1.4" strokeLinecap="round" opacity="0.5" />
         </svg>
       );
 
-    case 'ringlight':
+    case 'amiga500':
       return (
         <svg viewBox="0 0 64 64" className="w-full h-full animate-vector-float">
           <defs>
-            <linearGradient id="ring-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+            <linearGradient id="amiga-top" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#faf6ee" />
+              <stop offset="100%" stopColor="#d8cdbd" />
+            </linearGradient>
+            <linearGradient id="amiga-front" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#d3c8b8" />
+              <stop offset="100%" stopColor="#9a8d7c" />
+            </linearGradient>
+            <radialGradient id="amiga-ball-shade" cx="35%" cy="30%" r="75%">
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.55" />
+              <stop offset="55%" stopColor="#ffffff" stopOpacity="0" />
+              <stop offset="100%" stopColor="#000000" stopOpacity="0.28" />
+            </radialGradient>
+            <clipPath id="amiga-ball-clip">
+              <circle cx="46" cy="14" r="9" />
+            </clipPath>
+          </defs>
+          <circle cx="32" cy="34" r="28" fill="rgba(255, 224, 178, 0.17)" />
+          <g clipPath="url(#amiga-ball-clip)">
+            <rect x="37" y="5" width="18" height="18" fill="#ffffff" />
+            <g fill="#e53935">
+              <rect x="37" y="5" width="4.5" height="4.5" />
+              <rect x="46" y="5" width="4.5" height="4.5" />
+              <rect x="41.5" y="9.5" width="4.5" height="4.5" />
+              <rect x="50.5" y="9.5" width="4.5" height="4.5" />
+              <rect x="37" y="14" width="4.5" height="4.5" />
+              <rect x="46" y="14" width="4.5" height="4.5" />
+              <rect x="41.5" y="18.5" width="4.5" height="4.5" />
+              <rect x="50.5" y="18.5" width="4.5" height="4.5" />
+            </g>
+            <rect x="37" y="5" width="18" height="18" fill="url(#amiga-ball-shade)" />
+          </g>
+          <circle cx="46" cy="14" r="9" fill="none" stroke="#2A1810" strokeWidth="2" />
+          <path d="M 10 27 L 54 27 L 60 41 L 4 41 Z" fill="url(#amiga-top)" stroke="#2A1810" strokeWidth="2.2" strokeLinejoin="round" />
+          <g fill="#eee7da" stroke="#7d7060" strokeWidth="0.9">
+            <rect x="13" y="29.2" width="4.4" height="2.8" rx="0.6" />
+            <rect x="18.8" y="29.2" width="4.4" height="2.8" rx="0.6" />
+            <rect x="24.6" y="29.2" width="4.4" height="2.8" rx="0.6" />
+            <rect x="30.4" y="29.2" width="4.4" height="2.8" rx="0.6" />
+            <rect x="36.2" y="29.2" width="4.4" height="2.8" rx="0.6" />
+            <rect x="42" y="29.2" width="4.4" height="2.8" rx="0.6" />
+            <rect x="11" y="33.2" width="4.6" height="2.8" rx="0.6" />
+            <rect x="17" y="33.2" width="4.6" height="2.8" rx="0.6" />
+            <rect x="23" y="33.2" width="4.6" height="2.8" rx="0.6" />
+            <rect x="29" y="33.2" width="4.6" height="2.8" rx="0.6" />
+            <rect x="35" y="33.2" width="4.6" height="2.8" rx="0.6" />
+            <rect x="41" y="33.2" width="4.6" height="2.8" rx="0.6" />
+            <rect x="47" y="33.2" width="4.6" height="2.8" rx="0.6" />
+            <rect x="19" y="37.3" width="26" height="2.4" rx="0.8" />
+          </g>
+          <g fill="#8d8070" stroke="#7d7060" strokeWidth="0.9">
+            <rect x="48.6" y="29.2" width="4.4" height="2.8" rx="0.6" />
+            <rect x="12" y="37.3" width="5" height="2.4" rx="0.8" />
+            <rect x="47" y="37.3" width="5" height="2.4" rx="0.8" />
+          </g>
+          <path
+            d="M 4 41 L 60 41 L 60 50 Q 60 53.5 56.5 53.5 L 7.5 53.5 Q 4 53.5 4 50 Z"
+            fill="url(#amiga-front)"
+            stroke="#2A1810"
+            strokeWidth="2.2"
+            strokeLinejoin="round"
+          />
+          <rect x="38" y="45" width="17" height="2.8" rx="1" fill="#3a3530" />
+          <circle cx="10.5" cy="47.4" r="1.7" fill="#69f0ae" stroke="#2A1810" strokeWidth="0.8" />
+          <circle cx="15.6" cy="47.4" r="1.7" fill="#ff5252" stroke="#2A1810" strokeWidth="0.8" />
+        </svg>
+      );
+
+    case 'cdrom':
+      return (
+        <svg viewBox="0 0 64 64" className="w-full h-full animate-vector-float">
+          <defs>
+            <radialGradient id="cdrom-base" cx="40%" cy="35%" r="75%">
               <stop offset="0%" stopColor="#ffffff" />
-              <stop offset="50%" stopColor="#fff59d" />
-              <stop offset="100%" stopColor="#ffb300" />
+              <stop offset="45%" stopColor="#d9e1e5" />
+              <stop offset="100%" stopColor="#7c919b" />
+            </radialGradient>
+            <clipPath id="cdrom-clip">
+              <path
+                clipRule="evenodd"
+                d="M 7 32 a 25 25 0 1 0 50 0 a 25 25 0 1 0 -50 0 Z M 26 32 a 6 6 0 1 0 12 0 a 6 6 0 1 0 -12 0 Z"
+              />
+            </clipPath>
+          </defs>
+          <circle cx="32" cy="32" r="29" fill="rgba(128, 222, 234, 0.18)" />
+          <path
+            fillRule="evenodd"
+            d="M 7 32 a 25 25 0 1 0 50 0 a 25 25 0 1 0 -50 0 Z M 26 32 a 6 6 0 1 0 12 0 a 6 6 0 1 0 -12 0 Z"
+            fill="url(#cdrom-base)"
+          />
+          <g clipPath="url(#cdrom-clip)">
+            <polygon points="32,32 52,-2.6 69.6,18.3" fill="#00e5ff" opacity="0.55" />
+            <polygon points="32,32 69.6,18.3 69.6,45.7" fill="#ffee58" opacity="0.5" />
+            <polygon points="32,32 69.6,45.7 55,64.8" fill="#ff4081" opacity="0.55" />
+            <polygon points="32,32 12,66.6 -5.6,45.7" fill="#00e5ff" opacity="0.55" />
+            <polygon points="32,32 -5.6,45.7 -5.6,18.3" fill="#ffee58" opacity="0.5" />
+            <polygon points="32,32 -5.6,18.3 9,-0.8" fill="#ff4081" opacity="0.55" />
+          </g>
+          <circle cx="32" cy="32" r="11" fill="none" stroke="#ffffff" strokeWidth="2.2" opacity="0.7" />
+          <circle cx="32" cy="32" r="16.5" fill="none" stroke="rgba(120, 144, 156, 0.55)" strokeWidth="0.9" />
+          <path
+            fillRule="evenodd"
+            d="M 7 32 a 25 25 0 1 0 50 0 a 25 25 0 1 0 -50 0 Z M 26 32 a 6 6 0 1 0 12 0 a 6 6 0 1 0 -12 0 Z"
+            fill="none"
+            stroke="#2A1810"
+            strokeWidth="2.2"
+          />
+          <path d="M 14 22 A 20 20 0 0 1 30 11.5" stroke="#ffffff" strokeWidth="2.6" fill="none" opacity="0.8" strokeLinecap="round" />
+        </svg>
+      );
+
+    case 'nes':
+      return (
+        <svg viewBox="0 0 64 64" className="w-full h-full animate-vector-float">
+          <defs>
+            <linearGradient id="nes-body" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#f1f3f4" />
+              <stop offset="100%" stopColor="#aab4b9" />
             </linearGradient>
           </defs>
-          <circle cx="32" cy="28" r="27" fill="rgba(255, 245, 157, 0.2)" />
-          <path d="M 32 44 L 32 54 M 32 54 L 20 61 M 32 54 L 44 61" stroke="#2A1810" strokeWidth="5" strokeLinecap="round" fill="none" />
-          <path d="M 32 44 L 32 54 M 32 54 L 20 61 M 32 54 L 44 61" stroke="#78909c" strokeWidth="2.4" strokeLinecap="round" fill="none" />
-          <circle cx="32" cy="26" r="17" fill="none" stroke="#2A1810" strokeWidth="11.5" />
-          <circle cx="32" cy="26" r="17" fill="none" stroke="url(#ring-glow)" strokeWidth="8" />
-          <circle cx="32" cy="26" r="17" fill="none" stroke="#ffffff" strokeWidth="2.4" opacity="0.7" strokeDasharray="12 90" strokeLinecap="round" />
-          <rect x="26" y="19" width="12" height="14" rx="2.5" fill="#37474f" stroke="#2A1810" strokeWidth="1.8" />
-          <circle cx="32" cy="26" r="3" fill="#80d8ff" stroke="#2A1810" strokeWidth="1" />
+          <circle cx="32" cy="34" r="28" fill="rgba(229, 57, 53, 0.15)" />
+          <path d="M 32 18 C 32 10, 40 9, 46 4" stroke="#2A1810" strokeWidth="4.6" strokeLinecap="round" fill="none" />
+          <path d="M 32 18 C 32 10, 40 9, 46 4" stroke="#607d8b" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+          <rect x="3" y="17" width="58" height="32" rx="4.5" fill="url(#nes-body)" stroke="#2A1810" strokeWidth="2.2" />
+          <rect x="7.5" y="21.5" width="49" height="23" rx="2.5" fill="#2b3237" stroke="#2A1810" strokeWidth="1.2" />
+          <path
+            d="M 15 25.5 H 21 V 30 H 25.5 V 36 H 21 V 40.5 H 15 V 36 H 10.5 V 30 H 15 Z"
+            fill="#cfd8dc"
+            stroke="#0d1317"
+            strokeWidth="1.2"
+            strokeLinejoin="round"
+          />
+          <rect x="27.5" y="35" width="7.5" height="3.2" rx="1.6" fill="#78909c" stroke="#0d1317" strokeWidth="0.9" />
+          <rect x="37" y="35" width="7.5" height="3.2" rx="1.6" fill="#78909c" stroke="#0d1317" strokeWidth="0.9" />
+          <circle cx="47" cy="34" r="4" fill="#e53935" stroke="#0d1317" strokeWidth="1.2" />
+          <circle cx="54" cy="34" r="4" fill="#e53935" stroke="#0d1317" strokeWidth="1.2" />
+          <circle cx="45.8" cy="32.6" r="1.2" fill="#ffffff" opacity="0.75" />
+          <circle cx="52.8" cy="32.6" r="1.2" fill="#ffffff" opacity="0.75" />
+          <path d="M 7 19.5 L 57 19.5" stroke="#ffffff" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+        </svg>
+      );
+
+    case 'sega':
+      return (
+        <svg viewBox="0 0 64 64" className="w-full h-full animate-vector-float">
+          <defs>
+            <linearGradient id="sega-body" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#4a565d" />
+              <stop offset="45%" stopColor="#1f282d" />
+              <stop offset="100%" stopColor="#0d1317" />
+            </linearGradient>
+            <linearGradient id="sega-cart" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#90a4ae" />
+              <stop offset="100%" stopColor="#455a64" />
+            </linearGradient>
+          </defs>
+          <circle cx="32" cy="34" r="28" fill="rgba(66, 165, 245, 0.17)" />
+          <rect x="19" y="4" width="26" height="23" rx="3" fill="url(#sega-cart)" stroke="#2A1810" strokeWidth="2.2" />
+          <rect x="23" y="8" width="18" height="11" rx="1.5" fill="#1e88e5" stroke="#2A1810" strokeWidth="1.2" />
+          <polygon points="29,10.5 36,13.5 29,16.5" fill="#ffffff" />
+          <path
+            d="M 5 41 C 5 30, 12 25, 22 25 L 42 25 C 52 25, 59 30, 59 41 L 59 50 Q 59 54.5 54.5 54.5 L 9.5 54.5 Q 5 54.5 5 50 Z"
+            fill="url(#sega-body)"
+            stroke="#2A1810"
+            strokeWidth="2.2"
+            strokeLinejoin="round"
+          />
+          <ellipse cx="32" cy="29" rx="17" ry="3.6" fill="#0d1317" stroke="#cfd8dc" strokeWidth="1.2" />
+          <path d="M 9 37 C 12 31, 18 28.6, 24 28.4" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" fill="none" opacity="0.28" />
+          <rect x="12" y="43" width="12" height="6" rx="1.6" fill="#10161a" stroke="#546e7a" strokeWidth="1" />
+          <rect x="40" y="43" width="12" height="6" rx="1.6" fill="#10161a" stroke="#546e7a" strokeWidth="1" />
+          <g fill="#546e7a">
+            <rect x="14.5" y="44.8" width="1.6" height="2.4" />
+            <rect x="17.5" y="44.8" width="1.6" height="2.4" />
+            <rect x="20.5" y="44.8" width="1.6" height="2.4" />
+            <rect x="42.5" y="44.8" width="1.6" height="2.4" />
+            <rect x="45.5" y="44.8" width="1.6" height="2.4" />
+            <rect x="48.5" y="44.8" width="1.6" height="2.4" />
+          </g>
+          <circle cx="32" cy="46.2" r="1.8" fill="#ff1744" stroke="#2A1810" strokeWidth="0.8" />
+          <path d="M 27 51.6 L 37 51.6" stroke="#ffca28" strokeWidth="1.4" strokeLinecap="round" />
         </svg>
       );
 

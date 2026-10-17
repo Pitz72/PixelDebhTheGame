@@ -109,8 +109,10 @@ export const COLLECTIBLE_TYPES: CollectibleType[] = [
   'cartridge',
   'cassette',
   'token',
+  'atari2600',
+  'amiga500',
   'crt',
-  'webcam',
-  'microphone',
-  'ringlight',
+  'cdrom',
+  'nes',
+  'sega',
 ];

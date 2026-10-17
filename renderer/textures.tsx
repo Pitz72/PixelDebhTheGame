@@ -415,7 +415,7 @@ async function buildTexturesUncached(): Promise<TextureSet> {
   );
 
   const itemTypes: ItemType[] = [
-    'joystick', 'floppy', 'cartridge', 'cassette', 'token', 'crt', 'webcam', 'microphone', 'ringlight',
+    'joystick', 'floppy', 'cartridge', 'cassette', 'token', 'atari2600', 'amiga500', 'crt', 'cdrom', 'nes', 'sega',
     'speed-boost', 'shield', 'super-throw',
   ];
   const items = {} as Record<ItemType, Texture>;

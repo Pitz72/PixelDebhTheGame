@@ -58,17 +58,19 @@ export interface Enemy extends DynamicObject {
   mazeCell?: number;
 }
 
-/** Things to collect: retro gear and Debh's streaming setup, introduced a few at a time. */
+/** Things to collect: retro gaming gear (Debh is a retro-gaming collector), introduced a few at a time. */
 export type CollectibleType =
   | 'joystick'
   | 'floppy'
   | 'cartridge'
   | 'cassette'
   | 'token'
+  | 'atari2600'
+  | 'amiga500'
   | 'crt'
-  | 'webcam'
-  | 'microphone'
-  | 'ringlight';
+  | 'cdrom'
+  | 'nes'
+  | 'sega';
 export type PowerUpType = 'speed-boost' | 'shield' | 'super-throw';
 export type ItemType = CollectibleType | PowerUpType;
 export interface Item extends GameObject {
