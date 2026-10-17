@@ -37,6 +37,7 @@ import {
 import { levels as defaultLevels } from '../levels';
 import { Rng } from './rng';
 import { InputState, Action, emptyInput } from './input';
+import { RunStats, createStats } from './stats';
 
 export interface Shockwave {
   id: number;
@@ -133,6 +134,8 @@ export interface World {
   rng: Rng;
   nextId: number;
   elapsed: number;
+  /** What happened during this run, for the trophies (see stats.ts). */
+  stats: RunStats;
 }
 
 export interface CreateWorldOptions {
@@ -227,6 +230,7 @@ export function createWorld(opts: CreateWorldOptions = {}): World {
     rng: opts.rng ?? Math.random,
     nextId: 1,
     elapsed: 0,
+    stats: createStats(),
   };
   loadLevel(w, opts.levelIndex ?? 0);
   return w;
@@ -445,6 +449,8 @@ export function loadLevel(w: World, levelIndex: number): void {
   w.transitionTimer = 0;
   w.bossDeathTick = 0;
   w.hitThisStep = false;
+  w.stats.levelHits = 0;
+  w.stats.levelLivesLost = 0;
   w.items = levelData.items.map((c, i) => ({ id: i + 1, ...c }));
   w.goal = levelData.goal ? { id: 1, ...levelData.goal } : null;
   w.timeRemaining = loopTimeLimit(levelData, w.loopCount);

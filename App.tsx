@@ -8,6 +8,7 @@ import PixelArcadeIntro from './components/PixelArcadeIntro';
 import HighscoreScreen from './components/HighscoreScreen';
 import EnterHighscoreScreen from './components/EnterHighscoreScreen';
 import AudioOptions from './components/AudioOptions';
+import TrophyScreen from './components/TrophyScreen';
 import { GameState } from './types';
 import { GAME_WIDTH, GAME_HEIGHT } from './constants';
 import * as highscoreService from './services/highscoreService';
@@ -28,6 +29,7 @@ function App() {
   // Score and lives travel with the player from one loop (New Game+) to the next.
   const [carry, setCarry] = useState<Carry>({ score: 0 });
   const [showOptions, setShowOptions] = useState(false);
+  const [showTrophies, setShowTrophies] = useState(false);
   const { dimensions, margins } = useGameScale();
 
   // The desktop app always starts fullscreen (window config), so nothing to request there.
@@ -60,6 +62,8 @@ function App() {
       } else if (key === 'o' && (gameState === 'start' || gameState === 'highscore')) {
         soundService.initAudio();
         setShowOptions(true);
+      } else if (key === 't' && (gameState === 'start' || gameState === 'highscore')) {
+        setShowTrophies(true);
       } else if (gameState === 'intro') {
         requestAppFullscreen();
       }
@@ -227,6 +231,7 @@ function App() {
         >
           {renderContent()}
           {showOptions && <AudioOptions onClose={() => setShowOptions(false)} />}
+          {showTrophies && <TrophyScreen onClose={() => setShowTrophies(false)} />}
         </div>
       </div>
     </div>

@@ -2,8 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import Hud from './components/Hud';
 import DomScene from './components/DomScene';
 import AudioOptions from './components/AudioOptions';
+import TrophyScreen from './components/TrophyScreen';
+import TrophyToast, { TOAST_MS } from './components/TrophyToast';
 import * as soundService from './services/soundService';
 import * as storage from './services/storage';
+import { createTrophyTracker, TrophyTracker } from './services/trophyService';
+import type { TrophyDef } from './trophies';
 import { levels } from './levels';
 import { GAME_WIDTH, GAME_HEIGHT } from './constants';
 import {
@@ -117,6 +121,13 @@ const GameScreen: React.FC<GameScreenProps> = ({
   const [domFrame, setDomFrame] = useState<Frame>(() => frameRef.current as Frame);
   const [isPaused, setIsPaused] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
+  const [showTrophies, setShowTrophies] = useState(false);
+  // Trophies earned and not yet announced: the banner shows them one at a time.
+  const [toasts, setToasts] = useState<TrophyDef[]>([]);
+  const trackerRef = useRef<TrophyTracker | null>(null);
+  if (trackerRef.current === null) {
+    trackerRef.current = createTrophyTracker(worldRef.current, t => setToasts(q => [...q, t]));
+  }
   // Why WebGL could not be used (shown briefly, and with F3, when the compatibility renderer takes over).
   const [renderError, setRenderError] = useState<string | null>(null);
   const [showCompat, setShowCompat] = useState(true);
@@ -151,6 +162,12 @@ const GameScreen: React.FC<GameScreenProps> = ({
       bossHp: (n: number) => {
         for (const b of w.bosses) b.hp = Math.min(b.hp, n);
       },
+      /** The trophy save (earned ones and the lifetime counters) and the counters of this run. */
+      trophies: () => trackerRef.current?.save(),
+      stats: () => w.stats,
+      /** Where the items and the exit are, for walking a level in a test. */
+      items: () => w.items.map(i => ({ type: i.type, x: i.x, y: i.y, width: i.width, height: i.height })),
+      goal: () => w.goal,
       state: () => ({
         level: w.currentLevelIndex,
         status: w.status,
@@ -165,6 +182,18 @@ const GameScreen: React.FC<GameScreenProps> = ({
       }),
     };
   }, []);
+
+  // The lifetime counters are written down when the screen goes away (game over, victory, quit).
+  useEffect(() => () => trackerRef.current?.flush(), []);
+
+  // The trophy banner: one at a time, with its jingle, then the next.
+  const toastId = toasts[0]?.id;
+  useEffect(() => {
+    if (toastId === undefined) return;
+    soundService.playSound('trophy');
+    const id = window.setTimeout(() => setToasts(q => q.slice(1)), TOAST_MS + 200);
+    return () => window.clearTimeout(id);
+  }, [toastId]);
 
   const changeMode = (m: RenderMode) => {
     modeRef.current = m;
@@ -253,10 +282,12 @@ const GameScreen: React.FC<GameScreenProps> = ({
       setIsPaused(paused);
       if (paused) {
         input.reset();
+        trackerRef.current?.flush();
         soundService.pauseMusic();
         soundService.playSound('pause');
       } else {
         setShowOptions(false);
+        setShowTrophies(false);
         soundService.resumeMusic();
         soundService.playSound('resume');
       }
@@ -285,6 +316,11 @@ const GameScreen: React.FC<GameScreenProps> = ({
 
       if (e.key.toLowerCase() === 'o' && pausedRef.current) {
         if (!e.repeat) setShowOptions(true);
+        return;
+      }
+
+      if (e.key.toLowerCase() === 't' && pausedRef.current) {
+        if (!e.repeat) setShowTrophies(true);
         return;
       }
 
@@ -402,6 +438,8 @@ const GameScreen: React.FC<GameScreenProps> = ({
         }
         if (steps === MAX_STEPS_PER_FRAME) acc = 0; // never try to catch up a long stall
         alpha = Math.min(1, acc / STEP_MS);
+        // before the events: a game over or a victory leaves the screen in dispatchEvents
+        if (steps > 0) trackerRef.current?.update();
         dispatchEvents();
         if (steps > 0) {
           const frame = makeFrame(w);
@@ -483,6 +521,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
             <p>
               <strong className="text-cyan-400">[M]</strong> Muto •{' '}
               <strong className="text-cyan-400">[O]</strong> Audio •{' '}
+              <strong className="text-cyan-400">[T]</strong> Trofei •{' '}
               <strong className="text-cyan-400">[F]</strong> Schermo intero / finestra •{' '}
               <strong className="text-cyan-400">[Q]</strong> Qualità grafica:{' '}
               <span className="text-yellow-300">{quality === 'high' ? 'ALTA' : 'BASSA'}</span> •{' '}
@@ -500,6 +539,9 @@ const GameScreen: React.FC<GameScreenProps> = ({
       )}
 
       {isPaused && showOptions && <AudioOptions onClose={() => setShowOptions(false)} />}
+      {isPaused && showTrophies && <TrophyScreen onClose={() => setShowTrophies(false)} />}
+
+      {toasts.length > 0 && <TrophyToast key={toasts[0].id} trophy={toasts[0]} />}
 
       {/* Level Cleared Banner */}
       {hud.status === 'level-cleared' && (

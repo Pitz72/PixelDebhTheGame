@@ -945,7 +945,8 @@ const VAULT_H = 1512;
 const vaultLevel: LevelData = {
   name: "Level 14: The Collector's Vault",
   musicTheme: 'boss',
-  musicTrack: 'bossShadowHead',
+  // The tune of the first worlds comes back for the last fight; `musicTheme` stays 'boss' for the colors.
+  musicTrack: 'adventure',
   isZeroG: true,
   refill: true,
   backdrop: 'vault',

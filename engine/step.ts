@@ -126,6 +126,7 @@ function rememberPrev(w: World): void {
 export function step(w: World): void {
   w.elapsed += STEP_MS;
   if (w.damageFlash > 0) w.damageFlash = Math.max(0, w.damageFlash - STEP_MS);
+  if (w.isGodMode) w.stats.tainted = true; // a run played with the cheat on earns no trophies
 
   rememberPrev(w);
   processActions(w);
@@ -560,6 +561,8 @@ function respawnPlayer(w: World): void {
 }
 
 function loseLife(w: World): void {
+  w.stats.livesLost += 1;
+  w.stats.levelLivesLost += 1;
   w.lives -= 1;
   if (w.lives <= 0) {
     triggerGameOver(w);
@@ -591,7 +594,11 @@ export function damagePlayer(w: World): void {
     return;
   }
 
+  w.stats.hits += 1;
+  w.stats.levelHits += 1;
+
   if (p.hasShield) {
+    w.stats.shieldBlocks += 1;
     sound(w, 'hit');
     p.hasShield = false;
     p.isInvincible = true;
@@ -622,6 +629,8 @@ export function fallIntoPit(w: World): void {
     return;
   }
 
+  w.stats.hits += 1;
+  w.stats.levelHits += 1;
   hurtEffects(w);
   w.player.hurtAnim = 420;
   loseLife(w);
@@ -1236,6 +1245,8 @@ function resolveLaunchedHit(w: World, enemy: Enemy, index: number): boolean {
           spawnParticles(w, target.x + 25, target.y + 25, '#ff3d00', 12);
         }
       }
+      w.stats.enemiesDefeated += defeatedCount;
+      w.stats.bestBlast = Math.max(w.stats.bestBlast, defeatedCount);
       const pts = ENEMY_DEFEAT_POINTS * defeatedCount;
       addScore(w, pts);
       spawnFloatingText(w, hitX, hitY - 16, `SUPER BLAST! +${pts}`, '#ffea00', 1.3);
@@ -1245,6 +1256,8 @@ function resolveLaunchedHit(w: World, enemy: Enemy, index: number): boolean {
       spawnShockwave(w, hitX, hitY, '#ff1744', 95, 4);
       enemy.state = 'defeated';
       other.state = 'defeated';
+      w.stats.enemiesDefeated += 2;
+      w.stats.doubleKos += 1;
       const pts = ENEMY_DEFEAT_POINTS * 2;
       addScore(w, pts);
       spawnFloatingText(w, hitX, hitY - 12, `DOUBLE K.O.! +${pts}`, '#00e5ff', 1.15);
@@ -1272,7 +1285,9 @@ function defeatBoss(w: World, b: Boss): void {
   spawnShockwave(w, bx, by, '#ffea00', 220, 5);
   addScore(w, ENEMY_DEFEAT_POINTS * 20);
   spawnFloatingText(w, bx, by - 30, `BOSS DEFEATED! +${ENEMY_DEFEAT_POINTS * 20}`, '#ffea00', 1.45);
+  if (!w.stats.bossesDefeated.includes(b.type)) w.stats.bossesDefeated.push(b.type);
   if (!last) return; // the others fight on
+  noteLevelClear(w);
   w.projectiles = [];
   w.playerProjectiles = [];
   w.status = 'level-cleared';
@@ -1311,6 +1326,7 @@ function updatePlayerProjectileHits(w: World): void {
       for (const en of w.enemies) {
         if ((en.state === 'active' || en.state === 'stunned') && areRectsColliding(proj, en)) {
           en.state = 'defeated';
+          w.stats.enemiesDefeated += 1;
           const ex = en.x + en.width / 2;
           const ey = en.y + en.height / 2;
           sound(w, 'hit');
@@ -1365,6 +1381,8 @@ function updateItems(w: World): void {
     const ix = item.x + item.width / 2;
     const iy = item.y + item.height / 2;
     addScore(w, COLLECTIBLE_POINTS);
+    if (isCollectible(item.type)) w.stats.collected += 1;
+    if (!w.stats.itemTypes.includes(item.type)) w.stats.itemTypes.push(item.type);
     sound(w, 'collect');
     spawnParticles(w, ix, iy, '#ffea00', 12);
     spawnShockwave(w, ix, iy, '#ffea00', 55, 3);
@@ -1408,6 +1426,18 @@ function updateGoal(w: World): void {
   sound(w, 'levelClear');
   spawnParticles(w, gx, gy, '#00e5ff', 45);
   spawnShockwave(w, gx, gy, '#00e5ff', 240, 6);
+  noteLevelClear(w);
   w.status = 'level-cleared';
   w.transitionTimer = 2000;
+}
+
+/** Writes down how the level was cleared (for the trophies). */
+function noteLevelClear(w: World): void {
+  const s = w.stats;
+  s.clears[w.currentLevelIndex] = {
+    hits: s.levelHits,
+    livesLost: s.levelLivesLost,
+    livesLostSoFar: s.livesLost,
+    timeLeft: w.timeRemaining,
+  };
 }

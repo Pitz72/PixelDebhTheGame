@@ -225,6 +225,21 @@ export const SFX = {
     gain: 0.6,
     duck: [0.4, 800],
   },
+  // A trophy is earned: a short rising fanfare, brighter and shorter than the level jingle
+  trophy: {
+    tones: [
+      ...sequence({ ...pulse(0.25), vol: 0.42, shape: 'gate', release: 0.015 }, [
+        ['G5', 0.08], ['C6', 0.08], ['E6', 0.08], ['G6', 0.24],
+      ]),
+      ...sequence({ wave: 'triangle', vol: 0.55, shape: 'gate', release: 0.02 }, [
+        ['C4', 0.08], ['E4', 0.08], ['G4', 0.08], ['C5', 0.24],
+      ]),
+      { ...pulse(0.5), start: 0.24, dur: 0.5, f0: note('C7'), vol: 0.2, curve: 2, vibrato: [7, 0.2] },
+    ],
+    gain: 0.55,
+    minGapMs: 200,
+    duck: [0.5, 900],
+  },
   levelClear: {
     tones: [
       ...sequence({ ...pulse(0.25), vol: 0.45, shape: 'gate', release: 0.015 }, [

@@ -71,3 +71,11 @@ body {
     opacity: 1;
   }
 }
+
+/* Trophy notification: rises from below, stays, then slips away */
+@keyframes trophy-toast {
+  0% { transform: translate(-50%, 140px); opacity: 0; }
+  10% { transform: translate(-50%, 0); opacity: 1; }
+  88% { transform: translate(-50%, 0); opacity: 1; }
+  100% { transform: translate(-50%, 140px); opacity: 0; }
+}

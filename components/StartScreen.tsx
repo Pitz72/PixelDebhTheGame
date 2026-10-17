@@ -1,6 +1,7 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import { PlayerSprite, EnemySprite } from '../services/assetService';
 import * as soundService from '../services/soundService';
+import { trophyProgress } from '../services/trophyService';
 import { EnemyType } from '../types';
 
 interface StartScreenProps {
@@ -10,6 +11,7 @@ interface StartScreenProps {
 const StartScreen: React.FC<StartScreenProps> = ({ onStart }) => {
   const [visibleCharacters, setVisibleCharacters] = useState(0);
   const [showText, setShowText] = useState(false);
+  const { earned, total } = trophyProgress();
 
   const paradeCharacters: { type: 'player' | EnemyType; id: string; label: string }[] = [
     { type: 'player', id: 'player', label: 'PixelDebh' },
@@ -141,6 +143,8 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart }) => {
               <div><strong className="text-cyan-400">[SHIFT SX]:</strong> Spara (Boss &amp; Zero-G)</div>
               <div><strong className="text-cyan-400">[O]:</strong> Opzioni audio</div>
               <div><strong className="text-cyan-400">[M]:</strong> Muto</div>
+              <div><strong className="text-cyan-400">[T]:</strong> Trofei ({earned}/{total})</div>
+              <div><strong className="text-cyan-400">[F]:</strong> Schermo intero / finestra</div>
             </div>
           </div>
         )}

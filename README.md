@@ -39,6 +39,7 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 -   **Arcade High Score Leaderboard:** Compete for the top score! If you make it into the top 5, the game features a fully immersive highscore entry screen where you select your initials by scrolling through the alphabet, just like on a real arcade cabinet. The leaderboard is pre-filled with default scores.
 -   **Arcade-Style Attract Mode:** The title screen simulates a classic arcade cabinet, automatically and seamlessly alternating between the "Character Parade" intro and the high score leaderboard. The player can press Enter on either screen to start the game. The chiptune theme plays continuously throughout, creating a fluid attract mode experience.
 -   **Dynamic Background Music:** A track for each world (Adventure, Industrial, Ethereal), one for each of the three bosses, and one each for the title screen, the leaderboard, victory and game over. The music is loaded from `public/audio/music/` (see `docs/MUSIC_BRIEF.md`); a track without a file falls back to a short built-in loop, so the game is never silent.
+-   **Trophies:** 21 trophies in four kinds (normal, rare, hard and completion), from clearing level 1 to beating the final stage without losing a life. A banner with a jingle announces each one in the game; `T` opens the full list on the title screen and in the pause menu. They are saved with the other settings (`save.json` in the desktop app). A run played with the developer's god mode earns none.
 -   **Dynamic Arcade-Style Intro:** A vibrant, animated intro sequence to welcome players.
 -   **Unique Boss Encounters:** Multiple bosses with distinct AI behaviors (Random Float vs Figure-8 vs Teleport/Fade) and attack patterns.
 -   Classic 2D platforming action with a consistent pixel-perfect look
@@ -61,6 +62,7 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 -   **Pause:** `ESC` (the game also pauses by itself when the window loses focus)
 -   **Mute:** `M`
 -   **Audio settings (volume, music, effects, mute):** `O` on the start screen and in the pause menu
+-   **Trophies:** `T` on the title screen and in the pause menu
 -   **Fullscreen / window:** `F`, `F11` or `Alt+Enter`
 -   **Graphics quality:** `Q` switches between High (dynamic lights, bloom) and Low; the game drops to Low by itself if it cannot hold 40 fps
 -   **Performance overlay:** `F3` (renderer, fps, quality, particle count)
