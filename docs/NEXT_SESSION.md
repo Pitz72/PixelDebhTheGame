@@ -7,7 +7,7 @@ Il gioco e' finito: tutte le 7 fasi della roadmap e tutto l'audit sono chiusi (`
 | # | Decisione | Perche' serve | Consiglio |
 |---|---|---|---|
 | D1 | **Licenza** del repo (codice, grafica, musiche Lyria) e file `LICENSE` | **FATTA il 2026-10-17** sul modello di Il Relitto Silente e Il Viaggiatore: codice MIT; musiche, grafica vettoriale e testi di presentazione CC BY-NC-SA 4.0; nomi, loghi, icone e animazioni d'apertura (intro PixelDebh e logo Runtime) tutti i diritti riservati. Dettagli in `LICENZE.md` | Niente da fare |
-| D2 | OK a impostare i **2 segreti GitHub** (`TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`) | Senza, la build non firma i pacchetti dell'aggiornamento | Prima una **copia sicura** della cartella `C:\Users\Utente\.pixeldebh-signing\` (se la chiave si perde non si aggiornano piu' i giochi gia' installati) |
+| D2 | OK a impostare i **2 segreti GitHub** (`TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`) | **FATTA il 2026-10-17**: copia delle chiavi in `F:\Backup\PixelDebh-chiavi-firma-2026-10-17` (4 file, confronto SHA-256 identico), poi i due segreti impostati sul repo | Tenere la copia su F: e una seconda altrove (gestore di password): se la chiave si perde non si aggiornano piu' i giochi gia' installati |
 | D3 | **Firma del codice** (SmartScreen di Windows) | Senza, i giocatori vedono "Esegui comunque" | SignPath Foundation: gratuita per l'open source, richiede una domanda. Si puo' rimandare a dopo la prima release |
 | D4 | **Classifica online** per tutti (`docs/CLASSIFICA_ONLINE.md`) | E' la richiesta 11: va deciso se e quando farla | Fase 1 su Cloudflare, poi la verifica per rigiocata contro i trucchi |
 | D5 | **Dove e come si scarica** il gioco gratuito (solo GitHub Releases? un sito? itch.io?) | Per ora c'e' solo la pagina Release | Dirlo all'inizio della sessione: le pagine di download e il README si scrivono di conseguenza |
@@ -17,7 +17,7 @@ Il gioco e' finito: tutte le 7 fasi della roadmap e tutto l'audit sono chiusi (`
 | # | Azione | Quando |
 |---|---|---|
 | A1 | `LICENSE`, `LICENZE.md`, sezione License nel README, campo `license` in `package.json` e `Cargo.toml` | **Fatta** (dopo D1) |
-| A2 | Impostare i segreti con `gh secret set` (comandi in `docs/RILASCIO.md`) | Dopo D2 |
+| A2 | Impostare i segreti con `gh secret set` (comandi in `docs/RILASCIO.md`) | **Fatta** (dopo D2) |
 | A3 | Prima build di prova `build-only` (Windows e Linux) con `gh workflow run release.yml -f mode=build-only`, guardare i log e correggere | Dopo A2 (mai partita: e' la prova vera) |
 | A4 | Bozza di release `mode=draft` con `latest.json` e `log/<versione>.md`; **l'utente preme "Publish release"** | Dopo A3 |
 | A5 | **Prova dell'aggiornamento automatico**: servono due release pubblicate in fila (per esempio 1.18.0 e 1.18.1) e un installatore vero. Provare anche l'avviso della portable | Dopo A4 |
