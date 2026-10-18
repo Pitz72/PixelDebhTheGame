@@ -47,7 +47,7 @@ The core mechanic of **PixelDebh: Retro-Rescue!** is the ability to capture enem
 -   **Dynamic Background Music:** A track for each world (Adventure, Industrial, Ethereal), one for each of the three bosses, and one each for the title screen, the leaderboard, victory and game over. The music is loaded from `public/audio/music/` (see `docs/MUSIC_BRIEF.md`); a track without a file falls back to a short built-in loop, so the game is never silent.
 -   **Continue, level select and difficulty:** the game saves where you were at the start of each level ("Continue" in the title menu takes it up again, trophy counts included); the levels you have reached can be started again from the level select (practice: no leaderboard, no trophies); Easy (5 lives, slower enemies, weaker bosses), Normal and Hard (2 lives, faster enemies, tougher bosses) are chosen in Options > Game.
 -   **English and Italian:** the whole interface is in both (the arcade shouts, level and boss names and the HUD labels stay in English); the language follows the system until you choose one in Options.
--   **Trophies:** 22 trophies in four kinds (normal, rare, hard and completion), from clearing level 1 to beating the final stage without losing a life. A banner with a jingle announces each one in the game; `T` opens the full list on the title screen and in the pause menu. They are saved with the other settings (`save.json` in the desktop app). A run played with the developer's god mode earns none.
+-   **Trophies:** 22 trophies in four kinds (normal, rare, hard and completion), from clearing level 1 to beating the final stage without losing a life. A banner with a jingle announces each one in the game; `T` opens the full list on the title screen and in the pause menu. They are saved with the other settings (`save.json` in the desktop app). A run played with test tools switched on earns none.
 -   **Any screen, any refresh rate:** the simulation always runs 60 steps a second and the picture is interpolated between steps, so a 144 Hz screen shows smoother motion of the same game; the canvas follows the window (4K, high pixel density, F11) up to 1.5x the 1920x1080 stage.
 -   **A scenery for every world:** the neon city of world 1, a refinery in the smog for world 2 (cooling towers, smokestacks, gantries, glowing furnaces), floating islands, crystals and a ringed planet under an aurora for world 3, and a ruined citadel under a cracked blood moon for the bosses (`renderer/worldArt.ts`, drawn on the canvas at double size and shown at half so it stays sharp on big screens). The five enemies are drawn in HD vector with shading and rim light, in three readable states (normal, purple when held, dizzy when stunned).
 -   **Chain of K.O.s:** defeats that follow each other within four seconds build a chain: every third one raises the multiplier of the points (x2, x3, x4, up to x5). A COMBO pill in the HUD shows the chain and the time left on it; a hit breaks it.
@@ -90,14 +90,6 @@ The keys below are the defaults; every control can be given other keys (two each
 ## Start-up
 
 The game opens on half a second of black, then the animated logo of **Runtime Multimedia** (a TV that turns on and writes the mark; code and score imported from *Il Relitto Silente*, `intro/`), half a second of black, the animated intro of the Pixel Debh channel (`public/intro/pixeldebh-intro.webm`, 28 s, rendered from the Remotion project), a note on how the game was made (the work of the author, with AI as a tool) and then the game's own title. Esc, Enter, Space or a click skip each of them. The title screens carry the credit **By Simone Pizzi - Runtime Multimedia**.
-
-## Developer Features
-
-Available only when running `npm run dev` (they are compiled out of release builds):
-
--   **God Mode:** Press `0` to toggle invincibility.
--   **Boss Skip:** Press `9` to jump directly to the last boss (Level 12).
--   **Level Skip:** Press `L` to skip the current level instantly.
 
 ## Development
 

@@ -11,6 +11,7 @@ import { readPad, suppressMenuPad } from './services/gamepadService';
 import { t, useLanguage } from './services/i18n';
 import { createTrophyTracker, TrophyTracker } from './services/trophyService';
 import { clearRun, saveRun } from './services/progress';
+import { devProbeAllowed } from './services/devAccess';
 import type { TrophyDef } from './trophies';
 import { levels } from './levels';
 import { GAME_WIDTH, GAME_HEIGHT, COMBO_WINDOW_MS } from './constants';
@@ -186,9 +187,11 @@ const GameScreen: React.FC<GameScreenProps> = ({
   const callbacksRef = useRef({ onGameOver, onCompleted, onQuit });
   callbacksRef.current = { onGameOver, onCompleted, onQuit };
 
-  // Test probe, like window.__pdPerf: the scripts in tools/dev use it to jump to a level and read the
-  // state in the release build, where the developer keys do not exist.
+  // Test probe: the scripts in tools/dev use it to jump to a level and read the state in the release build,
+  // where the developer keys do not exist. It is only there in dev builds or once the page has been unlocked
+  // (services/devAccess.ts); the read-only measures (window.__pdPerf and the like) are always on.
   useEffect(() => {
+    if (!devProbeAllowed()) return;
     const w = worldRef.current as World;
     (window as unknown as { __pdGame?: unknown }).__pdGame = {
       load: (index: number) => loadLevel(w, index),

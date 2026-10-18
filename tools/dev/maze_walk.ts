@@ -43,6 +43,9 @@ const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 const keyEvent = (type: 'keydown' | 'keyup', key: string) =>
   ev(`document.body.dispatchEvent(new KeyboardEvent('${type}', {key: ${JSON.stringify(key)}, bubbles: true}))`);
 
+// unlock the test probe (the release build only installs window.__pdGame after this; see services/devAccess.ts)
+await ev("window.__pdUnlock = 'debh-sonda-retro-2026'");
+
 // into the game
 for (let i = 0; i < 60 && !(await ev('!!window.__pdGame')); i++) {
   if (i === 2) await keyEvent('keydown', ' ');

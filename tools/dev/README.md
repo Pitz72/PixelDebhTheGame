@@ -7,6 +7,13 @@ Scritti per Windows 11 + PowerShell + WSL2 Ubuntu. Alcuni script contengono anco
 - `shot.ps1`, `crop.ps1`, `strip.ps1`: screenshot di una finestra (anche WSLg con `-ProcName msrdc`), ritaglio, striscia di fotogrammi.
 - `wsl_setup.sh`, `wsl_update_build.sh`, `wsl_quick.sh`, `wsl_launch2.sh`: preparare Rust/Node in WSL, ricostruire i pacchetti Linux e avviare l'app con WSLg e xdotool.
 
+## Scorciatoie e sonda di prova (non sono nel README di proposito)
+
+- **Tasti di sviluppo**, solo con `npm run dev` (nelle build di rilascio non esistono: il codice e' tolto in compilazione): `0` God Mode, `L` salta il livello, `9` salta al boss finale; la pausa elenca i tre tasti. Una partita con il God Mode non assegna trofei.
+- **La sonda `window.__pdGame`** (`load(livello)`, `god(true)`, `warp(x, y)`, `bossHp(n)`, `state()`, `items()`, `goal()`, `movers()`, `springs()`, `stats()`, `trophies()`) serve agli script in questa cartella contro la build di rilascio. Dalla 1.18.2 **nella build di rilascio non c'e' piu' a meno che la pagina non sia stata sbloccata** (`services/devAccess.ts`): prima di avviare la partita, dalla console o con CDP (`Runtime.evaluate`), `window.__pdUnlock = 'debh-sonda-retro-2026'`. Nella build di sviluppo c'e' sempre. Non e' una serratura (il codice e' aperto): serve a non averla a portata di console di un giocatore qualsiasi. Nel bundle resta solo l'impronta (FNV-1a) della frase.
+- Le sonde che **misurano soltanto** (`__pdPerf`, `__pdPlayer`, `__pdLoadMs`, `__pdRenderError`, `__pdAudio`) restano sempre attive: non cambiano il gioco.
+- L'app Tauri di rilascio non ha gli strumenti per sviluppatori del browser (la funzione `devtools` di Tauri non e' attiva in `Cargo.toml`) e il menu del tasto destro e' bloccato (`index.tsx`).
+
 ## Audio (`tools/audio/`)
 
 - `export-sfx.ts`: scrive ogni effetto in WAV e stampa le misure. Si lancia con esbuild + node: `npx esbuild tools/audio/export-sfx.ts --bundle --platform=node --format=esm --outfile=<tmp>/export-sfx.mjs` poi `node <tmp>/export-sfx.mjs <cartella-uscita>`.
