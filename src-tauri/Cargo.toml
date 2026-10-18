@@ -1,6 +1,6 @@
 [package]
 name = "pixeldebh"
-version = "1.18.1"
+version = "1.18.2"
 description = "PixelDebh: Retro-Rescue! - arcade platformer"
 authors = ["Simone Pizzi - Runtime Multimedia"]
 license = "MIT"
