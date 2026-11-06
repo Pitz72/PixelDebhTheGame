@@ -4,9 +4,10 @@
 > La classifica online (D4 qui sotto) **non è più sospesa**: Simone l'ha voluta come torneo sul sito ufficiale del canale,
 > che è già pronto a ricevere i punteggi. Manca la versione del gioco che li manda (interruttore nelle opzioni, sigla, codice
 > della copia, firma, CSP). Le decisioni di Simone e il contratto con il sito sono in `docs/TORNEO.md`.
-> **Fasi 1 e 2 fatte il 6 novembre** (interruttore, consenso, codice della copia; stato all'avvio, invio firmato, coda,
-> cancellazione, CSP): si riprende dalla fase 3, la prova vera contro il sito di sviluppo (porta 8123), poi la fase 4
-> (segreto di GitHub e release 1.19.0). La tabella delle fasi e le note per la fase 3 sono in cima a `docs/TORNEO.md`.
+> **Fasi 1, 2 e 3 fatte il 6 novembre** (interruttore, consenso, codice della copia; stato all'avvio, invio firmato, coda,
+> cancellazione, CSP; prova vera contro il runtime isolato del sito, anche con una partita giocata nell'exe): resta la fase 4,
+> il segreto di GitHub (la chiave del pannello del sito vero, la mette Simone) e la release 1.19.0. Tabella delle fasi e
+> resoconto delle prove in cima a `docs/TORNEO.md`.
 
 **1.18.2 pubblicata il 2026-10-18** (tag su `9456210`, «Latest»; `latest.json` pubblico a 1.18.2, 6 piattaforme, firme con la chiave `3E180F3F6F7C8052`): corregge il primo checkpoint del livello 3, che stava nel vuoto del baratro (campo `baseCheckpoint` in `levels.ts`, test su tutti i checkpoint), e nasconde la sonda di prova `window.__pdGame` nelle build di rilascio (serve una frase di sblocco, `services/devAccess.ts`; le istruzioni sono in `tools/dev/README.md`, non piu' nel README). Dettagli in `log/1.18.2.md`. **Landing Ecosystem aggiornata alla 1.18.2 il 2026-10-18** (sito v0.24.2, commit `c55d04d`, deploy fatto su OK dell'utente: link di download, versione e nome del portable; online 137/137 file identici, nessun «1.18.1» rimasto). Il testo che segue, scritto a 1.18.1, resta valido per il resto.
 

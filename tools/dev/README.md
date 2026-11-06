@@ -6,6 +6,7 @@ Scritti per Windows 11 + PowerShell + WSL2 Ubuntu. Alcuni script contengono anco
 - `copy_exe.mjs`: copia l'exe di release in `exe/PixelDebh-<versione>.exe` (cartella nella root, ignorata da git), pronto da mandare a qualcuno. Si usa con `npm run exe` (compila e copia).
 - `shot.ps1`, `crop.ps1`, `strip.ps1`: screenshot di una finestra (anche WSLg con `-ProcName msrdc`), ritaglio, striscia di fotogrammi.
 - `wsl_setup.sh`, `wsl_update_build.sh`, `wsl_quick.sh`, `wsl_launch2.sh`: preparare Rust/Node in WSL, ricostruire i pacchetti Linux e avviare l'app con WSLg e xdotool.
+- `torneo/`: la prova del torneo contro il runtime isolato del sito di PixelDebh (`prepara.php` lo prepara, `sito.test.ts` ci fa girare il client del gioco). Fuori da `npm test` perché serve il server acceso; i comandi sono in `docs/TORNEO.md`, fase 3.
 
 ## Scorciatoie e sonda di prova (non sono nel README di proposito)
 

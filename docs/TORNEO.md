@@ -12,7 +12,7 @@
 |---|---|---|
 | 1 | Interruttore nelle Opzioni (scheda GIOCO), schermata dei 14 anni e della sigla, link all'informativa, codice della copia in `save.json` (punti 1, 2 e 9 qui sotto) | **Fatta il 6 novembre 2026** |
 | 2 | Stato del torneo all'avvio, invio firmato a fine partita, coda senza rete, «Cancella i miei dati», CSP (punti 3-8) | **Fatta il 6 novembre 2026** |
-| 3 | Prova vera contro il sito di sviluppo (server locale 8123 nel progetto del sito) (punto 10) | Da fare |
+| 3 | Prova vera contro il sito (punto 10): fatta sul runtime isolato del sito, non sul database di sviluppo della 8123 | **Fatta il 6 novembre 2026** |
 | 4 | Segreto di GitHub, `release.yml`, versione 1.19.0 (punti 7 e 11) | Da fare |
 
 **Fase 1, dove sta:** `services/tournament.ts` (stato salvato sotto `pixelDebhTournament`: `enabled`, `initials`, `copy`,
@@ -61,12 +61,46 @@ bloccato dalla CSP, l'interruttore compare, la schermata del consenso lo accende
 `curl`: il preflight del POST risponde 204 con le intestazioni giuste. **Non provato:** un invio vero e una cancellazione vera
 (sul sito di sviluppo, fase 3).
 
-**Per la fase 3 (prova contro il sito di sviluppo, porta 8123):** l'indirizzo si cambia con `VITE_PIXELDEBH_TORNEO_URL`
-(per esempio `http://127.0.0.1:8123/api/torneo.php`), la chiave con `VITE_PIXELDEBH_TORNEO_CHIAVE` (quella del pannello del
-sito di sviluppo). Attenzione al CORS: il sito risponde solo alle origini dell'app (`TORNEO_ORIGINI`), quindi da `npm run dev`
-o `tauri dev` (origine `http://localhost:3000`) il browser blocca. Le strade: un exe di prova con quella base e la CSP allargata
-per l'occasione (`tauri build --config` con un `connect-src` che comprende `http://127.0.0.1:8123`), oppure aggiungere per
-la prova `http://localhost:3000` alle origini del sito di sviluppo.
+**Fase 3, com'è andata (6 novembre).** Invece del database di sviluppo della 8123 (che è di Simone) si è usato il
+**runtime isolato** del sito, quello dei collaudi: lo stesso codice PHP servito con `PIXELDEBH_PROVA_DIR` puntato su una
+cartella usa e getta, con un SQLite suo e una chiave del torneo sua. Il progetto del sito non è cambiato (`git status` pulito,
+database di sviluppo intatto). Due prove, entrambe verdi:
+
+1. **Il client del gioco contro il sito** (`tools/dev/torneo/sito.test.ts`, 9 controlli): stato e orologio; una partita che
+   vale → «Punteggio registrato: sei al posto 1.»; una più bassa → il record resta (frase del sito in italiano, la nostra in
+   inglese); **l'orologio del PC avanti di due ore**: con la correzione la partita passa, senza il sito risponde `chiuso`; le
+   partite che non valgono tornano indietro con `regole` e `numeri` (e `versione`), una chiave sbagliata con `firma`; la coda
+   parte al riavvio; la classifica pubblica mostra DEB; la cancellazione svuota tutto.
+2. **Una partita vera nell'exe di release** (exe di prova con l'indirizzo del runtime isolato, la sua chiave e la CSP allargata
+   solo per quella build; `save.json` copiato prima e rimesso dopo, hash uguale): origine `http://tauri.localhost`, interruttore
+   acceso dalle Opzioni, nel titolo «TORNEO APERTO FINO AL 8 NOVEMBRE ALLE ORE 14:39 · PARTECIPI COME AAA», Nuova partita
+   giocata con i tasti (13 secondi, 250 punti, nessuna sonda), «esci al titolo» → il gioco chiede lo stato, fa il preflight
+   (204), manda (200) e mostra «Punteggio registrato: sei al posto 1.». Il sito ha salvato AAA, 250 punti, livello 1, LOOP 1,
+   17 secondi, versione 1.18.2, valida. Poi Opzioni → «Cancella i miei dati dal torneo» due volte → preflight 204, POST 200,
+   «Fatto: il sito non ha più nessun dato di questa copia del gioco.», interruttore spento, classifica vuota.
+
+Imparato: il sito frena a **30 scritture ogni 10 minuti per rete** (risponde 429): il gioco mette da parte e riprova, come
+deve; per le prove `prepara.php apri` azzera i contatori del solo runtime isolato. **Non provato:** la coda nell'exe con la
+rete staccata davvero (la logica è la stessa provata in Node e nei test), Linux.
+
+**Come si rifà** (Windows, PHP di MAMP; `<dir>` è una cartella vuota con dentro `.data`, `.cache` e `uploads`):
+
+```bash
+# 1. il server del sito, isolato (dalla cartella del progetto del sito)
+PIXELDEBH_PROVA_DIR=<dir> C:/MAMP/bin/php/php8.2.14/php.exe -d extension=gd -d extension=intl -d extension=fileinfo -S 127.0.0.1:8125 -t public public/dev-router.php
+# 2. schema, freni azzerati e un torneo aperto (dalla cartella del gioco)
+PIXELDEBH_PROVA_DIR=<dir> TORNEO_VERSIONE_MINIMA=1.18.2 C:/MAMP/bin/php/php8.2.14/php.exe tools/dev/torneo/prepara.php apri > <dir>/stato.json
+# 3. il client contro il sito
+TORNEO_PROVA_STATO=<dir>/stato.json npx vitest run --config tools/dev/torneo/vitest.config.ts
+# 4. (facoltativo) un exe di prova: la chiave è "chiave" in stato.json; la CSP con http://127.0.0.1:8125 in un file JSON
+#    {"app":{"security":{"csp":"…connect-src 'self' ipc: http://ipc.localhost https://www.pixeldebh.it http://127.0.0.1:8125; …"}}}
+VITE_PIXELDEBH_TORNEO_URL=http://127.0.0.1:8125/api/torneo.php VITE_PIXELDEBH_TORNEO_CHIAVE=<chiave> npx tauri build --no-bundle --config <csp.json>
+```
+
+L'exe di prova usa lo stesso `save.json` del gioco installato (`%APPDATA%\com.pixeldebh.retrorescue\save.json`): copiarlo prima
+e rimetterlo dopo. Finita la prova, ricompilare l'exe normale (`npx tauri build --no-bundle`) perché non resti in giro una build
+che punta al server di prova. Da `npm run dev` o `tauri dev` non si prova: l'origine `http://localhost:3000` non è fra quelle a
+cui il sito risponde (`TORNEO_ORIGINI`).
 
 ## Da dove viene
 
