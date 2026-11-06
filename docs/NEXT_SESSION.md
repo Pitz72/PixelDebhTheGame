@@ -7,9 +7,9 @@
 > **Fasi 1, 2 e 3 fatte il 6 novembre** (interruttore, consenso, codice della copia; stato all'avvio, invio firmato, coda,
 > cancellazione, CSP; prova vera contro il runtime isolato del sito, anche con una partita giocata nell'exe). **Fase 4
 > preparata** (versione 1.19.0 con il suo log, `release.yml` che passa la chiave e si ferma senza): il segreto
-> `VITE_PIXELDEBH_TORNEO_CHIAVE` c'è (messo il 6 novembre, preso dal database del sito vero); la **bozza `v1.19.0` c'è** (6 novembre) e il suo exe
-> parla con il sito vero con la chiave giusta; mancano l'OK di Simone per pubblicare (`gh release edit v1.19.0 --draft=false --latest`)
-> e poi la landing Ecosystem. Per il torneo, nel
+> `VITE_PIXELDEBH_TORNEO_CHIAVE` c'è (messo il 6 novembre, preso dal database del sito vero); la bozza `v1.19.0` è stata provata (il suo exe
+> parla con il sito vero con la chiave giusta) e **la 1.19.0 è PUBBLICATA dal 6 novembre 2026, 15:54 UTC** («Latest», `latest.json`
+> pubblico a 1.19.0, 6 piattaforme). Manca la landing Ecosystem a 1.19.0 (deploy solo su OK di Simone). Per il torneo, nel
 > pannello del sito: versione minima 1.19.0. Tabella delle fasi in cima a `docs/TORNEO.md`.
 
 **1.18.2 pubblicata il 2026-10-18** (tag su `9456210`, «Latest»; `latest.json` pubblico a 1.18.2, 6 piattaforme, firme con la chiave `3E180F3F6F7C8052`): corregge il primo checkpoint del livello 3, che stava nel vuoto del baratro (campo `baseCheckpoint` in `levels.ts`, test su tutti i checkpoint), e nasconde la sonda di prova `window.__pdGame` nelle build di rilascio (serve una frase di sblocco, `services/devAccess.ts`; le istruzioni sono in `tools/dev/README.md`, non piu' nel README). Dettagli in `log/1.18.2.md`. **Landing Ecosystem aggiornata alla 1.18.2 il 2026-10-18** (sito v0.24.2, commit `c55d04d`, deploy fatto su OK dell'utente: link di download, versione e nome del portable; online 137/137 file identici, nessun «1.18.1» rimasto). Il testo che segue, scritto a 1.18.1, resta valido per il resto.
