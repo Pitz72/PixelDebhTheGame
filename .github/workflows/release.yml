@@ -22,6 +22,12 @@
 # `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` (the public key is in tauri.conf.json).
 # The games installed with the setup program (and the AppImage) update themselves; the portable exe and the
 # .deb / .rpm packages only show a notice with the link to the release (see services/updateService.ts).
+#
+# The tournaments of www.pixeldebh.it (docs/TORNEO.md): the game signs the scores it sends with the key in the
+# secret `VITE_PIXELDEBH_TORNEO_CHIAVE`, copied from the site's panel (Il gioco -> "La chiave per il gioco"; 64
+# lowercase hex characters). Vite puts it into the game at build time; it is never in the repository. Without it
+# the game has no tournament switch at all, so a draft or a release refuses to start without a valid one (a
+# build-only run just warns).
 name: Build and release
 
 on:
@@ -66,6 +72,15 @@ jobs:
       - name: A release needs its own log file
         if: inputs.mode != 'build-only'
         run: test -f "log/${{ steps.version.outputs.version }}.md" || { echo "::error::log/${{ steps.version.outputs.version }}.md is missing"; exit 1; }
+      - name: The tournament key is there
+        env:
+          KEY: ${{ secrets.VITE_PIXELDEBH_TORNEO_CHIAVE }}
+          MODE: ${{ inputs.mode }}
+        run: |
+          if printf '%s' "$KEY" | grep -Eq '^[0-9a-f]{64}$'; then echo "Tournament key: present"; exit 0; fi
+          if [ "$MODE" = "build-only" ]; then echo "::warning::No valid VITE_PIXELDEBH_TORNEO_CHIAVE secret: this build has no tournament switch"; exit 0; fi
+          echo "::error::The secret VITE_PIXELDEBH_TORNEO_CHIAVE is missing or is not 64 lowercase hex characters. Copy it from the site's panel (Il gioco -> La chiave per il gioco) and set it with: gh secret set VITE_PIXELDEBH_TORNEO_CHIAVE"
+          exit 1
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
@@ -88,6 +103,8 @@ jobs:
       RELEASING: ${{ inputs.mode != 'build-only' }}
       TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
       TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+      # read by Vite while it builds the game (services/tournament.ts); see the note at the top
+      VITE_PIXELDEBH_TORNEO_CHIAVE: ${{ secrets.VITE_PIXELDEBH_TORNEO_CHIAVE }}
       APPIMAGE_EXTRACT_AND_RUN: 1
     steps:
       - uses: actions/checkout@v4

@@ -13,7 +13,7 @@
 | 1 | Interruttore nelle Opzioni (scheda GIOCO), schermata dei 14 anni e della sigla, link all'informativa, codice della copia in `save.json` (punti 1, 2 e 9 qui sotto) | **Fatta il 6 novembre 2026** |
 | 2 | Stato del torneo all'avvio, invio firmato a fine partita, coda senza rete, «Cancella i miei dati», CSP (punti 3-8) | **Fatta il 6 novembre 2026** |
 | 3 | Prova vera contro il sito (punto 10): fatta sul runtime isolato del sito, non sul database di sviluppo della 8123 | **Fatta il 6 novembre 2026** |
-| 4 | Segreto di GitHub, `release.yml`, versione 1.19.0 (punti 7 e 11) | Da fare |
+| 4 | Segreto di GitHub, `release.yml`, versione 1.19.0 (punti 7 e 11) | **Preparata il 6 novembre**: `release.yml` passa la chiave alla build e non crea release senza; versione 1.19.0, `log/1.19.0.md`, README. **Manca**: il segreto `VITE_PIXELDEBH_TORNEO_CHIAVE` (lo mette Simone, `docs/RILASCIO.md`), la bozza, la prova dell'exe della bozza, l'OK per pubblicare, la landing Ecosystem |
 
 **Fase 1, dove sta:** `services/tournament.ts` (stato salvato sotto `pixelDebhTournament`: `enabled`, `initials`, `copy`,
 `consentAt`; acceso solo con sigla, codice e consenso validi; spegnerlo tiene sigla e codice), `components/TournamentConsent.tsx`

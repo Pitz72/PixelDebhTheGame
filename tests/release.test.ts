@@ -68,6 +68,19 @@ describe('the release workflow', () => {
     expect(portable?.run).toContain('gh release upload');
   });
 
+  it('gives the build the tournament key from its secret, and stops a release without a valid one', () => {
+    const env = workflow.jobs.build.env as Record<string, string>;
+    expect(env.VITE_PIXELDEBH_TORNEO_CHIAVE).toBe('${{ secrets.VITE_PIXELDEBH_TORNEO_CHIAVE }}');
+    const steps = workflow.jobs.check.steps as { name?: string; run?: string; env?: Record<string, string>; if?: string }[];
+    const key = steps.find(s => s.name === 'The tournament key is there');
+    expect(key).toBeDefined();
+    expect(key!.if).toBeUndefined(); // it runs for every mode: build-only only warns
+    expect(key!.env!.KEY).toBe('${{ secrets.VITE_PIXELDEBH_TORNEO_CHIAVE }}');
+    expect(key!.run).toContain('^[0-9a-f]{64}$');
+    expect(key!.run).toContain('::error::');
+    expect(key!.run).toMatch(/build-only[^\n]*::warning::/);
+  });
+
   it('checks that the versions agree and tests before building', () => {
     expect(workflow.jobs.build.needs).toBe('check');
     const run = (workflow.jobs.check.steps as { run?: string }[]).map(s => s.run ?? '').join('\n');

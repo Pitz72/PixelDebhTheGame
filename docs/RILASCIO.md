@@ -29,6 +29,21 @@ gh secret set TAURI_SIGNING_PRIVATE_KEY_PASSWORD < C:/Users/Utente/.pixeldebh-si
 
 **Fai una copia sicura della cartella delle chiavi.** Se la chiave privata si perde non si possono piu' pubblicare aggiornamenti che i giochi gia' installati accettino: bisognerebbe far reinstallare tutti a mano, con una chiave nuova.
 
+## Dalla 1.19.0: il terzo segreto, la chiave del torneo
+
+Il gioco firma i punteggi che manda al torneo di www.pixeldebh.it (`docs/TORNEO.md`) con la chiave del sito. Si copia dal
+pannello del sito vero (**Il gioco > «La chiave per il gioco»**, 64 caratteri esadecimali minuscoli) e si mette nel segreto
+`VITE_PIXELDEBH_TORNEO_CHIAVE`; il comando la chiede senza mostrarla:
+
+```bash
+gh secret set VITE_PIXELDEBH_TORNEO_CHIAVE --repo Pitz72/PixelDebhTheGame
+```
+
+Il workflow la passa alla build (Vite la mette nel gioco) e **non crea una bozza o una release senza una chiave valida** (con
+`build-only` avvisa soltanto: quella build non ha l'interruttore del torneo). **Se nel pannello si cambia la chiave**, i giochi
+gia' installati non possono piu' mandare punteggi (il sito risponde «aggiorna il gioco»): bisogna rimettere il segreto e
+pubblicare una versione nuova. Chi smonta il gioco la puo' trovare: e' una difesa contro i trucchi pigri, non contro tutti.
+
 ## Pubblicare una versione, passo per passo
 
 1.  **Il numero di versione**: cambialo nei tre posti che devono coincidere, `package.json`, `src-tauri/tauri.conf.json` e `src-tauri/Cargo.toml` (e i lock: `npm install` e una build di Cargo li aggiornano). Il workflow controlla che siano uguali.

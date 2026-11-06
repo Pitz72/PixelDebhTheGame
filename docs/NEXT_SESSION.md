@@ -5,9 +5,11 @@
 > che è già pronto a ricevere i punteggi. Manca la versione del gioco che li manda (interruttore nelle opzioni, sigla, codice
 > della copia, firma, CSP). Le decisioni di Simone e il contratto con il sito sono in `docs/TORNEO.md`.
 > **Fasi 1, 2 e 3 fatte il 6 novembre** (interruttore, consenso, codice della copia; stato all'avvio, invio firmato, coda,
-> cancellazione, CSP; prova vera contro il runtime isolato del sito, anche con una partita giocata nell'exe): resta la fase 4,
-> il segreto di GitHub (la chiave del pannello del sito vero, la mette Simone) e la release 1.19.0. Tabella delle fasi e
-> resoconto delle prove in cima a `docs/TORNEO.md`.
+> cancellazione, CSP; prova vera contro il runtime isolato del sito, anche con una partita giocata nell'exe). **Fase 4
+> preparata** (versione 1.19.0 con il suo log, `release.yml` che passa la chiave e si ferma senza): mancano il segreto
+> `VITE_PIXELDEBH_TORNEO_CHIAVE` (lo mette Simone: comando in `docs/RILASCIO.md`), la bozza (`gh workflow run release.yml -f
+> mode=draft`), la prova dell'exe della bozza, l'OK di Simone per pubblicare e poi la landing Ecosystem. Per il torneo, nel
+> pannello del sito: versione minima 1.19.0. Tabella delle fasi in cima a `docs/TORNEO.md`.
 
 **1.18.2 pubblicata il 2026-10-18** (tag su `9456210`, «Latest»; `latest.json` pubblico a 1.18.2, 6 piattaforme, firme con la chiave `3E180F3F6F7C8052`): corregge il primo checkpoint del livello 3, che stava nel vuoto del baratro (campo `baseCheckpoint` in `levels.ts`, test su tutti i checkpoint), e nasconde la sonda di prova `window.__pdGame` nelle build di rilascio (serve una frase di sblocco, `services/devAccess.ts`; le istruzioni sono in `tools/dev/README.md`, non piu' nel README). Dettagli in `log/1.18.2.md`. **Landing Ecosystem aggiornata alla 1.18.2 il 2026-10-18** (sito v0.24.2, commit `c55d04d`, deploy fatto su OK dell'utente: link di download, versione e nome del portable; online 137/137 file identici, nessun «1.18.1» rimasto). Il testo che segue, scritto a 1.18.1, resta valido per il resto.
 
