@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { bakeParade } from './characters/debh/paradeFrames';
 import { useGameScale } from './hooks/useGameScale';
 import StartScreen, { type StartChoice } from './components/StartScreen';
-import GameScreen from './GameScreen';
+import GameScreen, { type RunEnd } from './GameScreen';
 import CompletedScreen from './components/CompletedScreen';
 import GameoverScreen from './components/GameoverScreen';
 import PixelArcadeIntro from './components/PixelArcadeIntro';
@@ -12,6 +12,8 @@ import HighscoreScreen from './components/HighscoreScreen';
 import EnterHighscoreScreen from './components/EnterHighscoreScreen';
 import ScreenOverlay, { type OverlayKind } from './components/ScreenOverlay';
 import UpdateBanner, { UpdateStatus } from './components/UpdateBanner';
+import TournamentBanner from './components/TournamentBanner';
+import TournamentToast from './components/TournamentToast';
 import { Difficulty, GameState } from './types';
 import type { RunStats } from './engine/stats';
 import { GAME_WIDTH, GAME_HEIGHT } from './constants';
@@ -22,11 +24,19 @@ import { isTauri, openPage, quitApp, setFullscreen, toggleFullscreen } from './s
 import { startMenuPad } from './services/gamepadService';
 import { getSettings } from './services/settings';
 import { loadProgress } from './services/progress';
+import { reportGame, startupCheck } from './services/tournamentApi';
+import { levels } from './levels';
 
 interface Carry {
   score: number;
   lives?: number;
+  /** Play time of the LOOPs already finished (the tournament wants the whole game). */
+  playedMs: number;
+  /** A cheat was used in one of the LOOPs already finished. */
+  cheats: boolean;
 }
+
+const freshCarry = (): Carry => ({ score: 0, playedMs: 0, cheats: false });
 
 function App() {
   const [gameState, setGameState] = useState<GameState>('boot');
@@ -35,13 +45,15 @@ function App() {
   const [finalScore, setFinalScore] = useState(0);
   const [loopCount, setLoopCount] = useState(1);
   // Score and lives travel with the player from one loop (New Game+) to the next.
-  const [carry, setCarry] = useState<Carry>({ score: 0 });
+  const [carry, setCarry] = useState<Carry>(freshCarry);
   // The game that is starting, or in progress: where it begins, how hard it is, whether it is practice (a game
-  // from the level select: no leaderboard, no trophies) and what a continued game has counted so far.
-  const [run, setRun] = useState<{ levelIndex: number; difficulty: Difficulty; practice: boolean; stats?: RunStats }>({
+  // from the level select: no leaderboard, no trophies), whether it was taken up with "Continue" (it does not count
+  // for the tournament) and what a continued game has counted so far.
+  const [run, setRun] = useState<{ levelIndex: number; difficulty: Difficulty; practice: boolean; continued: boolean; stats?: RunStats }>({
     levelIndex: 0,
     difficulty: 'normal',
     practice: false,
+    continued: false,
   });
   // The page open over the title (options, trophies, credits, how to play, the leaderboard), if any
   const [overlay, setOverlay] = useState<OverlayKind | null>(null);
@@ -68,7 +80,8 @@ function App() {
     return () => clearTimeout(id);
   }, []);
 
-  // Look for a newer version once, the first time a title screen shows (never during a game).
+  // Look for a newer version once, the first time a title screen shows (never during a game); the tournament asks
+  // the site about itself at the same moment, and sends what was put aside without a network.
   const updateChecked = useRef(false);
   useEffect(() => {
     if (updateChecked.current || (gameState !== 'start' && gameState !== 'highscore')) return;
@@ -76,6 +89,7 @@ function App() {
     void checkForUpdate().then(found => {
       if (found) setUpdate(found);
     });
+    void startupCheck();
   }, [gameState]);
 
   // U: install the update (installed copies) or open its page (portable copies and packages).
@@ -135,8 +149,8 @@ function App() {
   }, [requestAppFullscreen]);
 
   const startFresh = useCallback(() => {
-    setCarry({ score: 0 });
-    setRun({ levelIndex: 0, difficulty: getSettings().difficulty, practice: false });
+    setCarry(freshCarry());
+    setRun({ levelIndex: 0, difficulty: getSettings().difficulty, practice: false, continued: false });
     setGameState('playing');
     setGameId(id => id + 1);
     setLoopCount(1);
@@ -152,8 +166,8 @@ function App() {
     const saved = loadProgress().run;
     if (!saved) return handleStart();
     requestAppFullscreen();
-    setCarry({ score: saved.score, lives: saved.lives });
-    setRun({ levelIndex: saved.levelIndex, difficulty: saved.difficulty, practice: false, stats: saved.stats });
+    setCarry({ score: saved.score, lives: saved.lives, playedMs: 0, cheats: false });
+    setRun({ levelIndex: saved.levelIndex, difficulty: saved.difficulty, practice: false, continued: true, stats: saved.stats });
     setLoopCount(saved.loopCount);
     setGameState('playing');
     setGameId(id => id + 1);
@@ -164,8 +178,8 @@ function App() {
     (levelIndex: number) => {
       requestAppFullscreen();
       setOverlay(null);
-      setCarry({ score: 0 });
-      setRun({ levelIndex, difficulty: getSettings().difficulty, practice: true });
+      setCarry(freshCarry());
+      setRun({ levelIndex, difficulty: getSettings().difficulty, practice: true, continued: false });
       setLoopCount(1);
       setGameState('playing');
       setGameId(id => id + 1);
@@ -180,31 +194,47 @@ function App() {
     setGameId(id => id + 1);
   }, []);
 
-  /** Ends a run: the score goes to the leaderboard if it qualifies. */
-  const finishRun = useCallback((score: number, fallback: GameState) => {
+  /**
+   * Ends a run: the score goes to the leaderboard if it qualifies, and to the tournament of pixeldebh.it when the
+   * player takes part and the game counts (services/tournamentApi.ts decides, and does nothing with the switch off).
+   * `end` is the LOOP being played; `carry` has the LOOPs finished before it.
+   */
+  const finishRun = useCallback((score: number, fallback: GameState, end: RunEnd) => {
     soundService.stopMusic();
+    void reportGame({
+      score,
+      level: end.level,
+      loop: loopCount,
+      seconds: Math.floor((carry.playedMs + end.playedMs) / 1000),
+      difficulty: run.difficulty,
+      continued: run.continued,
+      practice: run.practice,
+      cheats: carry.cheats || end.cheats,
+      endedAt: Math.floor(Date.now() / 1000),
+    });
     if (!run.practice && highscoreService.isHighscore(score)) {
       setFinalScore(score);
       setGameState('enter-highscore');
     } else {
       setGameState(fallback);
     }
-  }, [run.practice]);
+  }, [run.practice, run.difficulty, run.continued, loopCount, carry.playedMs, carry.cheats]);
 
   const handleGameOver = useCallback(
-    (score: number) => finishRun(score, 'gameover'),
+    (score: number, end: RunEnd) => finishRun(score, 'gameover', end),
     [finishRun]
   );
 
-  const handleGameCompleted = useCallback((score: number, lives: number) => {
+  const handleGameCompleted = useCallback((score: number, lives: number, end: RunEnd) => {
     soundService.stopMusic();
-    setCarry({ score, lives });
+    setCarry(c => ({ score, lives, playedMs: c.playedMs + end.playedMs, cheats: c.cheats || end.cheats }));
     setGameState('completed');
   }, []);
 
-  // "Save and quit" from the victory screen: bank the score instead of starting another loop.
+  // "Save and quit" from the victory screen: bank the score instead of starting another loop. The LOOP's time is
+  // already in `carry`, and she got to the last level.
   const handleBankScore = useCallback(() => {
-    finishRun(carry.score, 'start');
+    finishRun(carry.score, 'start', { level: levels.length, playedMs: 0, cheats: false });
     setAttractScreen('highscore');
   }, [carry.score, finishRun]);
 
@@ -272,8 +302,8 @@ function App() {
     [handleStart, handleContinue]
   ),
   handleLeaveGame = useCallback(
-    (score: number) => {
-      finishRun(score, 'start');
+    (score: number, end: RunEnd) => {
+      finishRun(score, 'start', end);
       setAttractScreen('start');
     },
     [finishRun]
@@ -381,6 +411,8 @@ function App() {
           {update && (gameState === 'start' || gameState === 'highscore') && (
             <UpdateBanner update={update} status={updateStatus} error={updateError} />
           )}
+          {(gameState === 'start' || gameState === 'highscore') && !overlay && <TournamentBanner />}
+          <TournamentToast />
         </div>
       </div>
     </div>

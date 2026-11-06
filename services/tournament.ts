@@ -89,6 +89,14 @@ export function disableTournament(): void {
   save({ ...getTournament(), enabled: false });
 }
 
+/**
+ * After the site deleted this copy's data: the code goes (a new one is made the next time the switch goes on) and the
+ * switch is off. The initials stay, to be proposed again.
+ */
+export function forgetCopy(): void {
+  save({ ...getTournament(), enabled: false, copy: '', consentAt: 0 });
+}
+
 /** The initials to propose: the tournament's own, else the last ones written in the high scores, else the best entry's. */
 export function proposedInitials(): string {
   const mine = getTournament().initials;

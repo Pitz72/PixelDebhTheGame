@@ -11,7 +11,7 @@
 | Fase | Che cosa | Stato |
 |---|---|---|
 | 1 | Interruttore nelle Opzioni (scheda GIOCO), schermata dei 14 anni e della sigla, link all'informativa, codice della copia in `save.json` (punti 1, 2 e 9 qui sotto) | **Fatta il 6 novembre 2026** |
-| 2 | Stato del torneo all'avvio, invio firmato a fine partita, coda senza rete, «Cancella i miei dati», CSP (punti 3-8) | Da fare |
+| 2 | Stato del torneo all'avvio, invio firmato a fine partita, coda senza rete, «Cancella i miei dati», CSP (punti 3-8) | **Fatta il 6 novembre 2026** |
 | 3 | Prova vera contro il sito di sviluppo (server locale 8123 nel progetto del sito) (punto 10) | Da fare |
 | 4 | Segreto di GitHub, `release.yml`, versione 1.19.0 (punti 7 e 11) | Da fare |
 
@@ -26,8 +26,47 @@ sigla si scrive con le lettere o, col pad, INVIO e poi ↑↓), le due righe in 
 **Come si prova senza la chiave vera:** l'interruttore compare solo se la build ha `VITE_PIXELDEBH_TORNEO_CHIAVE`. Per lo
 sviluppo basta un file `.env.local` nella radice con `VITE_PIXELDEBH_TORNEO_CHIAVE=<la chiave del sito di sviluppo>` (git lo
 ignora: `*.local`). Per guardare le schermate: `/ui-sheet.html?screen=options&tab=3&torneo=1` (interruttore spento),
-`&torneo=on` (acceso come DEB), `/ui-sheet.html?screen=tournament` (la schermata del consenso). Con la fase 1 il gioco non manda
-ancora niente, neanche con l'interruttore acceso.
+`&torneo=on` (acceso come DEB), `/ui-sheet.html?screen=tournament` (la schermata del consenso). Con `&torneo=on`, anche
+`&stato=aperto` o `&stato=in_arrivo` (una risposta del sito inventata: l'avviso sul titolo) e `&avviso=good|info|bad` (il
+messaggio dopo una partita).
+
+**Fase 2, dove sta:** `services/tournamentApi.ts` (stato, invio, coda, cancellazione; le regole sulle partite in
+`whyNotCounted`), `services/hmac.ts` (HMAC-SHA256 scritto in TypeScript: `crypto.subtle` c'è solo in un contesto sicuro, e su
+Linux la pagina dell'app è `tauri://localhost`), `components/TournamentBanner.tsx` (in basso a destra nel titolo: «Torneo aperto
+fino al …» o «Torneo dal …», più la sigla, o in rosa «vale solo la difficoltà normale» / «aggiorna il gioco»),
+`components/TournamentToast.tsx` (la risposta del sito per 6 secondi, in alto a destra, sopra ogni schermata), la riga «Cancella i
+miei dati dal torneo» nelle Opzioni (compare quando la copia ha un codice; chiede una seconda pressione), `connect-src` con
+`https://www.pixeldebh.it` in `src-tauri/tauri.conf.json`, le prove in `tests/tournamentApi.test.ts`. Scelte fatte qui:
+
+- **Quando si manda:** a ogni fine partita che passa da `finishRun` in `App.tsx`: game over, punteggio messo in banca alla
+  vittoria e anche «esci al titolo» dalla pausa (anche quella è la fine della partita; finisce pure nella classifica locale).
+  Prima dell'invio il gioco richiede lo stato (il torneo può essersi chiuso o aperto mentre si giocava). Non si mandano le
+  partite che non valgono (il gioco le scarta da sé, con un avviso se la colpa è della difficoltà o del «Continua»), né quelle
+  a zero punti.
+- **La durata** è l'orologio del motore (`w.elapsed`, fermo in pausa), sommato sui LOOP; il LOOP è `loopCount`; il livello è
+  quello in cui si era (14 dopo una vittoria messa in banca).
+- **I trucchi:** oltre al God Mode (`stats.tainted`), segnano la partita anche la sonda di prova `window.__pdGame` (`load`,
+  `god`, `warp`, `bossHp`) e i tasti di sviluppo `9`, `L`, `0`: chi sblocca la sonda in una build di rilascio non può
+  saltare livelli e mandare il punteggio.
+- **L'orologio:** gli orari `giocata` e `inviata` si correggono con l'`ora` del sito (lo scarto si misura a ogni `stato`).
+- **La coda** (`pixelDebhTournamentQueue` in `save.json`): senza rete, con 429 o 503; al massimo 10 voci, restano le migliori;
+  all'avvio parte solo quella del torneo aperto adesso e della copia attuale, le altre si buttano.
+- **Cancellare:** solo se il sito risponde sì il gioco dimentica il codice e spegne l'interruttore (senza rete non cambia
+  niente: i dati resterebbero sul sito senza più modo di raggiungerli). Il codice nuovo nasce alla prossima accensione.
+- **I messaggi:** in italiano quello del sito (`messaggio`), in inglese il nostro tradotto dal codice `errore`.
+
+**Provato il 6 novembre** nell'exe di release (costruita con una chiave finta, `save.json` copiato prima e rimesso dopo, hash
+uguale): la pagina raggiunge `www.pixeldebh.it` (CSP e CORS a posto, `stato` 200 con `torneo: null`), un altro sito resta
+bloccato dalla CSP, l'interruttore compare, la schermata del consenso lo accende e subito dopo il gioco chiede lo stato. Con
+`curl`: il preflight del POST risponde 204 con le intestazioni giuste. **Non provato:** un invio vero e una cancellazione vera
+(sul sito di sviluppo, fase 3).
+
+**Per la fase 3 (prova contro il sito di sviluppo, porta 8123):** l'indirizzo si cambia con `VITE_PIXELDEBH_TORNEO_URL`
+(per esempio `http://127.0.0.1:8123/api/torneo.php`), la chiave con `VITE_PIXELDEBH_TORNEO_CHIAVE` (quella del pannello del
+sito di sviluppo). Attenzione al CORS: il sito risponde solo alle origini dell'app (`TORNEO_ORIGINI`), quindi da `npm run dev`
+o `tauri dev` (origine `http://localhost:3000`) il browser blocca. Le strade: un exe di prova con quella base e la CSP allargata
+per l'occasione (`tauri build --config` con un `connect-src` che comprende `http://127.0.0.1:8123`), oppure aggiungere per
+la prova `http://localhost:3000` alle origini del sito di sviluppo.
 
 ## Da dove viene
 

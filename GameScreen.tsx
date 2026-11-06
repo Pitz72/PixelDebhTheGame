@@ -29,11 +29,21 @@ import { GameRenderer, Quality } from './renderer/GameRenderer';
 import { Boss, Difficulty, ItemType } from './types';
 import type { RunStats } from './engine/stats';
 
+/** How far this game screen (one LOOP) got, for the tournament: told with each of the three ways it can end. */
+export interface RunEnd {
+  /** The level she was in, 1-based (the last one after a win). */
+  level: number;
+  /** Milliseconds of play on this screen: the engine's own clock, which stops in the pause. */
+  playedMs: number;
+  /** God mode, a developer key or the test probe was used on this screen. */
+  cheats: boolean;
+}
+
 interface GameScreenProps {
-  onGameOver: (score: number) => void;
-  onCompleted: (score: number, lives: number) => void;
+  onGameOver: (score: number, end: RunEnd) => void;
+  onCompleted: (score: number, lives: number, end: RunEnd) => void;
   /** The player leaves the game from the pause menu. */
-  onQuit: (score: number) => void;
+  onQuit: (score: number, end: RunEnd) => void;
   /** The level the game begins at (0 for a new game; the saved level for a continued one). */
   startLevel?: number;
   difficulty?: Difficulty;
@@ -186,6 +196,17 @@ const GameScreen: React.FC<GameScreenProps> = ({
 
   const callbacksRef = useRef({ onGameOver, onCompleted, onQuit });
   callbacksRef.current = { onGameOver, onCompleted, onQuit };
+  // Set by anything that changes the game from outside its rules (the test probe, the developer keys): such a game
+  // does not count for the tournament. God mode also marks the run's stats (no trophies), and that counts too.
+  const cheatedRef = useRef(false);
+  const runEnd = (): RunEnd => {
+    const w = worldRef.current as World;
+    return {
+      level: Math.min(levels.length, w.currentLevelIndex + 1),
+      playedMs: w.elapsed,
+      cheats: cheatedRef.current || w.isGodMode || (w.stats.tainted && !w.practice),
+    };
+  };
 
   // Test probe: the scripts in tools/dev use it to jump to a level and read the state in the release build,
   // where the developer keys do not exist. It is only there in dev builds or once the page has been unlocked
@@ -194,12 +215,17 @@ const GameScreen: React.FC<GameScreenProps> = ({
     if (!devProbeAllowed()) return;
     const w = worldRef.current as World;
     (window as unknown as { __pdGame?: unknown }).__pdGame = {
-      load: (index: number) => loadLevel(w, index),
+      load: (index: number) => {
+        cheatedRef.current = true;
+        loadLevel(w, index);
+      },
       god: (on: boolean) => {
+        if (on) cheatedRef.current = true;
         w.isGodMode = on;
       },
       /** Puts the player somewhere in the level (for looking at a spot without walking there). */
       warp: (x: number, y: number) => {
+        cheatedRef.current = true;
         w.player.x = x;
         w.player.y = y;
         w.player.vx = 0;
@@ -207,6 +233,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
       },
       /** Brings every boss down to at most this much life (to reach the end of a fight quickly). */
       bossHp: (n: number) => {
+        cheatedRef.current = true;
         for (const b of w.bosses) b.hp = Math.min(b.hp, n);
       },
       /** The trophy save (earned ones and the lifetime counters) and the counters of this run. */
@@ -422,6 +449,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
       if (import.meta.env.DEV && !e.repeat) {
         const k = e.key.toLowerCase();
         const finalBoss = levels.findIndex(l => l.boss?.type === 'shadowHead');
+        if (e.key === '9' || k === 'l' || e.key === '0') cheatedRef.current = true;
         if (e.key === '9' && finalBoss >= 0) {
           soundService.playSound('powerup');
           loadLevel(w, finalBoss);
@@ -521,11 +549,11 @@ const GameScreen: React.FC<GameScreenProps> = ({
             break;
           case 'gameOver':
             clearRun();
-            callbacksRef.current.onGameOver(e.score);
+            callbacksRef.current.onGameOver(e.score, runEnd());
             break;
           case 'completed':
             clearRun();
-            callbacksRef.current.onCompleted(e.score, e.lives);
+            callbacksRef.current.onCompleted(e.score, e.lives, runEnd());
             break;
         }
       }
@@ -644,7 +672,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
                 { id: 'yes', label: t('pause.quitYes') },
               ]}
               onSelect={id => {
-                if (id === 'yes') callbacksRef.current.onQuit(worldRef.current?.score ?? 0);
+                if (id === 'yes') callbacksRef.current.onQuit(worldRef.current?.score ?? 0, runEnd());
                 else setConfirmQuit(false);
               }}
               onBack={() => setConfirmQuit(false)}

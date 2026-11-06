@@ -5,6 +5,7 @@ import { bindKey, clearKey, keyLabel, resetBindings, updateSettings, useSettings
 import { LANGUAGES, setLanguage, t, useLanguage, type Language } from '../services/i18n';
 import { openPage, toggleFullscreen } from '../services/platform';
 import { PRIVACY_URL, disableTournament, tournamentAvailable, useTournament, type TournamentState } from '../services/tournament';
+import { deleteMyData, refreshStatus } from '../services/tournamentApi';
 import TournamentConsent from './TournamentConsent';
 import type { TextKey } from '../locales/it';
 
@@ -48,6 +49,8 @@ export const bindableKey = (key: string): boolean => key.length === 1 || NAMED_K
 export interface TournamentRows {
   state: TournamentState;
   openConsent: () => void;
+  /** "Delete my data": asks for a second press, then asks the site. */
+  deleteData?: () => void;
 }
 
 export function rowsFor(tab: Tab, s: Settings, lang: Language, refresh: () => void, tournament: TournamentRows): Row[] {
@@ -111,6 +114,18 @@ export function rowsFor(tab: Tab, s: Settings, lang: Language, refresh: () => vo
                 set: v => (v ? tournament.openConsent() : disableTournament()),
               },
               { kind: 'action', id: 'tournamentPrivacy', label: t('options.game.privacy'), help: t('options.game.privacyHelp'), run: () => void openPage(PRIVACY_URL) },
+              // only once this copy has a code, that is, once it may have sent something
+              ...(tournament.state.copy !== ''
+                ? ([
+                    {
+                      kind: 'action',
+                      id: 'tournamentDelete',
+                      label: t('options.game.delete'),
+                      help: t('options.game.deleteHelp'),
+                      run: () => tournament.deleteData?.(),
+                    },
+                  ] satisfies Row[])
+                : []),
             ] satisfies Row[])
           : []),
       ];
@@ -162,8 +177,32 @@ const OptionsScreen: React.FC<OptionsScreenProps> = ({ onClose }) => {
   const [, setTick] = useState(0);
   const refresh = useCallback(() => setTick(n => n + 1), []);
   const openConsent = useCallback(() => setConsent(true), []);
+  // "Delete my data" asks for a second press within a few seconds before it goes to the site.
+  const deleteArmed = useRef(0);
+  const deleting = useRef(false);
+  const deleteData = useCallback(() => {
+    if (deleting.current) return;
+    if (Date.now() - deleteArmed.current > 4000) {
+      deleteArmed.current = Date.now();
+      setMessage(t('options.game.deleteConfirm'));
+      return;
+    }
+    deleteArmed.current = 0;
+    deleting.current = true;
+    setMessage(t('options.game.deleting'));
+    void deleteMyData().then(result => {
+      deleting.current = false;
+      soundService.playSound(result.ok ? 'collect' : 'menuMove');
+      setMessage(result.message);
+    });
+  }, []);
 
-  const rows = rowsFor(TABS[tab], settings, language, refresh, { state: tournament, openConsent });
+  // moving to another row or tab takes the first press back
+  useEffect(() => {
+    deleteArmed.current = 0;
+  }, [row, tab]);
+
+  const rows = rowsFor(TABS[tab], settings, language, refresh, { state: tournament, openConsent, deleteData });
 
   const live = useRef({ tab, row, slot, listening, rows, settings, consent });
   live.current = { tab, row, slot, listening, rows, settings, consent };
@@ -392,7 +431,15 @@ const OptionsScreen: React.FC<OptionsScreenProps> = ({ onClose }) => {
         </p>
         <p className="mt-2 text-center text-sm text-gray-300">{t('options.hint')}</p>
       </div>
-      {consent && <TournamentConsent onDone={() => setConsent(false)} onCancel={() => setConsent(false)} />}
+      {consent && (
+        <TournamentConsent
+          onDone={() => {
+            setConsent(false);
+            void refreshStatus(); // the title shows the tournament straight away
+          }}
+          onCancel={() => setConsent(false)}
+        />
+      )}
     </div>
   );
 };
