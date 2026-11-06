@@ -6,8 +6,8 @@
 > della copia, firma, CSP). Le decisioni di Simone e il contratto con il sito sono in `docs/TORNEO.md`.
 > **Fasi 1, 2 e 3 fatte il 6 novembre** (interruttore, consenso, codice della copia; stato all'avvio, invio firmato, coda,
 > cancellazione, CSP; prova vera contro il runtime isolato del sito, anche con una partita giocata nell'exe). **Fase 4
-> preparata** (versione 1.19.0 con il suo log, `release.yml` che passa la chiave e si ferma senza): mancano il segreto
-> `VITE_PIXELDEBH_TORNEO_CHIAVE` (lo mette Simone: comando in `docs/RILASCIO.md`), la bozza (`gh workflow run release.yml -f
+> preparata** (versione 1.19.0 con il suo log, `release.yml` che passa la chiave e si ferma senza): il segreto
+> `VITE_PIXELDEBH_TORNEO_CHIAVE` c'è (messo il 6 novembre, preso dal database del sito vero); mancano la bozza (`gh workflow run release.yml -f
 > mode=draft`), la prova dell'exe della bozza, l'OK di Simone per pubblicare e poi la landing Ecosystem. Per il torneo, nel
 > pannello del sito: versione minima 1.19.0. Tabella delle fasi in cima a `docs/TORNEO.md`.
 
