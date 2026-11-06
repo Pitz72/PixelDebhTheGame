@@ -3,7 +3,9 @@ import * as soundService from '../services/soundService';
 import { CONTROLS, RESERVED_KEYS, normaliseKey, type Control } from '../engine/input';
 import { bindKey, clearKey, keyLabel, resetBindings, updateSettings, useSettings, SHAKE_LEVELS, type Settings } from '../services/settings';
 import { LANGUAGES, setLanguage, t, useLanguage, type Language } from '../services/i18n';
-import { toggleFullscreen } from '../services/platform';
+import { openPage, toggleFullscreen } from '../services/platform';
+import { PRIVACY_URL, disableTournament, tournamentAvailable, useTournament, type TournamentState } from '../services/tournament';
+import TournamentConsent from './TournamentConsent';
 import type { TextKey } from '../locales/it';
 
 interface OptionsScreenProps {
@@ -42,7 +44,13 @@ const LANGUAGE_NAME: Record<Language, string> = { it: 'Italiano', en: 'English' 
 const NAMED_KEYS = ['arrowleft', 'arrowright', 'arrowup', 'arrowdown', 'shift', 'control', 'alt', 'backspace', 'delete', 'home', 'end', 'pageup', 'pagedown', 'insert'];
 export const bindableKey = (key: string): boolean => key.length === 1 || NAMED_KEYS.includes(key);
 
-function rowsFor(tab: Tab, s: Settings, lang: Language, refresh: () => void): Row[] {
+/** What the rows of the GAME tab need to know about the tournament, and how to open the screen that turns it on. */
+export interface TournamentRows {
+  state: TournamentState;
+  openConsent: () => void;
+}
+
+export function rowsFor(tab: Tab, s: Settings, lang: Language, refresh: () => void, tournament: TournamentRows): Row[] {
   switch (tab) {
     case 'audio':
       return [
@@ -88,6 +96,23 @@ function rowsFor(tab: Tab, s: Settings, lang: Language, refresh: () => void): Ro
           set: v => updateSettings({ difficulty: v === 'easy' ? 'easy' : v === 'hard' ? 'hard' : 'normal' }),
         },
         { kind: 'toggle', id: 'guide', label: t('options.game.guide'), help: t('options.game.guideHelp'), value: s.guide, set: v => updateSettings({ guide: v }) },
+        // only in a build that can sign what it sends (services/tournament.ts)
+        ...(tournamentAvailable()
+          ? ([
+              {
+                kind: 'toggle',
+                id: 'tournament',
+                label: t('options.game.tournament'),
+                help: tournament.state.enabled
+                  ? t('options.game.tournamentOn', { initials: tournament.state.initials })
+                  : t('options.game.tournamentHelp'),
+                value: tournament.state.enabled,
+                // turning it on asks first (age and initials); turning it off is immediate
+                set: v => (v ? tournament.openConsent() : disableTournament()),
+              },
+              { kind: 'action', id: 'tournamentPrivacy', label: t('options.game.privacy'), help: t('options.game.privacyHelp'), run: () => void openPage(PRIVACY_URL) },
+            ] satisfies Row[])
+          : []),
       ];
     case 'language':
       return [
@@ -118,7 +143,8 @@ function rowsFor(tab: Tab, s: Settings, lang: Language, refresh: () => void): Ro
 }
 
 /**
- * The options, in tabs: audio, graphics, controls (keys, two per control), language and accessibility. Up and
+ * The options, in tabs: audio, graphics, controls (keys, two per control), game (difficulty, guide arrow and, in a
+ * build with the tournament key, the switch for the tournaments of pixeldebh.it), language and accessibility. Up and
  * down move through the rows (the first one is the row of tabs, left and right change tab), left and right
  * change a value, Enter acts, Escape closes. It listens on the capture phase and swallows the keys it uses, so
  * the screen underneath does not also react to them. The pad is turned into those keys elsewhere.
@@ -131,13 +157,16 @@ const OptionsScreen: React.FC<OptionsScreenProps> = ({ onClose }) => {
   const [slot, setSlot] = useState<0 | 1>(0);
   const [listening, setListening] = useState<{ control: Control; slot: 0 | 1 } | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [consent, setConsent] = useState(false);
+  const tournament = useTournament();
   const [, setTick] = useState(0);
   const refresh = useCallback(() => setTick(n => n + 1), []);
+  const openConsent = useCallback(() => setConsent(true), []);
 
-  const rows = rowsFor(TABS[tab], settings, language, refresh);
+  const rows = rowsFor(TABS[tab], settings, language, refresh, { state: tournament, openConsent });
 
-  const live = useRef({ tab, row, slot, listening, rows, settings });
-  live.current = { tab, row, slot, listening, rows, settings };
+  const live = useRef({ tab, row, slot, listening, rows, settings, consent });
+  live.current = { tab, row, slot, listening, rows, settings, consent };
 
   const go = useCallback((setter: () => void) => {
     soundService.playSound('menuMove');
@@ -148,6 +177,8 @@ const OptionsScreen: React.FC<OptionsScreenProps> = ({ onClose }) => {
     const onKey = (e: KeyboardEvent) => {
       const st = live.current;
       const k = e.key.toLowerCase();
+      // the tournament screen is open on top: it has the keys
+      if (st.consent) return;
 
       // waiting for the key the player wants to give to a control
       if (st.listening) {
@@ -361,6 +392,7 @@ const OptionsScreen: React.FC<OptionsScreenProps> = ({ onClose }) => {
         </p>
         <p className="mt-2 text-center text-sm text-gray-300">{t('options.hint')}</p>
       </div>
+      {consent && <TournamentConsent onDone={() => setConsent(false)} onCancel={() => setConsent(false)} />}
     </div>
   );
 };

@@ -3,7 +3,8 @@
  * with every animation off. It exists to compare the screens before and after a change to the styles (a new version of
  * Tailwind, say): take a screenshot of each screen, change, take them again, and subtract.
  * Screens: start, howto, credits, trophies, options (`&tab=0..5`), highscore, gameover, completed, enterscore,
- * levels, update, hud, hudboss, notice.
+ * levels, update, hud, hudboss, notice, tournament (the screen that turns on the tournaments). Add `&torneo=1` to see
+ * the tournament switch in the options (`&tab=3`) without the key, and `&torneo=on` to see it already on as DEB.
  */
 import type { ReactElement } from 'react';
 import ReactDOM from 'react-dom/client';
@@ -20,10 +21,15 @@ import LevelSelectScreen from '../components/LevelSelectScreen';
 import UpdateBanner from '../components/UpdateBanner';
 import Hud from '../components/Hud';
 import AiNotice from '../components/AiNotice';
+import TournamentConsent from '../components/TournamentConsent';
+import { enableTournament, previewTournament } from './tournament';
 
 const q = new URLSearchParams(location.search);
 const screen = q.get('screen') ?? 'start';
 const noop = () => undefined;
+const torneo = q.get('torneo');
+if (torneo) previewTournament();
+if (torneo === 'on') enableTournament('DEB', 1762431834);
 
 const hudBase = {
   score: 12450,
@@ -68,6 +74,7 @@ const screens: Record<string, ReactElement> = {
     />
   ),
   notice: <AiNotice onDone={noop} />,
+  tournament: <TournamentConsent onDone={noop} onCancel={noop} />,
 };
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(

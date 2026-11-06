@@ -227,6 +227,28 @@ export const it = {
   'completed.bank': '[ESC] SALVA IL PUNTEGGIO ED ESCI',
   'game.loading': 'CARICAMENTO…',
   'game.compat': 'MODALITÀ COMPATIBILITÀ: WebGL NON DISPONIBILE (niente luci dinamiche)',
+  'options.game.tournament': 'PARTECIPA AI TORNEI DI PIXELDEBH',
+  'options.game.tournamentHelp': 'Manda i punteggi al torneo di www.pixeldebh.it: solo la sigla, niente nome, email o account.',
+  'options.game.tournamentOn': 'Partecipi con la sigla {initials}. NO: il gioco smette di mandare i punteggi.',
+  'options.game.privacy': 'INFORMATIVA SUL TORNEO',
+  'options.game.privacyHelp': 'Apre www.pixeldebh.it/privacy nel browser (la sezione «Il torneo del videogioco»).',
+  'tournament.title': 'I TORNEI DI PIXELDEBH',
+  'tournament.text1':
+    'Sul sito www.pixeldebh.it ci sono i tornei del gioco, con una data di inizio e una di fine: la classifica sta nella pagina del gioco e si aggiorna mentre si gioca.',
+  'tournament.text2':
+    'Se partecipi, a fine partita il gioco manda al sito la tua sigla, il punteggio, il livello e il LOOP raggiunti, la durata, la versione del gioco e un codice casuale di questa copia. Niente nome, email o account.',
+  'tournament.text3': 'Contano le partite a difficoltà NORMALE cominciate con NUOVA PARTITA (non con CONTINUA né dalla selezione del livello).',
+  'tournament.age': 'HO ALMENO 14 ANNI',
+  'tournament.ageHelp': 'Sotto i 14 anni non si può partecipare.',
+  'tournament.initials': 'LA TUA SIGLA',
+  'tournament.initialsHelp': 'INVIO per cambiarla, oppure scrivi le tre lettere',
+  'tournament.privacy': "LEGGI L'INFORMATIVA",
+  'tournament.privacyHelp': 'Apre www.pixeldebh.it/privacy nel browser',
+  'tournament.confirm': 'PARTECIPA',
+  'tournament.cancel': 'ANNULLA',
+  'tournament.needAge': 'PER PARTECIPARE DEVI AVERE ALMENO 14 ANNI',
+  'tournament.hint': '↑ ↓ SCEGLI  ·  INVIO CONFERMA  ·  ESC ANNULLA',
+  'tournament.hintEdit': '↑ ↓ CAMBIA LETTERA  ·  ← → SPOSTA  ·  INVIO FATTO',
 } as const;
 
 export type TextKey = keyof typeof it;

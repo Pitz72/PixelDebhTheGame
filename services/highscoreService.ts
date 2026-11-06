@@ -1,6 +1,7 @@
 import { Difficulty, HighscoreEntry } from '../types';
 import { HIGHSCORE_KEY } from '../constants';
 import * as storage from './storage';
+import { LAST_INITIALS_KEY } from './tournament';
 
 const MAX_SCORES = 5;
 
@@ -55,6 +56,8 @@ export function addHighscore(name: string, score: number, difficulty: Difficulty
 
   currentRealScores.push({ name, score, difficulty });
   saveHighscores(currentRealScores);
+  // remembered so the tournament can propose the same initials (services/tournament.ts)
+  storage.setItem(LAST_INITIALS_KEY, name);
 }
 
 export function isHighscore(score: number): boolean {

@@ -6,6 +6,29 @@
 > (Aruba) e ha già informativa e registro dei trattamenti. Il sito è pronto (sua versione 0.6.0); manca il gioco che manda
 > i punteggi. Si fa una cosa per volta, con commit e push a fine fase, come sempre.
 
+## A che punto siamo
+
+| Fase | Che cosa | Stato |
+|---|---|---|
+| 1 | Interruttore nelle Opzioni (scheda GIOCO), schermata dei 14 anni e della sigla, link all'informativa, codice della copia in `save.json` (punti 1, 2 e 9 qui sotto) | **Fatta il 6 novembre 2026** |
+| 2 | Stato del torneo all'avvio, invio firmato a fine partita, coda senza rete, «Cancella i miei dati», CSP (punti 3-8) | Da fare |
+| 3 | Prova vera contro il sito di sviluppo (server locale 8123 nel progetto del sito) (punto 10) | Da fare |
+| 4 | Segreto di GitHub, `release.yml`, versione 1.19.0 (punti 7 e 11) | Da fare |
+
+**Fase 1, dove sta:** `services/tournament.ts` (stato salvato sotto `pixelDebhTournament`: `enabled`, `initials`, `copy`,
+`consentAt`; acceso solo con sigla, codice e consenso validi; spegnerlo tiene sigla e codice), `components/TournamentConsent.tsx`
+(la schermata: «Ho almeno 14 anni» parte da NO e va confermato ogni volta, sigla proposta, informativa, PARTECIPA/ANNULLA; la
+sigla si scrive con le lettere o, col pad, INVIO e poi ↑↓), le due righe in `components/OptionsScreen.tsx`, i testi in
+`locales/` (chiavi `options.game.tournament*`, `options.game.privacy*`, `tournament.*`), le prove in `tests/tournament.test.ts`.
+`addHighscore` ora ricorda l'ultima sigla scritta (`pixelDebhLastInitials`): è quella che il torneo propone se non ne ha una sua.
+`openPage` è passato da `updateService.ts` a `platform.ts`.
+
+**Come si prova senza la chiave vera:** l'interruttore compare solo se la build ha `VITE_PIXELDEBH_TORNEO_CHIAVE`. Per lo
+sviluppo basta un file `.env.local` nella radice con `VITE_PIXELDEBH_TORNEO_CHIAVE=<la chiave del sito di sviluppo>` (git lo
+ignora: `*.local`). Per guardare le schermate: `/ui-sheet.html?screen=options&tab=3&torneo=1` (interruttore spento),
+`&torneo=on` (acceso come DEB), `/ui-sheet.html?screen=tournament` (la schermata del consenso). Con la fase 1 il gioco non manda
+ancora niente, neanche con l'interruttore acceso.
+
 ## Da dove viene
 
 Nel progetto del sito (`C:\Users\Utente\Documents\GitHub\SITI-WEB\PIXELDEBH-Sito`) ci sono i due documenti che contano:

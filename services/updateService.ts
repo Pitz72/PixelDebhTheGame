@@ -103,17 +103,3 @@ export async function checkForUpdate(): Promise<UpdateInfo | null> {
     return null;
   }
 }
-
-/** Opens a web page in the system browser (in a browser tab, in a new tab). */
-export async function openPage(url: string): Promise<void> {
-  try {
-    if (isTauri()) {
-      const { openUrl } = await import('@tauri-apps/plugin-opener');
-      await openUrl(url);
-    } else {
-      window.open(url, '_blank', 'noopener');
-    }
-  } catch (error) {
-    console.warn('Could not open the page:', error);
-  }
-}
