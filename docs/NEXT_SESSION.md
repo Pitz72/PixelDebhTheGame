@@ -1,5 +1,13 @@
 # Decisioni e cose da fare per arrivare al 100% (stato al 2026-10-18, v1.18.2)
 
+> **1.19.1 (17 novembre 2026): l'installatore aspetta che il gioco si chiuda.** Un giocatore, aggiornando dal gioco alla
+> 1.19.0, ha visto l'installazione fermarsi con «Impossibile chiudere PixelDebh Retro-Rescue» (al secondo tentativo è andata):
+> è la corsa nota di Tauri [tauri-apps/tauri#16277](https://github.com/tauri-apps/tauri/issues/16277), il controllo del gioco
+> aperto arriva mentre il gioco si sta ancora chiudendo. Nello stesso messaggio c'era `{product_name}` al posto del nome
+> (traduzione italiana di Tauri). Corretto con il passo `NSIS_HOOK_PREINSTALL` in `src-tauri/windows/installer-hooks.nsh`
+> (durante un aggiornamento aspetta fino a 20 secondi che l'exe sia libero) e con `@tauri-apps/cli` 2.12.5. Dettagli in
+> `log/1.19.1.md`.
+
 > **⚠ PROSSIMO LAVORO DEL GIOCO (6 novembre 2026): il torneo di pixeldebh.it. Leggere per primo `docs/TORNEO.md`.**
 > La classifica online (D4 qui sotto) **non è più sospesa**: Simone l'ha voluta come torneo sul sito ufficiale del canale,
 > che è già pronto a ricevere i punteggi. Manca la versione del gioco che li manda (interruttore nelle opzioni, sigla, codice

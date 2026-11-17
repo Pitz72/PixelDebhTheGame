@@ -121,6 +121,38 @@ describe('the updater', () => {
   });
 });
 
+describe('the Windows installer', () => {
+  const nsis = conf.bundle.windows.nsis;
+
+  it('in an update, waits for the game to let go of its exe before the running-app check', () => {
+    expect(nsis.installerHooks).toBe('./windows/installer-hooks.nsh');
+    const hooks = read('src-tauri/windows/installer-hooks.nsh');
+    const preinstall = /!macro NSIS_HOOK_PREINSTALL\n([\s\S]*?)!macroend/.exec(hooks.replace(/\r\n/g, '\n'));
+    expect(preinstall).not.toBeNull();
+    const body = preinstall![1];
+    expect(body).toMatch(/\$\{If\} \$UpdateMode = 1/); // a manual install does not wait
+    expect(body).toContain('$INSTDIR\\${MAINBINARYNAME}.exe');
+    expect(body).toContain('RmGetList');
+    expect(body).toContain('${LoopUntil} $R9 >= ${PD_WAIT_STEPS}'); // bounded
+    expect(hooks).toContain('!define /ifndef PD_WAIT_STEP_MS 250');
+    expect(hooks).toContain('!define /ifndef PD_WAIT_STEPS 80'); // 20 seconds at most
+    // every register it uses goes back as it was, in reverse order
+    const pushed = [...body.matchAll(/^\s*Push (\$\w+)/gm)].map(m => m[1]);
+    const popped = [...body.matchAll(/^\s*Pop (\$\w+)/gm)].map(m => m[1]);
+    expect(pushed.length).toBeGreaterThan(0);
+    expect(popped).toEqual([...pushed].reverse());
+    // makensis reads a file without a byte order mark in the system code page
+    expect(/^[\x00-\x7f]*$/.test(hooks)).toBe(true);
+  });
+
+  it('is built with a Tauri CLI whose Italian messages name the game (fixed in 2.12.5)', () => {
+    const lock = json('package-lock.json');
+    const cli = lock.packages['node_modules/@tauri-apps/cli'].version as string;
+    expect(isNewer(cli, '2.12.4')).toBe(true);
+    expect(nsis.languages).toContain('Italian');
+  });
+});
+
 describe('comparing versions', () => {
   it('reads x.y.z, with or without a v and a suffix', () => {
     expect(parseVersion('1.12.0')).toEqual([1, 12, 0]);
