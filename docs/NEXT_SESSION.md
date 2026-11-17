@@ -7,6 +7,13 @@
 > (traduzione italiana di Tauri). Corretto con il passo `NSIS_HOOK_PREINSTALL` in `src-tauri/windows/installer-hooks.nsh`
 > (durante un aggiornamento aspetta fino a 20 secondi che l'exe sia libero) e con `@tauri-apps/cli` 2.12.5. Dettagli in
 > `log/1.19.1.md`.
+> **PUBBLICATA il 17 novembre 2026, 14:02 UTC** su OK di Simone («Latest», tag su `2da2307`; bozza controllata: 10 file,
+> `latest.json` a 1.19.1 con 6 piattaforme, firme con la chiave `3E180F3F6F7C8052`). **Provata sul PC con l'installatore della
+> bozza**, avviato come lo avvia il gioco (`/P /UPDATE /R`) con la 1.19.0 installata e aperta: il gioco chiuso dopo 6 s →
+> l'installatore ha aspettato (gioco uscito a 6,3 s), ha installato la 1.19.1 e ha riaperto il gioco; il gioco lasciato aperto →
+> dopo circa 24 s l'installatore lo ha chiuso da sé e ha installato. Per confronto, l'installatore della 1.19.0 chiudeva il
+> gioco di forza dopo 0,6 s (è lì che può fallire). `save.json` di Simone salvato prima e identico dopo. **Resta**: la landing
+> Ecosystem punta ancora ai file della 1.19.0 (aggiornarla e caricarla solo su OK di Simone).
 
 > **⚠ PROSSIMO LAVORO DEL GIOCO (6 novembre 2026): il torneo di pixeldebh.it. Leggere per primo `docs/TORNEO.md`.**
 > La classifica online (D4 qui sotto) **non è più sospesa**: Simone l'ha voluta come torneo sul sito ufficiale del canale,
