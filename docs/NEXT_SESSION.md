@@ -16,8 +16,9 @@
 > Ecosystem a 1.19.1 fatta il 17 novembre e caricata il 18** su OK di Simone (sito v0.37.0, commit `aaa4eaf`: versione, i 5
 > link, nome del portable, 852 test, notizia in home; la riga «Tornei» resta «Dalla 1.19.0»; pagine online identiche alla
 > build, audit a zero). Il 17 novembre **www.pixeldebh.it è aperto al pubblico** (`/`, `/gioco` e `/privacy` rispondono 200,
-> c'è «Il torneo di PixelDebh: Retro-Rescue #1»): nella landing Ecosystem manca ancora un pulsante verso la pagina del gioco
-> con la classifica (`links.extra`), da aggiungere solo se Simone lo vuole.
+> c'è «Il torneo di PixelDebh: Retro-Rescue #1», aperto fino al 2 dicembre): il 18 novembre, su richiesta di Simone, la landing
+> Ecosystem ha un pulsante «Tornei e classifica su pixeldebh.it» verso `https://www.pixeldebh.it/gioco#torneo` (sito v0.37.1,
+> commit `14eeba2`, caricato e pushato, pagine online identiche alla build).
 
 > **⚠ PROSSIMO LAVORO DEL GIOCO (6 novembre 2026): il torneo di pixeldebh.it. Leggere per primo `docs/TORNEO.md`.**
 > La classifica online (D4 qui sotto) **non è più sospesa**: Simone l'ha voluta come torneo sul sito ufficiale del canale,
