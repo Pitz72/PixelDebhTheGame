@@ -12,8 +12,12 @@
 > bozza**, avviato come lo avvia il gioco (`/P /UPDATE /R`) con la 1.19.0 installata e aperta: il gioco chiuso dopo 6 s →
 > l'installatore ha aspettato (gioco uscito a 6,3 s), ha installato la 1.19.1 e ha riaperto il gioco; il gioco lasciato aperto →
 > dopo circa 24 s l'installatore lo ha chiuso da sé e ha installato. Per confronto, l'installatore della 1.19.0 chiudeva il
-> gioco di forza dopo 0,6 s (è lì che può fallire). `save.json` di Simone salvato prima e identico dopo. **Resta**: la landing
-> Ecosystem punta ancora ai file della 1.19.0 (aggiornarla e caricarla solo su OK di Simone).
+> gioco di forza dopo 0,6 s (è lì che può fallire). `save.json` di Simone salvato prima e identico dopo. **Landing
+> Ecosystem a 1.19.1 fatta il 17 novembre e caricata il 18** su OK di Simone (sito v0.37.0, commit `aaa4eaf`: versione, i 5
+> link, nome del portable, 852 test, notizia in home; la riga «Tornei» resta «Dalla 1.19.0»; pagine online identiche alla
+> build, audit a zero). Il 17 novembre **www.pixeldebh.it è aperto al pubblico** (`/`, `/gioco` e `/privacy` rispondono 200,
+> c'è «Il torneo di PixelDebh: Retro-Rescue #1»): nella landing Ecosystem manca ancora un pulsante verso la pagina del gioco
+> con la classifica (`links.extra`), da aggiungere solo se Simone lo vuole.
 
 > **⚠ PROSSIMO LAVORO DEL GIOCO (6 novembre 2026): il torneo di pixeldebh.it. Leggere per primo `docs/TORNEO.md`.**
 > La classifica online (D4 qui sotto) **non è più sospesa**: Simone l'ha voluta come torneo sul sito ufficiale del canale,
