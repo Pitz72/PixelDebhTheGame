@@ -26,8 +26,40 @@ export interface UpdateInfo {
   canInstall: boolean;
   /** The page of the release on GitHub, for the copies that cannot update themselves. */
   releaseUrl: string;
-  /** Downloads, installs and restarts. Only for `canInstall`. */
-  install: () => Promise<void>;
+  /**
+   * Downloads, installs and restarts. Only for `canInstall`. `onProgress` hears how much of the download is done
+   * (0 to 1), or null while the size is not known.
+   */
+  install: (onProgress?: (fraction: number | null) => void) => Promise<void>;
+}
+
+/**
+ * The longest a download may take before it is given up as failed. Without it a connection that drops halfway left
+ * the game on "downloading" for good. An update is about 20 MB: ten minutes is enough for a slow line.
+ */
+export const DOWNLOAD_TIMEOUT_MS = 10 * 60 * 1000;
+
+type DownloadStep =
+  | { event: 'Started'; data: { contentLength?: number } }
+  | { event: 'Progress'; data: { chunkLength: number } }
+  | { event: 'Finished' };
+
+/** Turns the steps of a download into how much of it is done: 0 to 1, or null while the size is not known. */
+export function downloadFraction(): (step: DownloadStep) => number | null {
+  let total = 0;
+  let done = 0;
+  return step => {
+    if (step.event === 'Started') {
+      total = step.data.contentLength ?? 0;
+      done = 0;
+      return total > 0 ? 0 : null;
+    }
+    if (step.event === 'Progress') {
+      done += step.data.chunkLength;
+      return total > 0 ? Math.min(1, done / total) : null;
+    }
+    return 1;
+  };
 }
 
 /** The "x.y.z" of a version, as three numbers (a "v" in front and a "-beta.1" behind are ignored). */
@@ -92,8 +124,10 @@ export async function checkForUpdate(): Promise<UpdateInfo | null> {
       kind,
       canInstall: canSelfUpdate(kind),
       releaseUrl: releasePage(update.version),
-      install: async () => {
-        await update.downloadAndInstall();
+      install: async onProgress => {
+        const fraction = downloadFraction();
+        // On Windows this call does not come back when it works: the installer starts and the game exits.
+        await update.downloadAndInstall(step => onProgress?.(fraction(step)), { timeout: DOWNLOAD_TIMEOUT_MS });
         const { relaunch } = await import('@tauri-apps/plugin-process');
         await relaunch();
       },

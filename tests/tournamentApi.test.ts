@@ -7,6 +7,7 @@ import {
   QUEUE_MAX,
   TOURNAMENT_URL,
   deleteMyData,
+  byClock,
   entryBody,
   flushQueue,
   getNotice,
@@ -15,11 +16,13 @@ import {
   makeEntry,
   parseInfo,
   queueEntry,
+  rememberedStatus,
   reportGame,
   resetTournamentApi,
   sendEntry,
   setFetcher,
   startupCheck,
+  STATUS_KEY,
   versionAtLeast,
   whyNotCounted,
   type Entry,
@@ -329,6 +332,56 @@ describe('a game that ends', () => {
     expect(calls.map(c => c.method)).toEqual(['GET', 'POST']);
     expect(loadQueue()).toHaveLength(0);
     expect(memory.has(QUEUE_KEY)).toBe(false);
+  });
+
+  it('with the site unreachable since the start, goes by the state remembered from an earlier session', async () => {
+    enableTournament('DEB', NOW);
+    answer = () => statusOpen();
+    await startupCheck(); // an earlier session: the state is remembered
+    expect(rememberedStatus()?.info?.id).toBe(3);
+    resetTournamentApi(); // a new session...
+    answer = () => 'offline'; // ...with no network at all
+    await startupCheck();
+    const out = await reportGame(game({ endedAt: Math.floor(Date.now() / 1000) }));
+    expect(out?.kind).toBe('retry'); // signed and put aside, not dropped
+    expect(loadQueue().map(e => e.torneo)).toEqual([3]);
+    expect(getNotice()?.text).toContain('prossimo avvio');
+  });
+
+  it('when nothing was ever heard from the site, says that the game was not sent', async () => {
+    enableTournament('DEB', NOW);
+    answer = () => 'offline';
+    expect(await reportGame(game())).toBeNull();
+    expect(loadQueue()).toHaveLength(0);
+    expect(getNotice()?.text).toContain('non è stata inviata');
+    // a game that would not count anyway says nothing
+    resetTournamentApi();
+    await reportGame(game({ practice: true }));
+    expect(getNotice()).toBeNull();
+  });
+
+  it('a remembered tournament goes by its dates: not yet started, open, over', () => {
+    const snap = { info: info({ starts: 1000, ends: 2000, state: 'in_arrivo' }), offset: 10 };
+    expect(byClock(snap, 900)?.info?.state).toBe('in_arrivo');
+    expect(byClock(snap, 990)?.info?.state).toBe('aperto'); // the site's clock is 10 seconds ahead
+    expect(byClock(snap, 1989)?.info?.state).toBe('aperto');
+    expect(byClock(snap, 1990)?.info?.state).toBe('chiuso');
+    expect(byClock(null)).toBeNull();
+    expect(byClock({ info: null, offset: 0 })).toEqual({ info: null, offset: 0 });
+    memory.set(STATUS_KEY, 'not json');
+    expect(rememberedStatus()).toBeNull();
+  });
+
+  it('what was put aside goes with the next game that reaches the site, without waiting for a restart', async () => {
+    enableTournament('DEB', NOW);
+    answer = c => (c.method === 'GET' ? statusOpen() : 'offline');
+    await reportGame(game({ endedAt: Math.floor(Date.now() / 1000) })); // the state arrives, the result does not
+    expect(loadQueue()).toHaveLength(1);
+    calls = [];
+    answer = c => (c.method === 'GET' ? statusOpen() : { status: 200, json: { ok: true, migliorato: true, migliore: 123450, posizione: 1 } });
+    await reportGame(game({ endedAt: Math.floor(Date.now() / 1000) }));
+    expect(calls.map(c => c.method)).toEqual(['GET', 'POST', 'POST']); // this game, then the one put aside
+    expect(loadQueue()).toHaveLength(0);
   });
 
   it('put aside for a tournament that is over is thrown away, not sent', async () => {

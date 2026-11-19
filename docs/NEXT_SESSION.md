@@ -5,13 +5,16 @@
 > con il gioco in `C:\Program Files (x86)` (l'installatore non ha i permessi di amministratore; «Ignora» faceva ricordare la
 > cartella sbagliata). Ora l'installatore prova a scrivere nella cartella prima di copiare e, se non può, lo dice e propone
 > quella consigliata (`src-tauri/windows/installer-hooks.nsh`, `log/1.19.2.md`). Provato sul PC con installatori di prova
-> e con l'installatore vero senza finestra. **Restano:** bozza della release (`gh workflow run release.yml -f mode=draft`),
-> prova dell'installatore vero con la finestra e dell'aggiornamento dalla 1.19.1 sulla bozza, pubblicazione su OK di
-> Simone, poi la landing Ecosystem. Non si sa ancora se gli altri giocatori vedono lo stesso errore.
+> e con l'installatore vero senza finestra. Su richiesta di Simone («una versione unica») la 1.19.2 porta anche le voci più
+> urgenti della revisione: la pratica non cancella la partita salvata, F5 non ricarica il gioco, «Continua» non riconta i
+> trofei, schermata intera e tempo massimo durante l'aggiornamento, una sola copia del gioco su Windows, torneo che non
+> scarta i punteggi senza sito. **Restano:** bozza della release (`gh workflow run release.yml -f mode=draft`), prove
+> sulla bozza (elenco in fondo a `log/1.19.2.md`), pubblicazione su OK di Simone, poi la landing Ecosystem. Non si sa
+> ancora se gli altri giocatori vedono lo stesso errore di installazione.
 >
 > **Revisione dei bug del 18 novembre (parziale):** catalogo in `docs/REVISIONE_BUG_2026-11-18.md` (3 gravi, 14 medi, i
-> lievi; nessun gravissimo). Fatte: schermate, servizi/torneo/audio, Tauri e rilascio. Motore e grafica non revisionati, per
-> scelta di Simone. Nessuna di quelle correzioni è stata fatta: da decidere una per volta.
+> lievi; nessun gravissimo), con in cima cosa è corretto nella 1.19.2 e cosa resta aperto. Motore e grafica non
+> revisionati, per scelta di Simone.
 
 > **1.19.1 (17 novembre 2026): l'installatore aspetta che il gioco si chiuda.** Un giocatore, aggiornando dal gioco alla
 > 1.19.0, ha visto l'installazione fermarsi con «Impossibile chiudere PixelDebh Retro-Rescue» (al secondo tentativo è andata):

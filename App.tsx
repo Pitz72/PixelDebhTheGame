@@ -61,6 +61,9 @@ function App() {
   const [update, setUpdate] = useState<UpdateInfo | null>(null);
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>('available');
   const [updateError, setUpdateError] = useState('');
+  const [updateProgress, setUpdateProgress] = useState<number | null>(null);
+  // While an update downloads the game must not be used: when it is done the game closes by itself.
+  const updating = updateStatus === 'installing';
   const { dimensions, margins } = useGameScale();
 
   // The desktop app always starts fullscreen (window config), so nothing to request there.
@@ -99,9 +102,10 @@ function App() {
       return;
     }
     if (updateStatus === 'installing') return;
+    setUpdateProgress(null);
     setUpdateStatus('installing');
     try {
-      await found.install(); // restarts the game when it is done
+      await found.install(setUpdateProgress); // restarts the game when it is done
     } catch (error) {
       setUpdateError(error instanceof Error ? error.message : String(error));
       setUpdateStatus('failed');
@@ -119,6 +123,7 @@ function App() {
         return;
       }
       if (gameState === 'enter-highscore') return;
+      if (updating) return; // the update screen is up: nothing else answers
       const key = e.key.toLowerCase();
       if (key === 'f') {
         void toggleAppFullscreen();
@@ -129,7 +134,8 @@ function App() {
         setOverlay('options');
       } else if (key === 't' && (gameState === 'start' || gameState === 'highscore')) {
         setOverlay('trophies');
-      } else if (key === 'u' && update && (gameState === 'start' || gameState === 'highscore')) {
+      } else if (key === 'u' && update && !overlay && (gameState === 'start' || gameState === 'highscore')) {
+        // only where the notice is in sight: not under the options, the credits or the tournament page
         runUpdate(update);
       } else if (gameState === 'intro') {
         requestAppFullscreen();
@@ -137,7 +143,7 @@ function App() {
     };
     window.addEventListener('keydown', handleGlobalKey);
     return () => window.removeEventListener('keydown', handleGlobalKey);
-  }, [gameState, requestAppFullscreen, toggleAppFullscreen, update, runUpdate]);
+  }, [gameState, requestAppFullscreen, toggleAppFullscreen, update, runUpdate, overlay, updating]);
 
   // After the intros (Runtime, Pixel Debh) comes the note on the AI, then the game's own intro.
   const handleBootDone = useCallback(() => setGameState('notice'), []);
@@ -263,7 +269,7 @@ function App() {
     };
   }, []);
   useEffect(() => {
-    if (gameState !== 'start' || overlay) return;
+    if (gameState !== 'start' || overlay || updating) return;
     lastActivity.current = performance.now();
     const timer = window.setInterval(() => {
       const idle = performance.now() - lastActivity.current;
@@ -280,7 +286,7 @@ function App() {
       });
     }, 1000);
     return () => window.clearInterval(timer);
-  }, [gameState, overlay]);
+  }, [gameState, overlay, updating]);
 
   /** A choice made in the title menu. */
   const handleTitleChoice = useCallback(
@@ -337,7 +343,7 @@ function App() {
         if (attractScreen === 'highscore' && !overlay) {
           return <HighscoreScreen onStart={() => setAttractScreen('start')} />;
         }
-        return <StartScreen onSelect={handleTitleChoice} active={!overlay} />;
+        return <StartScreen onSelect={handleTitleChoice} active={!overlay && !updating} />;
       case 'playing':
       case 'level-cleared':
         return (
@@ -365,7 +371,13 @@ function App() {
           />
         );
       case 'gameover':
-        return <GameoverScreen onRestart={startFresh} onTitle={() => setGameState('start')} />;
+        // "try again" after a practice game is the same practice again, not a new real game over the saved one
+        return (
+          <GameoverScreen
+            onRestart={run.practice ? () => handlePlayLevel(run.levelIndex) : startFresh}
+            onTitle={() => setGameState('start')}
+          />
+        );
       case 'highscore':
         return <HighscoreScreen onStart={() => setGameState('start')} />;
       case 'enter-highscore':
@@ -377,7 +389,7 @@ function App() {
           />
         );
       default:
-        return <StartScreen onSelect={handleTitleChoice} active={!overlay} />;
+        return <StartScreen onSelect={handleTitleChoice} active={!overlay && !updating} />;
     }
   };
 
@@ -409,7 +421,7 @@ function App() {
           {renderContent()}
           {overlay && <ScreenOverlay kind={overlay} onClose={() => setOverlay(null)} onPlayLevel={handlePlayLevel} />}
           {update && (gameState === 'start' || gameState === 'highscore') && (
-            <UpdateBanner update={update} status={updateStatus} error={updateError} />
+            <UpdateBanner update={update} status={updateStatus} error={updateError} progress={updateProgress} />
           )}
           {(gameState === 'start' || gameState === 'highscore') && !overlay && <TournamentBanner />}
           <TournamentToast />

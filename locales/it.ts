@@ -25,6 +25,9 @@ export const it = {
   'update.download': '[U] SCARICA DA GITHUB',
   'update.installing': "SCARICO L'AGGIORNAMENTO...",
   'update.failed': 'AGGIORNAMENTO NON RIUSCITO: {error}',
+  'update.progress.title': 'AGGIORNAMENTO ALLA {version}',
+  'update.progress.percent': 'SCARICATO: {percent}%',
+  'update.progress.note': 'QUANDO HA FINITO, IL GIOCO SI CHIUDE DA SOLO E RIPARTE AGGIORNATO. NON CHIUDERLO.',
 
   // Keys, as they are written on screen
   'key.space': 'SPAZIO',
@@ -261,6 +264,7 @@ export const it = {
   'tournament.sent': 'Torneo: punteggio registrato, sei al posto {pos}.',
   'tournament.notBetter': 'Torneo: il tuo record resta {points} punti.',
   'tournament.queued': 'Torneo: il sito non risponde, il punteggio partirà al prossimo avvio del gioco.',
+  'tournament.unreachable': 'Torneo: il sito non risponde, questa partita non è stata inviata.',
   'tournament.not.difficulty': 'Torneo: questa partita non vale, conta solo la difficoltà normale.',
   'tournament.not.continued': 'Torneo: le partite riprese con CONTINUA non valgono.',
   'tournament.err.firma': 'Questa versione del gioco non può mandare punteggi al torneo: aggiorna il gioco.',

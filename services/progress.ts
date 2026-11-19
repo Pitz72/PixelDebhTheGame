@@ -122,6 +122,14 @@ export function clearRun(count: number = levelCount()): void {
   if (p.run) store({ highestLevel: p.highestLevel, run: null });
 }
 
+/**
+ * The end of a game: a game over, or a finished LOOP. A real game has nothing left to continue; a practice game (the
+ * level select) never touches the saved one, at its end as at its start.
+ */
+export function endRun(practice: boolean, count: number = levelCount()): void {
+  if (!practice) clearRun(count);
+}
+
 /** A level reached in a real game (the level select opens up to the furthest one). */
 export function noteLevelReached(index: number, count: number = levelCount()): void {
   const p = loadProgress(count);

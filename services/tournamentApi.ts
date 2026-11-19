@@ -25,6 +25,8 @@ export const TOURNAMENT_URL: string = (() => {
   return typeof custom === 'string' && custom.trim() !== '' ? custom.trim() : 'https://www.pixeldebh.it/api/torneo.php';
 })();
 export const QUEUE_KEY = 'pixelDebhTournamentQueue';
+/** The last answer of `?azione=stato`, kept for a game that ends while the site cannot be reached. */
+export const STATUS_KEY = 'pixelDebhTournamentStatus';
 /** How many results wait for the network at most (the lowest go first). */
 export const QUEUE_MAX = 10;
 const TIMEOUT_MS = 10000;
@@ -278,11 +280,49 @@ export async function refreshStatus(): Promise<StatusSnapshot | null> {
   if (!active()) return status;
   const asked = nowSeconds();
   const r = await request('GET', 'stato');
-  if (!r || r.http !== 200 || r.json.ok !== true) return status;
+  if (!r || r.http !== 200 || r.json.ok !== true) {
+    reached = false;
+    return status;
+  }
+  reached = true;
   const ora = typeof r.json.ora === 'number' && Number.isInteger(r.json.ora) ? r.json.ora : asked;
   status = { info: parseInfo(r.json.torneo), offset: ora - asked };
+  rememberStatus(r.json.torneo, status);
   emit();
   return status;
+}
+
+/** True when the last `refreshStatus` got its answer from the site (false: no network, or the site was down). */
+let reached = false;
+
+function rememberStatus(torneo: unknown, snap: StatusSnapshot): void {
+  const text = snap.info ? JSON.stringify({ torneo, offset: snap.offset }) : null;
+  if (text === storage.getItem(STATUS_KEY)) return; // asked at every start and at every game end: write only what changed
+  if (text === null) storage.removeItem(STATUS_KEY);
+  else storage.setItem(STATUS_KEY, text);
+}
+
+/** The last state the site gave, in this session or in an earlier one (read as defensively as the site's answer). */
+export function rememberedStatus(): StatusSnapshot | null {
+  try {
+    const raw = JSON.parse(storage.getItem(STATUS_KEY) ?? 'null') as { torneo?: unknown; offset?: unknown } | null;
+    const info = parseInfo(raw?.torneo);
+    if (!info) return null;
+    return { info, offset: typeof raw?.offset === 'number' && Number.isFinite(raw.offset) ? Math.trunc(raw.offset) : 0 };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Without the site, whether a tournament is open goes by its own dates: the state last heard may be old (the
+ * tournament started, or ended, since). The site has the last word when the result gets there.
+ */
+export function byClock(snap: StatusSnapshot | null, now: number = nowSeconds()): StatusSnapshot | null {
+  if (!snap?.info) return snap;
+  const at = now + snap.offset;
+  const state: TournamentInfo['state'] = at < snap.info.starts ? 'in_arrivo' : at < snap.info.ends ? 'aperto' : 'chiuso';
+  return { ...snap, info: { ...snap.info, state } };
 }
 
 /** Sends one entry, signed. */
@@ -389,19 +429,29 @@ export function startupCheck(): Promise<void> {
 export function reportGame(game: GameResult): Promise<Outcome | null> {
   return serial(async () => {
     if (!active()) return null;
-    const snap = (await refreshStatus()) ?? status;
+    let snap = await refreshStatus();
+    const answered = reached;
+    // The site cannot be reached: go by the state last heard (in this session, or in an earlier one) and by the
+    // clock, so that the game is signed and put aside instead of being dropped without a word.
+    if (!answered) snap = byClock(snap ?? rememberedStatus());
     const info = snap?.info ?? null;
     const why = whyNotCounted(game, info);
     if (why === 'difficulty') showNotice(t('tournament.not.difficulty'), 'info');
     else if (why === 'continued') showNotice(t('tournament.not.continued'), 'info');
     else if (why === 'version') showNotice(t('tournament.err.versione'), 'bad');
-    if (why !== null || !info) return null;
-    const entry = makeEntry(game, info);
-    if (!entry) return null;
-    const outcome = await sendEntry(entry, snap?.offset ?? 0);
-    if (outcome.kind === 'retry') queueEntry(entry);
-    if (outcome.kind === 'refused' && outcome.code === 'torneo') void refreshStatus();
-    showNotice(outcome.message, tone(outcome));
+    let outcome: Outcome | null = null;
+    const entry = why === null && info ? makeEntry(game, info) : null;
+    if (entry) {
+      outcome = await sendEntry(entry, snap?.offset ?? 0);
+      if (outcome.kind === 'retry') queueEntry(entry);
+      if (outcome.kind === 'refused' && outcome.code === 'torneo') void refreshStatus();
+      showNotice(outcome.message, tone(outcome));
+    } else if (!answered && !info && !game.practice && !game.cheats && game.score > 0) {
+      // nothing was ever heard from the site, so there is no tournament to sign this game for: at least say so
+      showNotice(t('tournament.unreachable'), 'info');
+    }
+    // The site is answering: what was put aside earlier goes now too, without waiting for the next start.
+    if (answered && outcome?.kind !== 'retry') await flushQueue(info);
     return outcome;
   });
 }
@@ -429,6 +479,7 @@ export function deleteMyData(): Promise<{ ok: boolean; message: string }> {
 /** For the tests: forget what this session knows. */
 export function resetTournamentApi(): void {
   status = null;
+  reached = false;
   notice = null;
   chain = Promise.resolve();
   emit();

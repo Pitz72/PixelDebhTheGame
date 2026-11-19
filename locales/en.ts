@@ -18,6 +18,9 @@ export const en: Record<TextKey, string> = {
   'update.download': '[U] DOWNLOAD FROM GITHUB',
   'update.installing': 'DOWNLOADING THE UPDATE...',
   'update.failed': 'UPDATE FAILED: {error}',
+  'update.progress.title': 'UPDATING TO {version}',
+  'update.progress.percent': 'DOWNLOADED: {percent}%',
+  'update.progress.note': 'WHEN IT IS DONE THE GAME CLOSES BY ITSELF AND STARTS AGAIN UPDATED. DO NOT CLOSE IT.',
 
   'key.space': 'SPACE',
   'key.enter': 'ENTER',
@@ -246,6 +249,7 @@ export const en: Record<TextKey, string> = {
   'tournament.sent': 'Tournament: score recorded, you are in position {pos}.',
   'tournament.notBetter': 'Tournament: your record stays at {points} points.',
   'tournament.queued': 'Tournament: the site is not answering, the score will go next time you start the game.',
+  'tournament.unreachable': 'Tournament: the site is not answering, this game was not sent.',
   'tournament.not.difficulty': 'Tournament: this game does not count, only normal difficulty does.',
   'tournament.not.continued': 'Tournament: games taken up with CONTINUE do not count.',
   'tournament.err.firma': 'This version of the game cannot send scores to the tournament: update the game.',

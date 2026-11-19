@@ -54,7 +54,9 @@ export interface TrophyTracker {
  */
 export function createTrophyTracker(w: World, onUnlock: (t: TrophyDef) => void): TrophyTracker {
   const save = loadTrophies();
-  const seen = { collected: 0, enemies: 0 };
+  // What this world has already counted when the tracker starts is in the totals already: a game taken up with
+  // "continue" comes with the counters of the saved run, and they must not be added a second time.
+  const seen = { collected: w.stats.collected, enemies: w.stats.enemiesDefeated };
   let dirty = false;
   let lastStatus = w.status;
 

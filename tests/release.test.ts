@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { parse } from 'yaml';
-import { REPO_URL, canSelfUpdate, isNewer, parseVersion, releasePage } from '../services/updateService';
+import { DOWNLOAD_TIMEOUT_MS, REPO_URL, canSelfUpdate, downloadFraction, isNewer, parseVersion, releasePage } from '../services/updateService';
+import { isBrowserShortcut } from '../services/browserKeys';
 
 const read = (file: string) => readFileSync(file, 'utf8');
 const json = (file: string) => JSON.parse(read(file));
@@ -118,6 +119,68 @@ describe('the updater', () => {
     for (const kind of ['portable', 'package', 'other'] as const) expect(canSelfUpdate(kind), kind).toBe(false);
     expect(releasePage('1.13.0')).toBe(`${REPO_URL}/releases/tag/v1.13.0`);
     expect(releasePage('v1.13.0')).toBe(`${REPO_URL}/releases/tag/v1.13.0`);
+  });
+});
+
+describe('one copy of the game at a time (Windows)', () => {
+  it('the single-instance plugin is there, only on Windows, and is the first plugin', () => {
+    const cargo = read('src-tauri/Cargo.toml').replace(/\r\n/g, '\n');
+    expect(cargo).toMatch(/\[target\.'cfg\(target_os = "windows"\)'\.dependencies\]\ntauri-plugin-single-instance = "2"/);
+    const lib = read('src-tauri/src/lib.rs');
+    const first = lib.indexOf('.plugin(');
+    expect(lib.slice(first)).toMatch(/^\.plugin\(tauri_plugin_single_instance::init\(/);
+    expect(lib.replace(/\r\n/g, '\n')).toContain('#[cfg(target_os = "windows")]\n    let builder = builder.plugin(tauri_plugin_single_instance::init(');
+    expect(lib).toContain('window.set_focus()'); // a second start brings the first copy to the front
+  });
+});
+
+describe('while an update downloads', () => {
+  it('the download has a time limit and reports how far it is', () => {
+    const src = read('services/updateService.ts');
+    expect(DOWNLOAD_TIMEOUT_MS).toBeGreaterThanOrEqual(5 * 60 * 1000);
+    expect(src).toContain('{ timeout: DOWNLOAD_TIMEOUT_MS }');
+    const f = downloadFraction();
+    expect(f({ event: 'Started', data: { contentLength: 200 } })).toBe(0);
+    expect(f({ event: 'Progress', data: { chunkLength: 50 } })).toBe(0.25);
+    expect(f({ event: 'Progress', data: { chunkLength: 500 } })).toBe(1); // never more than all of it
+    expect(f({ event: 'Finished' })).toBe(1);
+    const unknown = downloadFraction(); // a server that does not say the size
+    expect(unknown({ event: 'Started', data: {} })).toBeNull();
+    expect(unknown({ event: 'Progress', data: { chunkLength: 50 } })).toBeNull();
+  });
+
+  it('the game cannot be used: the menu is muted, the keys are ignored, the whole screen says so', () => {
+    const app = read('App.tsx');
+    expect(app).toContain("const updating = updateStatus === 'installing';");
+    expect(app).toContain('if (updating) return; // the update screen is up: nothing else answers');
+    expect(app.match(/active=\{!overlay && !updating\}/g)).toHaveLength(2);
+    expect(app).toContain("if (gameState !== 'start' || overlay || updating) return;"); // no attract mode either
+    // U only where the notice is in sight, not under another page
+    expect(app).toContain("key === 'u' && update && !overlay && (gameState === 'start' || gameState === 'highscore')");
+    const banner = read('components/UpdateBanner.tsx');
+    expect(banner).toMatch(/if \(status === 'installing'\) \{[\s\S]*?absolute inset-0/);
+    expect(banner).toContain("t('update.progress.note')");
+  });
+});
+
+describe('the keys of a browser', () => {
+  it('reload, print, find and the like are recognised; the keys of the game are not', () => {
+    for (const key of ['F5', 'F3', 'F7', 'BrowserRefresh']) expect(isBrowserShortcut({ key })).toBe(true);
+    expect(isBrowserShortcut({ key: 'F5', ctrlKey: true })).toBe(true);
+    for (const key of ['r', 'R', 'p', 'f', 'g', 's']) expect(isBrowserShortcut({ key, ctrlKey: true })).toBe(true);
+    expect(isBrowserShortcut({ key: 'ArrowLeft', altKey: true })).toBe(true);
+    for (const key of ['r', 'p', 'f', ' ', 'Enter', 'Escape', 'ArrowLeft', 'F11', 'F4', 'c', 'x']) expect(isBrowserShortcut({ key })).toBe(false);
+    expect(isBrowserShortcut({ key: 'Enter', altKey: true })).toBe(false); // Alt+Enter is the game's fullscreen
+    expect(isBrowserShortcut({ key: 'r', ctrlKey: true, altKey: true })).toBe(false); // AltGr
+    expect(isBrowserShortcut({ key: 'a', ctrlKey: true })).toBe(false);
+  });
+
+  it('the shipped game cancels them before anything else sees the key, and still lets the key through', () => {
+    const index = read('index.tsx').replace(/\r\n/g, '\n');
+    const shipped = /if \(!import\.meta\.env\.DEV\) \{\n([\s\S]*?)\n\}\n/.exec(index);
+    expect(shipped).not.toBeNull();
+    expect(shipped![1]).toMatch(/addEventListener\(\s*'keydown',\s*e => \{\s*if \(isBrowserShortcut\(e\)\) e\.preventDefault\(\);\s*\},\s*true\s*\)/);
+    expect(shipped![1]).not.toContain('stopPropagation');
   });
 });
 

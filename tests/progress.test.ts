@@ -3,7 +3,8 @@ import { levels } from '../levels';
 import { createWorld, createStats, step, mulberry32 } from '../engine';
 import type { World, EngineEvent } from '../engine';
 import { BOSS_2_HP, BOSS_INITIAL_HP, DIFFICULTY, ENEMY_SPEED, FINAL_BOSS_HP_SHARE, INITIAL_LIVES } from '../constants';
-import { PROGRESS_KEY, clearRun, loadProgress, noteLevelReached, parseProgress, parseStats, saveRun, levelCount, type SavedRun } from '../services/progress';
+import { readFileSync } from 'node:fs';
+import { PROGRESS_KEY, clearRun, endRun, loadProgress, noteLevelReached, parseProgress, parseStats, saveRun, levelCount, type SavedRun } from '../services/progress';
 import { addHighscore, getHighscores } from '../services/highscoreService';
 import { defaultSettings, parseSettings } from '../services/settings';
 import * as storage from '../services/storage';
@@ -151,6 +152,19 @@ describe('the saved progress', () => {
     saveRun(sample());
     clearRun();
     expect(loadProgress()).toEqual({ highestLevel: 4, run: null });
+  });
+
+  it('a practice game that ends leaves the saved game alone; a real one clears it', () => {
+    saveRun(sample());
+    endRun(true);
+    expect(loadProgress().run).toEqual(sample());
+    endRun(false);
+    expect(loadProgress()).toEqual({ highestLevel: 4, run: null });
+    // the game screen ends every game through it, and "try again" after a practice game is that practice again
+    const screen = readFileSync('GameScreen.tsx', 'utf8');
+    expect(screen.match(/endRun\(w\.practice\)/g)).toHaveLength(2);
+    expect(screen).not.toMatch(/clearRun\(/);
+    expect(readFileSync('App.tsx', 'utf8')).toContain('onRestart={run.practice ? () => handlePlayLevel(run.levelIndex) : startFresh}');
   });
 
   it('notes a level reached in a real game, and only goes forward', () => {

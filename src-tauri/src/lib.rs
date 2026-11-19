@@ -35,7 +35,23 @@ fn install_kind() -> &'static str {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default();
+
+    // One copy of the game at a time (Windows). Two copies each keep the save as it was when they started and write
+    // the whole file again when they close: the one closed last would put its old data back over the game just
+    // played (and both would play their music). Starting the game a second time brings the first one to the front.
+    // It has to be the first plugin.
+    #[cfg(target_os = "windows")]
+    let builder = builder.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+        use tauri::Manager;
+        if let Some(window) = app.get_webview_window("main") {
+            let _ = window.unminimize();
+            let _ = window.show();
+            let _ = window.set_focus();
+        }
+    }));
+
+    builder
         // Key/value store in the app data directory: high scores and settings.
         .plugin(tauri_plugin_store::Builder::new().build())
         // Restart after an update, and open the release page in the browser.

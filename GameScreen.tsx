@@ -10,7 +10,7 @@ import { padControls, padStart } from './engine/gamepad';
 import { readPad, suppressMenuPad } from './services/gamepadService';
 import { t, useLanguage } from './services/i18n';
 import { createTrophyTracker, TrophyTracker } from './services/trophyService';
-import { clearRun, saveRun } from './services/progress';
+import { endRun, saveRun } from './services/progress';
 import { devProbeAllowed } from './services/devAccess';
 import type { TrophyDef } from './trophies';
 import { levels } from './levels';
@@ -548,11 +548,11 @@ const GameScreen: React.FC<GameScreenProps> = ({
             }
             break;
           case 'gameOver':
-            clearRun();
+            endRun(w.practice); // a practice game leaves the saved one alone
             callbacksRef.current.onGameOver(e.score, runEnd());
             break;
           case 'completed':
-            clearRun();
+            endRun(w.practice);
             callbacksRef.current.onCompleted(e.score, e.lives, runEnd());
             break;
         }

@@ -11,6 +11,10 @@ l'installazione (sezione in fondo).
 Stato di partenza: `tsc --noEmit` pulito, 852 test verdi, nessun segreto nel repository, testi IT/EN allineati (243 chiavi).
 Niente è stato modificato nel codice.
 
+**Corretti nella 1.19.2 (19 novembre, preparata):** G1, G2 (solo Windows), M1, M6, M9, M10, M11, M12, più il problema
+dell'installatore (sezione in fondo). Dettagli in `log/1.19.2.md`. **Ancora aperti:** G3, M2, M3, M4, M5, M7, M8, M13, M14 e
+i lievi.
+
 Etichette: **[CODICE]** letto e seguito nel codice fino in fondo; **[NON PROVATO]** il meccanismo è nel codice ma non l'ho visto
 succedere nel gioco avviato.
 
@@ -98,5 +102,6 @@ Una schermata (installazione a mano della 1.19.1): «Errore nell'apertura del fi
 ## Da fare alla ripresa
 
 1. Chiudere la 1.19.2: bozza, prove sulla bozza, pubblicazione su OK di Simone.
-2. Decidere, una per volta, quali voci di questo catalogo correggere (G1 è la più sicura da fare: una riga).
-3. Provare nel gioco avviato: G2, G3, M3 (con un pad), M6 (sull'exe).
+2. Sulla bozza provare: doppia apertura (G2), F5 (M6), aggiornamento con la schermata intera (M9), pratica fino al game
+   over (G1).
+3. Le voci ancora aperte, una per volta, quando Simone lo decide (G3 e M3 per prime).

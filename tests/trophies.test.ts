@@ -394,6 +394,23 @@ describe('the save', () => {
     expect(told).toEqual(['again']); // first-steps was earned in the first world and is not told again
   });
 
+  it('a game taken up with "continue" does not add the counters of the saved run a second time', () => {
+    // 40 items and 45 enemies were counted when they happened, before the game was left
+    storage.setItem(TROPHY_KEY, JSON.stringify({ unlocked: {}, totals: { collected: 40, enemies: 45 } }));
+    const w = world([makeLevel(), makeLevel()]);
+    w.stats.collected = 40; // the world of a continued game starts with the saved counters
+    w.stats.enemiesDefeated = 45;
+    const tracker = createTrophyTracker(w, () => {});
+    tracker.update();
+    tracker.flush();
+    expect(tracker.save().totals).toEqual({ collected: 40, enemies: 45 });
+    w.stats.collected = 41; // one more, in this session
+    w.stats.enemiesDefeated = 47;
+    tracker.update();
+    tracker.flush();
+    expect(parseSave(storage.getItem(TROPHY_KEY)).totals).toEqual({ collected: 41, enemies: 47 });
+  });
+
   it('a tainted run earns nothing and adds nothing', () => {
     const w = world([makeLevel({ goal: { x: 400, y: FLOOR_Y - 150, width: 90, height: 150 } })]);
     w.isGodMode = true;
