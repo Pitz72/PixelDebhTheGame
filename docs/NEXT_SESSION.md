@@ -8,9 +8,10 @@
 > e con l'installatore vero senza finestra. Su richiesta di Simone («una versione unica») la 1.19.2 porta anche le voci più
 > urgenti della revisione: la pratica non cancella la partita salvata, F5 non ricarica il gioco, «Continua» non riconta i
 > trofei, schermata intera e tempo massimo durante l'aggiornamento, una sola copia del gioco su Windows, torneo che non
-> scarta i punteggi senza sito. **Restano:** bozza della release (`gh workflow run release.yml -f mode=draft`), prove
-> sulla bozza (elenco in fondo a `log/1.19.2.md`), pubblicazione su OK di Simone, poi la landing Ecosystem. Non si sa
-> ancora se gli altri giocatori vedono lo stesso errore di installazione.
+> scarta i punteggi senza sito. **Bozza `v1.19.2` costruita il 19 novembre** (corsa 44552871473, dal commit `20a7420`):
+> 10 file, `latest.json` a 1.19.2 con 6 piattaforme, firme con la chiave `3E180F3F6F7C8052`; «Latest» resta la 1.19.1.
+> **Restano:** prove sulla bozza (elenco in fondo a `log/1.19.2.md`), pubblicazione su OK di Simone, poi la landing
+> Ecosystem. Non si sa ancora se gli altri giocatori vedono lo stesso errore di installazione.
 >
 > **Revisione dei bug del 18 novembre (parziale):** catalogo in `docs/REVISIONE_BUG_2026-11-18.md` (3 gravi, 14 medi, i
 > lievi; nessun gravissimo), con in cima cosa è corretto nella 1.19.2 e cosa resta aperto. Motore e grafica non
