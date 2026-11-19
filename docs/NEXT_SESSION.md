@@ -2,9 +2,10 @@
 
 > **1.19.2 PUBBLICATA il 19 novembre 2026** su OK di Simone («Latest», tag su `20a7420`; `latest.json` pubblico a 1.19.2
 > con 6 piattaforme, verificato da fuori). **Da fare subito: la landing Ecosystem è ancora alla 1.19.1** (i suoi 5 link
-> puntano ai file della `v1.19.1`). Simone ha chiesto di eliminare da GitHub tutte le release precedenti (`v1.18.0`,
-> `v1.18.1`, `v1.18.2`, `v1.19.0`, `v1.19.1`): eliminare la `v1.19.1` prima di aggiornare la landing rompe quei 5 link;
-> in attesa della sua conferma. I tag restano.
+> puntano ai file della `v1.19.1`). Simone ha chiesto di eliminare da GitHub tutte le release precedenti: **il 19
+> novembre eliminate `v1.18.0`, `v1.18.1`, `v1.18.2` e `v1.19.0`** (solo le release, i tag restano tutti). **La `v1.19.1`
+> è tenuta apposta** finché la landing non passa alla 1.19.2: eliminarla prima rompe quei 5 link. Poi va eliminata anche
+> lei (`gh release delete v1.19.1 --yes`, senza togliere il tag), su conferma di Simone.
 >
 > **Com'è nata la 1.19.2: l'installatore controlla la cartella.** Più giocatori hanno
 > difficoltà a installare o aggiornare la 1.19.1; l'unica prova è una schermata: «Errore nell'apertura del file in scrittura»
