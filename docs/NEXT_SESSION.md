@@ -10,8 +10,17 @@
 > trofei, schermata intera e tempo massimo durante l'aggiornamento, una sola copia del gioco su Windows, torneo che non
 > scarta i punteggi senza sito. **Bozza `v1.19.2` costruita il 19 novembre** (corsa 44552871473, dal commit `20a7420`):
 > 10 file, `latest.json` a 1.19.2 con 6 piattaforme, firme con la chiave `3E180F3F6F7C8052`; «Latest» resta la 1.19.1.
-> **Restano:** prove sulla bozza (elenco in fondo a `log/1.19.2.md`), pubblicazione su OK di Simone, poi la landing
-> Ecosystem. Non si sa ancora se gli altri giocatori vedono lo stesso errore di installazione.
+> **Provata sul PC di Simone il 19 novembre con l'installatore della bozza**, avviato come lo avvia il gioco
+> (`/P /UPDATE /R`) con la 1.19.1 installata e aperta: gioco chiuso a 3,2 s, installatore finito a 5,0 s con codice 0,
+> gioco riaperto da solo, exe e registro a 1.19.2 nella stessa cartella; un secondo avvio lascia una sola copia aperta (la
+> stessa); chiusura normale riuscita; `save.json` identico alla copia fatta prima. **Non provati:** l'installatore con la
+> finestra verso `Program Files` (provato solo con l'installatore di prova e, senza finestra, con quello costruito sul
+> PC), F5 sull'exe, la pratica giocata fino al game over, il torneo contro il sito vero, e l'aggiornamento dal gioco con
+> la schermata nuova (si vedrà solo dalla versione dopo la 1.19.2). **Restano:** pubblicazione su OK di Simone, poi la
+> landing Ecosystem. Non si sa ancora se gli altri giocatori vedono lo stesso errore di installazione.
+> Per il giocatore della schermata, se aveva premuto «Ignora»: l'installatore 1.19.2 gli mostra prima la pagina «già
+> installato» con «Disinstalla prima di installare» preselezionato, che fallisce con «Impossibile disinstallare!» (il
+> disinstallatore non esiste); deve scegliere «Non disinstallare», e alla cartella il messaggio nuovo propone quella giusta.
 >
 > **Revisione dei bug del 18 novembre (parziale):** catalogo in `docs/REVISIONE_BUG_2026-11-18.md` (3 gravi, 14 medi, i
 > lievi; nessun gravissimo), con in cima cosa è corretto nella 1.19.2 e cosa resta aperto. Motore e grafica non
