@@ -1,5 +1,18 @@
 # Decisioni e cose da fare per arrivare al 100% (stato al 2026-10-18, v1.18.2)
 
+> **⚠ 1.19.2 PREPARATA, NON PUBBLICATA (19 novembre 2026): l'installatore controlla la cartella.** Più giocatori hanno
+> difficoltà a installare o aggiornare la 1.19.1; l'unica prova è una schermata: «Errore nell'apertura del file in scrittura»
+> con il gioco in `C:\Program Files (x86)` (l'installatore non ha i permessi di amministratore; «Ignora» faceva ricordare la
+> cartella sbagliata). Ora l'installatore prova a scrivere nella cartella prima di copiare e, se non può, lo dice e propone
+> quella consigliata (`src-tauri/windows/installer-hooks.nsh`, `log/1.19.2.md`). Provato sul PC con installatori di prova
+> e con l'installatore vero senza finestra. **Restano:** bozza della release (`gh workflow run release.yml -f mode=draft`),
+> prova dell'installatore vero con la finestra e dell'aggiornamento dalla 1.19.1 sulla bozza, pubblicazione su OK di
+> Simone, poi la landing Ecosystem. Non si sa ancora se gli altri giocatori vedono lo stesso errore.
+>
+> **Revisione dei bug del 18 novembre (parziale):** catalogo in `docs/REVISIONE_BUG_2026-11-18.md` (3 gravi, 14 medi, i
+> lievi; nessun gravissimo). Fatte: schermate, servizi/torneo/audio, Tauri e rilascio. Motore e grafica non revisionati, per
+> scelta di Simone. Nessuna di quelle correzioni è stata fatta: da decidere una per volta.
+
 > **1.19.1 (17 novembre 2026): l'installatore aspetta che il gioco si chiuda.** Un giocatore, aggiornando dal gioco alla
 > 1.19.0, ha visto l'installazione fermarsi con «Impossibile chiudere PixelDebh Retro-Rescue» (al secondo tentativo è andata):
 > è la corsa nota di Tauri [tauri-apps/tauri#16277](https://github.com/tauri-apps/tauri/issues/16277), il controllo del gioco

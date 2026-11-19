@@ -145,6 +145,43 @@ describe('the Windows installer', () => {
     expect(/^[\x00-\x7f]*$/.test(hooks)).toBe(true);
   });
 
+  it('before copying anything, checks that it can write to the folder and offers the recommended one', () => {
+    const hooks = read('src-tauri/windows/installer-hooks.nsh').replace(/\r\n/g, '\n');
+    const macro = (name: string) => new RegExp(`!macro ${name}\\n([\\s\\S]*?)!macroend`).exec(hooks)?.[1] ?? '';
+    const preinstall = macro('NSIS_HOOK_PREINSTALL');
+    const check = macro('PD_CHECK_FOLDER');
+    const canWrite = macro('PD_CAN_WRITE_INSTDIR');
+    const post = macro('NSIS_HOOK_POSTINSTALL');
+    for (const body of [preinstall, check, canWrite, post]) expect(body).not.toBe('');
+    // the folder comes first: before the wait, the running-app check, the copy of the exe and the registry
+    expect(preinstall.trimStart().startsWith('!insertmacro PD_CHECK_FOLDER')).toBe(true);
+    // a real try at creating a file, cleaned up afterwards
+    expect(canWrite).toContain('FileOpen $R0 "$INSTDIR\\${PD_WRITE_TEST}" w');
+    expect(canWrite).toContain('Delete "$INSTDIR\\${PD_WRITE_TEST}"');
+    // the folder offered is the one the template proposes by itself for a per-user install
+    expect(nsis.installMode).toBe('currentUser');
+    expect(check).toContain('StrCpy $R1 "$LOCALAPPDATA\\${PRODUCTNAME}"');
+    expect(check).toContain('StrCpy $INSTDIR $R1');
+    expect(check).toContain('SetOutPath $INSTDIR');
+    expect(check).toContain('StrCpy $PdFolderMoved 1');
+    // the player chooses; with no window at all the install stops instead of moving by itself
+    expect(check).toContain('MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION "$R2" /SD ${PD_FOLDER_SILENT_CHOICE} IDCANCEL');
+    expect(hooks).toContain('!define /ifndef PD_FOLDER_SILENT_CHOICE IDCANCEL');
+    // in the two languages of the installer
+    expect(nsis.languages).toEqual(['Italian', 'English']);
+    expect(check).toContain('${If} $LANGUAGE = ${PD_LANG_ITALIAN}');
+    expect(hooks).toContain('!define /ifndef PD_LANG_ITALIAN 1040');
+    // every register it uses goes back as it was, in reverse order
+    const pushed = [...check.matchAll(/^\s*Push (\$\w+)/gm)].map(m => m[1]);
+    const popped = [...check.matchAll(/^\s*Pop (\$\w+)/gm)].map(m => m[1]);
+    expect(pushed).toEqual(['$R0', '$R1', '$R2']);
+    expect(popped).toEqual([...pushed].reverse());
+    // an update that had to move the game: the shortcuts that exist follow it
+    expect(post).toMatch(/\$\{If\} \$PdFolderMoved == 1\n\s*\$\{AndIf\} \$UpdateMode = 1/);
+    expect(post).toContain('CreateShortcut "$SMPROGRAMS\\${PRODUCTNAME}.lnk" "$INSTDIR\\${MAINBINARYNAME}.exe"');
+    expect(post).toContain('CreateShortcut "$DESKTOP\\${PRODUCTNAME}.lnk" "$INSTDIR\\${MAINBINARYNAME}.exe"');
+  });
+
   it('is built with a Tauri CLI whose Italian messages name the game (fixed in 2.12.5)', () => {
     const lock = json('package-lock.json');
     const cli = lock.packages['node_modules/@tauri-apps/cli'].version as string;
