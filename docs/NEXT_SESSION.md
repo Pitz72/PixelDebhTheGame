@@ -1,5 +1,19 @@
 # Decisioni e cose da fare per arrivare al 100% (stato al 2026-10-18, v1.18.2)
 
+> **AGGIORNAMENTO del 19 novembre 2026 (sera), dalla sessione di Ecosystem, su OK di Simone: la landing è alla 1.19.2 e la
+> `v1.19.1` è eliminata.** La scheda di PixelDebh: Retro-Rescue! (sito Ecosystem v0.37.2, commit `ae7b391`, deployata e
+> pushata) ha versione, riga «Versione», i 5 link `v1.19.2` (tutti 200), il nome del portable e 864 test; nelle pagine
+> online non c'è più nessun link alla `v1.19.1`. Poi Simone ha detto «Sì, elimina» e la release `v1.19.1` è stata eliminata
+> da GitHub (`gh release delete v1.19.1 --yes`; il tag `v1.19.1` resta, su `2da2307`). **Ora l'unica release pubblicata è la
+> `v1.19.2` («Latest»); il «da fare subito» qui sotto è superato.** Non verificato: che www.pixeldebh.it avesse già letto la
+> 1.19.2 prima dell'eliminazione; se mostra ancora la 1.19.1 i suoi link darebbero 404, da controllare nel repo del sito
+> (`GitHub\SITI-WEB\PIXELDEBH-Sito`).
+> **Verificato da fuori il 19 novembre sera, dalla sessione del gioco: tutto chiuso.** Su GitHub c'è la sola release
+> `v1.19.2` («Latest») e i sei tag ci sono tutti; `latest.json` pubblico a 1.19.2 con 6 piattaforme; la landing Ecosystem,
+> in italiano e in inglese, ha i 5 link alla `v1.19.2` e rispondono tutti 200; i file della `v1.19.1` danno 404;
+> **www.pixeldebh.it/gioco mostra già la 1.19.2** con i link alla `v1.19.2` (il punto «non verificato» qui sopra è
+> risolto). Non resta nulla da fare per questa release.
+>
 > **1.19.2 PUBBLICATA il 19 novembre 2026** su OK di Simone («Latest», tag su `20a7420`; `latest.json` pubblico a 1.19.2
 > con 6 piattaforme, verificato da fuori). **Da fare subito: la landing Ecosystem è ancora alla 1.19.1** (i suoi 5 link
 > puntano ai file della `v1.19.1`). Simone ha chiesto di eliminare da GitHub tutte le release precedenti: **il 19
