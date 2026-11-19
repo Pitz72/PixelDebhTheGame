@@ -6,6 +6,11 @@
 > novembre eliminate `v1.18.0`, `v1.18.1`, `v1.18.2` e `v1.19.0`** (solo le release, i tag restano tutti). **La `v1.19.1`
 > è tenuta apposta** finché la landing non passa alla 1.19.2: eliminarla prima rompe quei 5 link. Poi va eliminata anche
 > lei (`gh release delete v1.19.1 --yes`, senza togliere il tag), su conferma di Simone.
+> **Messaggi lasciati il 19 novembre** (Simone: «lascia un messaggio nella repo di Ecosystem e del sito di Debh se
+> necessario», la landing NON va aggiornata da qui): per Ecosystem nella nota `project_pixeldebh_landing.md` della memoria
+> di quel progetto (riga «DA FARE», più l'indice); per il sito di Debh in cima a `docs/PROSSIMA-SESSIONE.md` del suo repo
+> (`GitHub\SITI-WEB\PIXELDEBH-Sito`, non committata): il sito legge la versione da GitHub da solo, ma deve aver letto la
+> 1.19.2 prima che la `v1.19.1` venga eliminata.
 >
 > **Com'è nata la 1.19.2: l'installatore controlla la cartella.** Più giocatori hanno
 > difficoltà a installare o aggiornare la 1.19.1; l'unica prova è una schermata: «Errore nell'apertura del file in scrittura»
